@@ -109,6 +109,24 @@ export default {
           component: './list/table-list',
         },
         {
+          name: '服务',
+          icon: 'book',
+          path: '/service',
+          routes: [
+            {
+              component: './service',
+              hideInMenu: true,
+              path: '/service',
+            },
+            {
+              name: '详情',
+              hideInMenu: true,
+              path: '/service/:id',
+              component: './service/$id',
+            },
+          ],
+        },
+        {
           name: '管理员',
           icon: 'book',
           path: '/servicer',

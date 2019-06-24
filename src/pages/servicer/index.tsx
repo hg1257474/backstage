@@ -20,9 +20,9 @@ import { connect } from 'dva';
 import TableForm from './components/TableForm';
 import FooterToolbar from './components/FooterToolbar';
 import styles from './style.less';
-
+import { image } from './images';
+import ImageUpload from '../../components/ImageUpload'
 const { Option } = Select;
-const { RangePicker } = DatePicker;
 
 const fieldLabels = {
   account: '账号',
@@ -35,27 +35,6 @@ const fieldLabels = {
   privilege: '权限',
 };
 
-const tableData = [
-  {
-    key: '1',
-    workId: '00001',
-    name: 'John Brown',
-    department: 'New York No. 1 Lake Park',
-  },
-  {
-    key: '2',
-    workId: '00002',
-    name: 'Jim Green',
-    department: 'London No. 1 Lake Park',
-  },
-  {
-    key: '3',
-    workId: '00003',
-    name: 'Joe Black',
-    department: 'Sidney No. 1 Lake Park',
-  },
-];
-
 interface AdvancedFormProps extends FormComponentProps {
   dispatch: Dispatch<any>;
   submitting: boolean;
@@ -67,7 +46,7 @@ interface AdvancedFormProps extends FormComponentProps {
 class AdvancedForm extends Component<AdvancedFormProps> {
   state = {
     width: '100%',
-    shouldInput: false,
+    inputTarget: null,
   };
 
   componentDidMount() {
@@ -128,8 +107,30 @@ class AdvancedForm extends Component<AdvancedFormProps> {
     );
   };
   test: TableFormDateType[] = [
-    { key: '1', workId: '1', name: '1', department: '1', isNew: false, editable: true },
-    { key: '2', workId: '2', name: '2', department: '2', isNew: false, editable: true },
+    {
+      account: '1',
+      password: '1',
+      name: '1',
+      avatar: image,
+      total: 1,
+      grade: 1,
+      expert: [],
+      privilege: [],
+      serviceTotal:10,
+      id:"dsdsds"
+    },
+    {
+      account: '2',
+      password: '2',
+      name: '2',
+      avatar: image,
+      total: 2,
+      grade: 2,
+      expert: [],
+      privilege: [],
+      serviceTotal:6,
+      id:"232222222222222222"
+    },
   ];
   resizeFooterToolbar = () => {
     requestAnimationFrame(() => {
@@ -159,7 +160,6 @@ class AdvancedForm extends Component<AdvancedFormProps> {
       }
     });
   };
-
   render() {
     console.log(this);
     const {
@@ -170,13 +170,14 @@ class AdvancedForm extends Component<AdvancedFormProps> {
     return (
       <>
         <PageHeaderWrapper content="在此页面管理律师和管理员">
-          {this.state.shouldInput && (
+          {this.state.inputTarget && (
             <Card title="详细信息" className={styles.card} bordered={false}>
               <Form layout="vertical" hideRequiredMark>
                 <Row gutter={16}>
                   <Col lg={6} md={12} sm={24}>
                     <Form.Item label={fieldLabels.account}>
                       {getFieldDecorator('account', {
+                        initialValue: this.state.inputTarget.account,
                         rules: [{ required: true, message: '请输入' }],
                       })(<Input placeholder="请输入" />)}
                     </Form.Item>
@@ -184,6 +185,7 @@ class AdvancedForm extends Component<AdvancedFormProps> {
                   <Col xl={{ span: 6, offset: 2 }} lg={{ span: 8 }} md={{ span: 12 }} sm={24}>
                     <Form.Item label={fieldLabels.password}>
                       {getFieldDecorator('password', {
+                        initialValue: this.state.inputTarget.password,
                         rules: [{ required: true, message: '请选择' }],
                       })(<Input placeholder="请输入" />)}
                     </Form.Item>
@@ -191,6 +193,7 @@ class AdvancedForm extends Component<AdvancedFormProps> {
                   <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>
                     <Form.Item label={fieldLabels.name}>
                       {getFieldDecorator('name', {
+                        initialValue: this.state.inputTarget.name,
                         rules: [{ required: true, message: '请选择管理员' }],
                       })(<Input placeholder="请输入" />)}
                     </Form.Item>
@@ -200,14 +203,16 @@ class AdvancedForm extends Component<AdvancedFormProps> {
                   <Col xl={{ span: 6, offset: 2 }} lg={{ span: 8 }} md={{ span: 12 }} sm={24}>
                     <Form.Item label={fieldLabels.avatar}>
                       {getFieldDecorator('avatar', {
+                        initialValue: this.state.inputTarget.avatar,
                         rules: [{ required: true, message: '请选择' }],
-                      })(<Input placeholder="请输入" />)}
+                      })(<ImageUpload onChange={()=>null}/>)}
                     </Form.Item>
                   </Col>
                   <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>
                     <Form.Item label={fieldLabels.total}>
-                      {getFieldDecorator('owner2', {
-                        rules: [{ required: true, message: '请选择管理员' }],
+                      {getFieldDecorator('total', {
+                        initialValue: this.state.inputTarget.total,
+                        rules: [{ required: true, message: '请输入服务客户人数' }],
                       })(<Input placeholder="请输入" />)}
                     </Form.Item>
                   </Col>
@@ -215,14 +220,16 @@ class AdvancedForm extends Component<AdvancedFormProps> {
                 <Row gutter={16}>
                   <Col lg={6} md={12} sm={24}>
                     <Form.Item label={fieldLabels.grade}>
-                      {getFieldDecorator('approver2', {
-                        rules: [{ required: true, message: '请选择审批员' }],
+                      {getFieldDecorator('grade', {
+                        initialValue: this.state.inputTarget.grade,
+                        rules: [{ required: true, message: '请输入分数' }],
                       })(<Input placeholder="请输入" />)}
                     </Form.Item>
                   </Col>
                   <Col xl={{ span: 6, offset: 2 }} lg={{ span: 8 }} md={{ span: 12 }} sm={24}>
                     <Form.Item label={fieldLabels.expert}>
-                      {getFieldDecorator('dateRange2', {
+                      {getFieldDecorator('expert', {
+                        initialValue: this.state.inputTarget.expert,
                         rules: [{ required: true, message: '请输入' }],
                       })(
                         <Select mode="multiple" style={{ width: '100%' }} placeholder="请选择">
@@ -235,8 +242,9 @@ class AdvancedForm extends Component<AdvancedFormProps> {
                   </Col>
                   <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>
                     <Form.Item label={fieldLabels.privilege}>
-                      {getFieldDecorator('type2', {
-                        rules: [{ required: true, message: '请选择仓库类型' }],
+                      {getFieldDecorator('privilege', {
+                        initialValue: this.state.inputTarget.privilege,
+                        rules: [{ required: true, message: '请选择律师权限' }],
                       })(
                         <Select mode="multiple" style={{ width: '100%' }} placeholder="请选择">
                           <Option value="assignLawyer">分配律师</Option>
@@ -253,9 +261,9 @@ class AdvancedForm extends Component<AdvancedFormProps> {
           <Card title="成员管理" bordered={false}>
             <TableForm
               value={this.test}
-              onChange={(...x) => {
-                console.log(x);
-                this.setState({shouldInput:true})
+              onChoose={inputTarget => {
+                console.log(inputTarget);
+                this.setState({ inputTarget });
               }}
             />
           </Card>

@@ -1,34 +1,29 @@
-export interface TableListItem {
-  key: number;
-  disabled?: boolean;
-  href: string;
+export interface Member {
   avatar: string;
   name: string;
-  title: string;
+  id: string;
+}
+
+export interface BasicListItemDataType {
+  id: string;
   owner: string;
-  desc: string;
-  callNo: number;
-  status: number;
-  updatedAt: Date;
-  createdAt: Date;
-  progress: number;
-}
-
-export interface TableListPagination {
-  total: number;
-  pageSize: number;
-  current: number;
-}
-
-export interface TableListDate {
-  list: TableListItem[];
-  pagination: Partial<TableListPagination>;
-}
-
-export interface TableListParams {
-  sorter: string;
-  status: string;
-  name: string;
-  pageSize: number;
-  currentPage: number;
+  title: string;
+  avatar: string;
+  cover: string;
+  status: 'normal' | 'exception' | 'active' | 'success';
+  percent: number;
+  logo: string;
+  href: string;
+  body?: any;
+  updatedAt: number;
+  createdAt: number;
+  subDescription: string;
+  description: string;
+  activeUser: number;
+  newUser: number;
+  star: number;
+  like: number;
+  message: number;
+  content: string;
+  members: Member[];
 }

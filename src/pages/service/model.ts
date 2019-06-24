@@ -1,11 +1,11 @@
 import { AnyAction, Reducer } from 'redux';
 import { EffectsCommandMap } from 'dva';
-import { addRule, queryRule, removeRule, updateRule } from './service';
+import { addFakeList, queryFakeList, removeFakeList, updateFakeList } from './service';
 
-import { TableListDate } from './data.d';
+import { BasicListItemDataType } from './data.d';
 
 export interface StateType {
-  data: TableListDate;
+  list: BasicListItemDataType[];
 }
 
 export type Effect = (
@@ -18,64 +18,63 @@ export interface ModelType {
   state: StateType;
   effects: {
     fetch: Effect;
-    add: Effect;
-    remove: Effect;
-    update: Effect;
+    appendFetch: Effect;
+    submit: Effect;
   };
   reducers: {
-    save: Reducer<StateType>;
+    queryList: Reducer<StateType>;
+    appendList: Reducer<StateType>;
   };
 }
 
 const Model: ModelType = {
-  namespace: 'listTableList',
+  namespace: 'listBasicList',
 
   state: {
-    data: {
-      list: [],
-      pagination: {},
-    },
+    list: [],
   },
 
   effects: {
     *fetch({ payload }, { call, put }) {
-      const response = yield call(queryRule, payload);
+      const response = yield call(queryFakeList, payload);
       yield put({
-        type: 'save',
-        payload: response,
+        type: 'queryList',
+        payload: Array.isArray(response) ? response : [],
       });
     },
-    *add({ payload, callback }, { call, put }) {
-      const response = yield call(addRule, payload);
+    *appendFetch({ payload }, { call, put }) {
+      const response = yield call(queryFakeList, payload);
       yield put({
-        type: 'save',
-        payload: response,
+        type: 'appendList',
+        payload: Array.isArray(response) ? response : [],
       });
-      if (callback) callback();
     },
-    *remove({ payload, callback }, { call, put }) {
-      const response = yield call(removeRule, payload);
+    *submit({ payload }, { call, put }) {
+      let callback;
+      if (payload.id) {
+        callback = Object.keys(payload).length === 1 ? removeFakeList : updateFakeList;
+      } else {
+        callback = addFakeList;
+      }
+      const response = yield call(callback, payload); // post
       yield put({
-        type: 'save',
+        type: 'queryList',
         payload: response,
       });
-      if (callback) callback();
-    },
-    *update({ payload, callback }, { call, put }) {
-      const response = yield call(updateRule, payload);
-      yield put({
-        type: 'save',
-        payload: response,
-      });
-      if (callback) callback();
     },
   },
 
   reducers: {
-    save(state, action) {
+    queryList(state, action) {
       return {
         ...state,
-        data: action.payload,
+        list: action.payload,
+      };
+    },
+    appendList(state = { list: [] }, action) {
+      return {
+        ...state,
+        list: state.list.concat(action.payload),
       };
     },
   },

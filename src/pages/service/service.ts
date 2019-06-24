@@ -1,37 +1,53 @@
 import request from 'umi-request';
-import { TableListParams } from './data.d';
+import { BasicListItemDataType } from './data.d';
 
-export async function queryRule(params: TableListParams) {
-  return request('/api/rule', {
+interface ParamsType extends Partial<BasicListItemDataType> {
+  count?: number;
+}
+
+export async function queryFakeList(params: ParamsType) {
+  return request('/api/fake_list', {
     params,
   });
 }
 
-export async function removeRule(params: TableListParams) {
-  return request('/api/rule', {
+export async function removeFakeList(params: ParamsType) {
+  const { count = 5, ...restParams } = params;
+  return request('/api/fake_list', {
     method: 'POST',
+    params: {
+      count,
+    },
     data: {
-      ...params,
+      ...restParams,
       method: 'delete',
     },
   });
 }
 
-export async function addRule(params: TableListParams) {
-  return request('/api/rule', {
+export async function addFakeList(params: ParamsType) {
+  const { count = 5, ...restParams } = params;
+  return request('/api/fake_list', {
     method: 'POST',
+    params: {
+      count,
+    },
     data: {
-      ...params,
+      ...restParams,
       method: 'post',
     },
   });
 }
 
-export async function updateRule(params: TableListParams) {
-  return request('/api/rule', {
+export async function updateFakeList(params: ParamsType) {
+  const { count = 5, ...restParams } = params;
+  return request('/api/fake_list', {
     method: 'POST',
+    params: {
+      count,
+    },
     data: {
-      ...params,
+      ...restParams,
       method: 'update',
     },
   });
