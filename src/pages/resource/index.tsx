@@ -30,7 +30,7 @@ import Result from './Result';
 import { StateType } from './model';
 import { IndexListItemDataType, PaymentListItemDataType } from './data.d';
 import styles from './style.less';
-import ImageUploader from './components/ImageUploader'
+import ImageUploader from './components/ImageUploader';
 const FormItem = Form.Item;
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
@@ -48,6 +48,17 @@ interface BasicListState {
   selectedPage: 'index' | 'payment';
 }
 const index: IndexListItemDataType[] = [
+  { category: '合同', categoryDescription: 'Dsdsdsd', id: 'dsdsdsd', icon: 'dsdsdsd' },
+  {
+    category: '合同',
+    service: 'dsd3232',
+    serviceDescription: 'Dsdsdsd',
+    serviceSummary: 'dsds14980280543',
+    id: 'dsdsdsd',
+    icon: 'dsdsdsd',
+  },
+];
+const index2: IndexListItemDataType[] = [
   { category: '合同', categoryDescription: 'Dsdsdsd', id: 'dsdsdsd', icon: 'dsdsdsd' },
   {
     category: '合同',
@@ -161,7 +172,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       payload: { id },
     });
   };
-  
+
   render() {
     const {
       listBasicList: { list },
@@ -171,7 +182,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       form: { getFieldDecorator },
     } = this.props;
 
-    const { visible, done, current = {} } = this.state;
+    const { visible, done, current = {}, selectedPage } = this.state;
 
     const editAndDelete = (
       key: string,
@@ -207,7 +218,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
 
     const extraContent = (
       <div className={styles.extraContent}>
-        <RadioGroup defaultValue="all">
+        <RadioGroup defaultValue={this.state.selectedPage}>
           <RadioButton value="index">首页</RadioButton>
           <RadioButton value="payment">支付页</RadioButton>
         </RadioGroup>
@@ -360,85 +371,6 @@ class BasicList extends Component<BasicListProps, BasicListState> {
         </Form>
       );
     };
-    const getModalContent2 = () => {
-      console.log(this);
-      let current = {};
-      if (this.state.current) current = this.state.current;
-      if (done) {
-        return (
-          <Result
-            type="success"
-            title="操作成功"
-            description="一系列的信息描述，很短同样也可以带标点。"
-            actions={
-              <Button type="primary" onClick={this.handleDone}>
-                知道了
-              </Button>
-            }
-            className={styles.formResult}
-          />
-        );
-      }
-      return (
-        <Form onSubmit={this.handleSubmit}>
-          {current.categoryDescription && (
-            <>
-              <FormItem label="服务类名" {...this.formLayout}>
-                {getFieldDecorator('category', {
-                  rules: [{ required: true, message: '请输入任务名称' }],
-                  initialValue: current.category,
-                })(<Input placeholder="请输入" />)}
-              </FormItem>
-              <FormItem label="服务类别说明" {...this.formLayout}>
-                {getFieldDecorator('categoryDescription', {
-                  rules: [{ required: true, message: '请输入任务名称' }],
-                  initialValue: current.categoryDescription,
-                })(<Input placeholder="请输入" />)}
-              </FormItem>
-              <FormItem label="服务图标" {...this.formLayout}>
-                {getFieldDecorator('icon', {
-                  rules: [{ required: true, message: '请输入任务名称' }],
-                  initialValue: current.icon,
-                })(<ImageUploader />)}
-              </FormItem>
-            </>
-          )}
-          {current.serviceDescription && (
-            <>
-              <FormItem label="服务类别" {...this.formLayout}>
-                {getFieldDecorator('category', {
-                  rules: [{ required: true, message: '请输入任务名称' }],
-                  initialValue: current.category,
-                })(
-                  <Select>
-                    <Option value="merger">融资并购</Option>
-                    <Option value="laborDispute">劳务纠纷</Option>
-                  </Select>,
-                )}
-              </FormItem>
-              <FormItem label="服务名" {...this.formLayout}>
-                {getFieldDecorator('title', {
-                  rules: [{ required: true, message: '请输入任务名称' }],
-                  initialValue: current.service,
-                })(<Input placeholder="请输入" />)}
-              </FormItem>
-              <FormItem label="服务概要" {...this.formLayout}>
-                {getFieldDecorator('title', {
-                  rules: [{ required: true, message: '请输入任务名称' }],
-                  initialValue: current.serviceSummary,
-                })(<Input placeholder="请输入" />)}
-              </FormItem>
-              <FormItem label="服务说明" {...this.formLayout}>
-                {getFieldDecorator('title', {
-                  rules: [{ required: true, message: '请输入任务名称' }],
-                  initialValue: current.serviceDescription,
-                })(<Input placeholder="请输入" />)}
-              </FormItem>
-            </>
-          )}
-        </Form>
-      );
-    };
     return (
       <>
         <PageHeaderWrapper>
@@ -467,7 +399,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                 size="large"
                 rowKey="id"
                 loading={loading}
-                pagination={paginationProps}
+                pagination={false /*paginationProps*/}
                 dataSource={this.state.selectedPage === 'index' ? index : payment}
                 renderItem={item => (
                   <List.Item
