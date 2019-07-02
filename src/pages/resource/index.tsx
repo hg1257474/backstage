@@ -2,8 +2,6 @@ import {
   Avatar,
   Button,
   Card,
-  Option,
-  Col,
   DatePicker,
   Dropdown,
   Form,
@@ -25,12 +23,10 @@ import { FormComponentProps } from 'antd/es/form';
 import { PageHeaderWrapper } from '@ant-design/pro-layout';
 import { connect } from 'dva';
 import { findDOMNode } from 'react-dom';
-import moment from 'moment';
-import Result from './Result';
 import { StateType } from './model';
 import { IndexListItemDataType, PaymentListItemDataType } from './data.d';
 import styles from './style.less';
-import ImageUploader from './components/ImageUploader';
+import FormModal from './components/FormModal';
 const FormItem = Form.Item;
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
@@ -44,34 +40,14 @@ interface BasicListProps extends FormComponentProps {
 interface BasicListState {
   visible: boolean;
   done: boolean;
+  shouldNewItem: boolean;
   current?: Partial<IndexListItemDataType | PaymentListItemDataType>;
   selectedPage: 'index' | 'payment';
 }
-const index: IndexListItemDataType[] = [
-  { category: '合同', categoryDescription: 'Dsdsdsd', id: 'dsdsdsd', icon: 'dsdsdsd' },
-  {
-    category: '合同',
-    service: 'dsd3232',
-    serviceDescription: 'Dsdsdsd',
-    serviceSummary: 'dsds14980280543',
-    id: 'dsdsdsd',
-    icon: 'dsdsdsd',
-  },
-];
-const index2: IndexListItemDataType[] = [
-  { category: '合同', categoryDescription: 'Dsdsdsd', id: 'dsdsdsd', icon: 'dsdsdsd' },
-  {
-    category: '合同',
-    service: 'dsd3232',
-    serviceDescription: 'Dsdsdsd',
-    serviceSummary: 'dsds14980280543',
-    id: 'dsdsdsd',
-    icon: 'dsdsdsd',
-  },
-];
 const payment: PaymentListItemDataType[] = [
   { category: '普通', fee: 23213, id: 'dsds', description: 'dsdsds' },
 ];
+/*
 @connect(
   ({
     listBasicList,
@@ -86,10 +62,15 @@ const payment: PaymentListItemDataType[] = [
     loading: loading.models.listBasicList,
   }),
 )
+*/
+@connect((x: { listBasicList: StateType; loading: { models: { [key: string]: boolean } } }) => {
+  return { listBasicList: x.listBasicList, loading: x.loading.models.listBasicList, x };
+})
 class BasicList extends Component<BasicListProps, BasicListState> {
   state: BasicListState = {
     visible: false,
     done: false,
+    shouldNewItem: false,
     current: undefined,
     selectedPage: 'index' as 'index' | 'payment',
   };
@@ -133,6 +114,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     this.setState({
       done: false,
       visible: false,
+      current: {},
     });
   };
 
@@ -140,6 +122,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     setTimeout(() => this.addBtn && this.addBtn.blur(), 0);
     this.setState({
       visible: false,
+      current: {},
     });
   };
 
@@ -148,7 +131,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     const { dispatch, form } = this.props;
     const { current } = this.state;
     const id = current ? current.id : '';
-
+    console.log(id)
     setTimeout(() => this.addBtn && this.addBtn.blur(), 0);
     form.validateFields(
       (err: string | undefined, fieldsValue: IndexListItemDataType | PaymentListItemDataType) => {
@@ -156,11 +139,19 @@ class BasicList extends Component<BasicListProps, BasicListState> {
         console.log(fieldsValue);
         this.setState({
           done: true,
+          current: {},
         });
-        dispatch({
-          type: 'listBasicList/submit',
-          payload: { id, ...fieldsValue },
-        });
+        console.log(id)
+        if (!id)
+          dispatch({
+            type: 'listBasicList/add',
+            payload: { id: new Date().getTime(), ...fieldsValue },
+          });
+        else
+          dispatch({
+            type: 'listBasicList/update',
+            payload: { id:id,...fieldsValue },
+          });
       },
     );
   };
@@ -172,6 +163,13 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       payload: { id },
     });
   };
+  onRemoveItem = (x:IndexListItemDataType | PaymentListItemDataType) => {
+    const { dispatch } = this.props;
+    dispatch({
+      type: 'listBasicList/remove',
+      payload: { id:x.id },
+    });
+  };
 
   render() {
     const {
@@ -181,7 +179,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     const {
       form: { getFieldDecorator },
     } = this.props;
-
+    console.log(this.props);
     const { visible, done, current = {}, selectedPage } = this.state;
 
     const editAndDelete = (
@@ -238,7 +236,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       total: 50,
     };
     const IndexListContent = ({
-      data: { category, service, categoryDescription, serviceSummary, serviceDescription },
+      data: { category, categoryDescription, term, termSummary, termDescription },
     }: {
       data: IndexListItemDataType;
     }) => (
@@ -248,10 +246,10 @@ class BasicList extends Component<BasicListProps, BasicListState> {
           <p>{category}</p>
         </div>
 
-        {service && (
+        {term && (
           <div className={styles.listContentItem}>
             <span>服务</span>
-            <p>{service}</p>
+            <p>{term}</p>
           </div>
         )}
         {categoryDescription && (
@@ -260,16 +258,16 @@ class BasicList extends Component<BasicListProps, BasicListState> {
             <p>{categoryDescription}</p>
           </div>
         )}
-        {serviceSummary && (
+        {termSummary && (
           <div className={styles.listContentItem}>
             <span>服务简略</span>
-            <p>{serviceSummary}</p>
+            <p>{termSummary}</p>
           </div>
         )}
-        {serviceDescription && (
+        {termDescription && (
           <div className={styles.listContentItem}>
             <span>服务说明</span>
-            <p>{serviceDescription}</p>
+            <p>{termDescription}</p>
           </div>
         )}
       </div>
@@ -312,7 +310,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
         </a>
       </Dropdown>
     );
-
+    /*
     const getModalContent = () => {
       console.log(this);
       if (done) {
@@ -371,6 +369,9 @@ class BasicList extends Component<BasicListProps, BasicListState> {
         </Form>
       );
     };
+    */
+    console.log(this.props.listBasicList.list);
+    console.log('DDDDDDDDDDDDD232323232');
     return (
       <>
         <PageHeaderWrapper>
@@ -400,7 +401,10 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                 rowKey="id"
                 loading={loading}
                 pagination={false /*paginationProps*/}
-                dataSource={this.state.selectedPage === 'index' ? index : payment}
+                dataSource={
+                  this.props.listBasicList
+                    .list /*this.state.selectedPage === 'index' ? index : payment*/
+                }
                 renderItem={item => (
                   <List.Item
                     actions={[
@@ -413,14 +417,24 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                       >
                         编辑
                       </a>,
-                      <MoreBtn key="more" item={item} />,
+                      <a
+                        key="remove"
+                        onClick={e => {
+                          e.preventDefault();
+                          this.onRemoveItem(item);
+                        }}
+                      >删除</a>,
+                      //<MoreBtn key="more" item={item} />,
                     ]}
                   >
                     {this.state.selectedPage === 'index' && (
                       <List.Item.Meta
                         avatar={
                           <Avatar
-                            src={(item as IndexListItemDataType).icon}
+                            src={
+                              (item as IndexListItemDataType).categoryIcon ||
+                              (item as IndexListItemDataType).termIcon
+                            }
                             shape="square"
                             size="large"
                           />
@@ -439,18 +453,18 @@ class BasicList extends Component<BasicListProps, BasicListState> {
             </Card>
           </div>
         </PageHeaderWrapper>
-
-        <Modal
-          title={done ? null : `任务${current ? '编辑' : '添加'}`}
-          className={styles.standardListForm}
-          width={640}
-          bodyStyle={done ? { padding: '72px 0' } : { padding: '28px 0 0' }}
-          destroyOnClose
-          visible={visible}
-          {...modalFooter}
-        >
-          {getModalContent2()}
-        </Modal>
+        {this.state.visible && (
+          <FormModal
+            current={current}
+            onCancel={this.handleCancel}
+            onDone={this.handleDone}
+            selectedPage={this.state.selectedPage}
+            done={done}
+            onSubmit={this.handleSubmit}
+            visible={visible}
+            getFieldDecorator={getFieldDecorator}
+          />
+        )}
       </>
     );
   }

@@ -1,7 +1,28 @@
 import request from 'umi-request';
-import { BasicListItemDataType } from './data.d';
-
-interface ParamsType extends Partial<BasicListItemDataType> {
+import { IndexListItemDataType, PaymentListItemDataType } from './data.d';
+import axios from 'axios';
+const sendRequest = async (data: any) => {
+  console.log(data);
+  try {
+    const res = await axios.post('http://192.168.0.29:7001/resource/upload', data, {
+      withCredentials: true,
+    });
+    console.log(res);
+    console.log("34124234")
+  } catch (e) {
+    console.log(e);
+  }
+};
+export const add = (data: any) => {
+  sendRequest({ ...data, action: 'add' });
+};
+export const remove = (data: any) => {
+  sendRequest({ ...data, action: 'remove' });
+};
+export const update = (data: any) => {
+  sendRequest({ ...data, action: 'update' });
+};
+interface ParamsType extends Partial<IndexListItemDataType | PaymentListItemDataType> {
   count?: number;
 }
 

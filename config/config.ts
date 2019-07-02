@@ -104,12 +104,12 @@ export default {
       authority: [''],
       routes: [
         {
-          name: 'table-list',
-          path: '/list/table-list',
-          component: './list/table-list',
+          name: 'home',
+          path: '/',
+          component: './dashboard/analysis',
         },
         {
-          name: '服务',
+          name: 'service',
           icon: 'book',
           path: '/service',
           routes: [
@@ -119,7 +119,7 @@ export default {
               path: '/service',
             },
             {
-              name: '详情',
+              name: 'detail',
               hideInMenu: true,
               path: '/service/:id',
               component: './service/$id',
@@ -127,7 +127,7 @@ export default {
           ],
         },
         {
-          name: '管理员',
+          name: 'servicer',
           icon: 'book',
           path: '/servicer',
           routes: [
@@ -145,7 +145,7 @@ export default {
           ],
         },
         {
-          name: '订单',
+          name: 'order',
           icon: 'book',
           path: '/order',
           routes: [
@@ -155,7 +155,7 @@ export default {
               path: '/order',
             },
             {
-              name: '详情',
+              name: 'detail',
               hideInMenu: true,
               path: '/order/:id',
               component: './order/$id',
@@ -163,7 +163,7 @@ export default {
           ],
         },
         {
-          name: '资源管理',
+          name: 'resource',
           icon: 'book',
           path: '/resource',
           component: './resource',
@@ -195,7 +195,7 @@ export default {
         resourcePath: string;
       },
       localIdentName: string,
-      localName: string
+      localName: string,
     ) => {
       if (
         context.resourcePath.includes('node_modules') ||

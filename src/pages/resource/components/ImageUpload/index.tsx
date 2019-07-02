@@ -1,14 +1,22 @@
 import React from 'react';
-import styles from './index.less'
+import styles from './index.less';
 import { Button } from 'antd';
-export default class extends React.Component<{}, { image: string }> {
-    state = { image: '' };
+interface Props {
+  onChange?: (x: string) => void;
+  value?: string;
+}
+export default class extends React.Component<Props, { image: string }> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { image: props.value || '' };
+  }
+  state = { image: '' };
   onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-
     const reader = new FileReader();
     reader.onload = () => {
       console.log(reader.result);
       this.setState({ image: reader.result as string });
+      this.props.onChange!(reader.result as string);
     };
     reader.readAsDataURL(e.target.files![0]);
   };
@@ -16,9 +24,9 @@ export default class extends React.Component<{}, { image: string }> {
     console.log(this.props);
     return (
       <div>
-        <img src={this.state.image} className={styles.img}/>
+        <img src={this.state.image} className={styles.img} />
         <Button className={styles.button}>
-          {this.state.image ?  '修改':'上传'}
+          {this.state.image ? '修改' : '上传'}
           <input className={styles.input} onChange={this.onChange} type="file" accept="image/*" />
         </Button>
       </div>

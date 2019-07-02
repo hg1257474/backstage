@@ -6,10 +6,11 @@ export interface Member {
 export interface IndexListItemDataType {
   category: string;
   categoryDescription?: string;
-  service?: string;
-  serviceSummary?: string;
-  serviceDescription?: string;
-  icon: string;
+  categoryIcon?:string;
+  term?: string;
+  termSummary?: string;
+  termDescription?: string;
+  termIcon?: string;
   id:string
 }
 export interface PaymentListItemDataType {

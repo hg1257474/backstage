@@ -1,11 +1,19 @@
 import { AnyAction, Reducer } from 'redux';
 import { EffectsCommandMap } from 'dva';
-import { addFakeList, queryFakeList, removeFakeList, updateFakeList } from './service';
+import {
+  addFakeList,
+  queryFakeList,
+  removeFakeList,
+  updateFakeList,
+  add,
+  remove,
+  update,
+} from './service';
 
-import { BasicListItemDataType } from './data.d';
+import { IndexListItemDataType, PaymentListItemDataType } from './data.d';
 
 export interface StateType {
-  list: BasicListItemDataType[];
+  list: Array<IndexListItemDataType | PaymentListItemDataType>;
 }
 
 export type Effect = (
@@ -24,6 +32,9 @@ export interface ModelType {
   reducers: {
     queryList: Reducer<StateType>;
     appendList: Reducer<StateType>;
+    add: Reducer<StateType>;
+    update: Reducer<StateType>;
+    remove: Reducer<StateType>;
   };
 }
 
@@ -72,6 +83,27 @@ const Model: ModelType = {
       };
     },
     appendList(state = { list: [] }, action) {
+      return {
+        ...state,
+        list: state.list.concat(action.payload),
+      };
+    },
+    remove(state = { list: [] }, action) {
+      remove(action.payload);
+      return {
+        ...state,
+        list: state.list.filter(item => item.id != action.payload.id),
+      };
+    },
+    update(state = { list: [] }, action) {
+      update(action.payload);
+      return {
+        ...state,
+        list: state.list.map(item => (item.id != action.payload.id ? item : action.payload)),
+      };
+    },
+    add(state = { list: [] }, action) {
+      add(action.payload);
       return {
         ...state,
         list: state.list.concat(action.payload),
