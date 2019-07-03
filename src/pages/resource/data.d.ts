@@ -1,21 +1,20 @@
-export interface Member {
-  avatar: string;
-  name: string;
-  id: string;
-}
-export interface IndexListItemDataType {
+export interface IndexCategoryListItemDataType {
   category: string;
   categoryDescription?: string;
   categoryIcon?:string;
-  term?: string;
-  termSummary?: string;
-  termDescription?: string;
-  termIcon?: string;
-  id:string
+  index:Number
 }
-export interface PaymentListItemDataType {
+export interface IndexTermListItemDataType {
+  category: string;
+  term: string;
+  termSummary: string;
+  termDescription: string;
+  termIcon?: string;
+  index:Number
+}
+export interface PriceListItemDataType {
   category: string;
   description: string;
   fee: number;
-  id:string
+  index:Number
 }

@@ -19,8 +19,10 @@ import ImageUpload from '../ImageUpload';
 const { Option } = Select;
 import React, { FormEvent } from 'react';
 import Result from '../../Result';
+import {SelectedPage} from '../../index'
 
 const FormItem = Form.Item;
+
 type ValidationRule = {
   /** validation error message */
   message?: React.ReactNode;
@@ -75,7 +77,7 @@ interface Props {
   onCancel: () => void;
   onSubmit: (e: FormEvent<Element>) => void;
   current: any;
-  selectedPage: 'index' | 'payment';
+  selectedPage: SelectedPage
   done: Boolean;
   // getFieldDecorator: (...x: any[]) => (...x: any[]) => {};
   getFieldDecorator: <T extends Object = {}>(
@@ -149,7 +151,7 @@ export default class extends React.Component<Props, State> {
             className={styles.formResult}
           />
         )}
-        {!this.props.done && this.props.selectedPage === 'index' && (
+        {!this.props.done && ['index-category', 'index-tern'].includes(this.props.selectedPage) && (
           <>
             {current.category === undefined && (
               <FormItem label="新加对象" {...this.formLayout}>

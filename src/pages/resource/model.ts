@@ -10,10 +10,14 @@ import {
   update,
 } from './service';
 
-import { IndexListItemDataType, PaymentListItemDataType } from './data.d';
+import {
+  IndexCategoryListItemDataType,
+  IndexTermListItemDataType,
+  PriceListItemDataType,
+} from './data.d';
 
 export interface StateType {
-  list: Array<IndexListItemDataType | PaymentListItemDataType>;
+  list: Array<IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType>;
 }
 
 export type Effect = (
@@ -48,16 +52,17 @@ const Model: ModelType = {
   effects: {
     *fetch({ payload }, { call, put }) {
       const response = yield call(queryFakeList, payload);
+      console.log(response)
       yield put({
         type: 'queryList',
-        payload: Array.isArray(response) ? response : [],
+        payload: response//Array.isArray(response) ? response : [],
       });
     },
     *appendFetch({ payload }, { call, put }) {
       const response = yield call(queryFakeList, payload);
       yield put({
         type: 'appendList',
-        payload: Array.isArray(response) ? response : [],
+        payload: response//Array.isArray(response) ? response : [],
       });
     },
     *submit({ payload }, { call, put }) {
@@ -92,14 +97,14 @@ const Model: ModelType = {
       remove(action.payload);
       return {
         ...state,
-        list: state.list.filter(item => item.id != action.payload.id),
+        list: state.list.filter(item => item.index != action.payload.index),
       };
     },
     update(state = { list: [] }, action) {
       update(action.payload);
       return {
         ...state,
-        list: state.list.map(item => (item.id != action.payload.id ? item : action.payload)),
+        list: state.list.map(item => (item.index != action.payload.id ? item : action.payload)),
       };
     },
     add(state = { list: [] }, action) {
