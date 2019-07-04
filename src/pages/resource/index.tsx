@@ -31,6 +31,15 @@ import {
 } from './data.d';
 import styles from './style.less';
 import FormModal from './components/FormModal';
+type SelectedPartType<T extends "IndexPage"|"ConsultingPrice">={
+  part:T,
+
+  [T extends "asd"?"asd":"dsadas"]?:T extends "IndexPage"? never:void
+}
+functio
+function asd
+const fuck1:SelectedPartType<"IndexPage">={part:"IndexPage"}
+//type bb<T>=T extends "qwe"
 const FormItem = Form.Item;
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
@@ -45,12 +54,18 @@ interface BasicListProps extends FormComponentProps {
 interface BasicListState {
   visible: boolean;
   done: boolean;
+  selectedPart: { part: 'IndexPage'; selectedCategory?: number } | 'ConsultingPrice';
   shouldNewItem: boolean;
   current?: Partial<
     IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType
   >;
-  selectedPage: SelectedPage;
 }
+const _maps1 = { indexCategory: '首页分类', indexTerm: '首页子项', price: '会员价格价格' };
+const _maps2 = {
+  indexCategory: '删除首页分类会导致全部子项删除，您确定继续吗？',
+  indexTerm: '首页子项',
+  price: '会员价格价格',
+};
 @connect((x: { listBasicList: StateType; loading: { models: { [key: string]: boolean } } }) => {
   return { listBasicList: x.listBasicList, loading: x.loading.models.listBasicList, x };
 })
@@ -60,7 +75,9 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     done: false,
     shouldNewItem: false,
     current: undefined,
-    selectedPage: 'indexCategory' as SelectedPage,
+    selectedPart: { part: 'IndexPage' } as
+      | { part: 'IndexPage'; selectedCategory?: number }
+      | 'ConsultingPrice',
   };
 
   formLayout = {
@@ -71,19 +88,22 @@ class BasicList extends Component<BasicListProps, BasicListState> {
   addBtn: HTMLButtonElement | undefined | null = undefined;
 
   componentDidMount() {
-    
     const { dispatch } = this.props;
     dispatch({
-      type: 'listBasicList/fetch',
+      type: 'listBasicList/getList',
       payload: {
         index: 0,
-        target:"indexCategory"
+        part: 'IndexPage',
       },
     });
-    
   }
 
-  showModal = () => {
+  newItem = () => {
+    
+    if(this.state.selectedPart.part){
+      console.log()
+    }
+    //const current=
     this.setState({
       visible: true,
       current: undefined,
@@ -100,7 +120,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     });
   };
 
-  handleDone = () => {
+  onDone = () => {
     setTimeout(() => this.addBtn && this.addBtn.blur(), 0);
     this.setState({
       done: false,
@@ -109,7 +129,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     });
   };
 
-  handleCancel = () => {
+  onCancel = () => {
     setTimeout(() => this.addBtn && this.addBtn.blur(), 0);
     this.setState({
       visible: false,
@@ -117,7 +137,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     });
   };
 
-  handleSubmit = (e: React.FormEvent) => {
+  onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const { dispatch, form } = this.props;
     const { current } = this.state;
@@ -146,20 +166,29 @@ class BasicList extends Component<BasicListProps, BasicListState> {
             type: 'listBasicList/update',
             payload: { selectedPage: this.state.selectedPage, ...fieldsValue },
           });
-          
       },
     );
   };
-  onRemoveItem = (
-    x: IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType,
-  ) => {
-    const { dispatch } = this.props;
-    dispatch({
-      type: 'listBasicList/remove',
-      payload: { index: x.index, target: this.state.selectedPage },
+  onDelete = (index: Number) => {
+    Modal.confirm({
+      title: '删除条目', //_maps1[this.state.selectedPage],
+      content: '您确定删除条目?', //_maps2[this.state.selectedPage],
+      okText: '确认',
+      cancelText: '取消',
+      onOk: () => {
+        const { dispatch } = this.props;
+        dispatch({
+          type: 'listBasicList/deleteList',
+          payload: {
+            index,
+            ...(typeof this.state.selectedPart === 'string'
+              ? { part: this.state.selectedPart }
+              : this.state.selectedPart),
+          },
+        });
+      },
     });
   };
-
   render() {
     const {
       listBasicList: { list },
@@ -169,33 +198,24 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       form: { getFieldDecorator },
     } = this.props;
     console.log(this.props);
-    const { visible, done, current = {}, selectedPage } = this.state;
-/*
-    const editAndDelete = (
-      key: string,
-      currentItem:
-        | IndexCategoryListItemDataType
-        | IndexTermListItemDataType
-        | PriceListItemDataType,
-    ) => {
-      if (key === 'edit') this.showEditModal(currentItem);
-      else if (key === 'delete') {
-        Modal.confirm({
-          title: '删除任务',
-          content: '确定删除该任务吗？',
-          okText: '确认',
-          cancelText: '取消',
-          onOk: () => this.deleteItem(currentItem.index),
-        });
+    const { visible, done, current = {}, selectedPart } = this.state;
+    const getReturnSuperiorContent = () => {
+      if (
+        (selectedPart as { part: 'IndexPage'; selectedCategory?: number }).selectedCategory !==
+        undefined
+      ) {
+        return [<a onClick={e => e.preventDefault()}>返回上级分类</a>];
       }
     };
-*/
     const extraContent = (
       <div className={styles.extraContent}>
-        <RadioGroup defaultValue={this.state.selectedPage}>
-          <RadioButton value="indexCategory">首页-分类</RadioButton>
-          <RadioButton value="indexTerm">首页-子项</RadioButton>
-          <RadioButton value="price">会员价格</RadioButton>
+        <RadioGroup
+          defaultValue={
+            (selectedPart as { part: 'IndexPage'; selectedCategory?: number }).part || selectedPart
+          }
+        >
+          <RadioButton value="IndexPage">首页类目</RadioButton>
+          <RadioButton value="ConsultingPrice">咨询价格</RadioButton>
         </RadioGroup>
         <Search
           style={{ display: 'none' }}
@@ -282,6 +302,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
         </div>
       </div>
     );
+    console.log(this.props.listBasicList);
     console.log(this.props.listBasicList.list);
     console.log('DDDDDDDDDDDDD232323232');
     return (
@@ -295,12 +316,15 @@ class BasicList extends Component<BasicListProps, BasicListState> {
               style={{ marginTop: 24 }}
               bodyStyle={{ padding: '0 32px 40px 32px' }}
               extra={extraContent}
+              actions={getReturnSuperiorContent()}
             >
               <Button
                 type="dashed"
                 style={{ width: '100%', marginBottom: 8 }}
                 icon="plus"
-                onClick={this.showModal}
+                onClick={() => {
+                  this.showModal('new');
+                }}
                 ref={component => {
                   // eslint-disable-next-line  react/no-find-dom-node
                   this.addBtn = findDOMNode(component) as HTMLButtonElement;
@@ -337,7 +361,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                         key="remove"
                         onClick={e => {
                           e.preventDefault();
-                          this.onRemoveItem(item);
+                          this.onDelete(item.index);
                         }}
                       >
                         删除
@@ -345,7 +369,8 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                       //<MoreBtn key="more" item={item} />,
                     ]}
                   >
-                    {['index-category', 'index-term'].includes(this.state.selectedPage) && (
+                    {(this.state.selectedPart as { part: 'IndexPage'; selectedCategory?: number })
+                      .part === 'IndexPage' && (
                       <List.Item.Meta
                         avatar={
                           <Avatar
@@ -359,13 +384,15 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                         }
                       />
                     )}
-                    {this.state.selectedPage === 'indexCategory' && (
+                    {(selectedPart as { part: 'IndexPage'; selectedCategory?: number }).part ===
+                      'IndexPage' && (
                       <IndexCategoryListContent data={item as IndexCategoryListItemDataType} />
                     )}
-                    {this.state.selectedPage === 'indexTerm' && (
+                    {(selectedPart as { part: 'IndexPage'; selectedCategory?: number })
+                      .selectedCategory !== undefined && (
                       <IndexTermListContent data={item as IndexTermListItemDataType} />
                     )}
-                    {this.state.selectedPage === 'price' && (
+                    {selectedPart === 'ConsultingPrice' && (
                       <PriceListContent data={item as PriceListItemDataType} />
                     )}
                   </List.Item>
@@ -377,13 +404,13 @@ class BasicList extends Component<BasicListProps, BasicListState> {
         {this.state.visible && (
           <FormModal
             current={current}
-            onCancel={this.handleCancel}
-            onDone={this.handleDone}
-            selectedPage={this.state.selectedPage}
+            onCancel={this.onCancel}
+            onDone={this.onDone}
             done={done}
-            onSubmit={this.handleSubmit}
+            onSubmit={this.onSubmit}
             visible={visible}
             getFieldDecorator={getFieldDecorator}
+            max={this.props.listBasicList.count}
           />
         )}
       </>
@@ -392,3 +419,19 @@ class BasicList extends Component<BasicListProps, BasicListState> {
 }
 
 export default Form.create<BasicListProps>()(BasicList);
+/*
+{this.state.indexPageCategorySelected && (
+                <Button
+                  type="dashed"
+                  style={{ width: '100%', marginBottom: 8 }}
+                  icon="rollback"
+                  onClick={this.showModal}
+                  ref={component => {
+                    // eslint-disable-next-line  react/no-find-dom-node
+                    this.addBtn = findDOMNode(component) as HTMLButtonElement;
+                  }}
+                >
+                  返回类目
+                </Button>
+              )}
+              */

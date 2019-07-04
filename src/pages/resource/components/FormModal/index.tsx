@@ -13,13 +13,13 @@ import {
   Radio,
   Row,
   Select,
+  InputNumber
 } from 'antd';
 import styles from '../../style.less';
 import ImageUpload from '../ImageUpload';
 const { Option } = Select;
 import React, { FormEvent } from 'react';
 import Result from '../../Result';
-import {SelectedPage} from '../../index'
 
 const FormItem = Form.Item;
 
@@ -72,12 +72,12 @@ type GetFieldDecoratorOptions = {
   preserve?: boolean;
 };
 interface Props {
+  max:number;
   visible: boolean | undefined;
   onDone: () => void;
   onCancel: () => void;
   onSubmit: (e: FormEvent<Element>) => void;
   current: any;
-  selectedPage: SelectedPage
   done: Boolean;
   // getFieldDecorator: (...x: any[]) => (...x: any[]) => {};
   getFieldDecorator: <T extends Object = {}>(
@@ -94,6 +94,7 @@ interface State {
     termSummary?: String;
     termDescription?: String;
     termIcon?: String;
+    index?:Number;
   };
 }
 export default class extends React.Component<Props, State> {
@@ -151,21 +152,8 @@ export default class extends React.Component<Props, State> {
             className={styles.formResult}
           />
         )}
-        {!this.props.done && ['index-category', 'index-tern'].includes(this.props.selectedPage) && (
+        {!this.props.done && (
           <>
-            {current.category === undefined && (
-              <FormItem label="新加对象" {...this.formLayout}>
-                {getFieldDecorator('newTarget', {
-                  rules: [{ required: true, message: '请选择新加对象' }],
-                  initialValue: '',
-                })(
-                  <Select style={{ width: 120 }} onChange={this.onSelectNewTarget}>
-                    <Option value="category">服务类型</Option>
-                    <Option value="term">服务项</Option>
-                  </Select>,
-                )}
-              </FormItem>
-            )}
             {current.categoryDescription !== undefined && (
               <>
                 <FormItem label="服务类名" {...this.formLayout}>
@@ -185,6 +173,12 @@ export default class extends React.Component<Props, State> {
                     rules: [{ required: true, message: '请上传服务图标' }],
                     initialValue: current.categoryIcon,
                   })(<ImageUpload />)}
+                </FormItem>
+                <FormItem label="序号" {...this.formLayout}>
+                  {getFieldDecorator('index', {
+                    rules: [{ required: true, message: '请填写序号' }],
+                    initialValue: current.index,
+                  })(<InputNumber placeholder="请输入" type="number" type="number" min={0} max={this.props.max}/>)}
                 </FormItem>
               </>
             )}
@@ -219,6 +213,12 @@ export default class extends React.Component<Props, State> {
                     rules: [{ required: true, message: '请上传服务图标' }],
                     initialValue: current.termIcon,
                   })(<ImageUpload />)}
+                </FormItem>
+                <FormItem label="序号" {...this.formLayout}>
+                  {getFieldDecorator('index', {
+                    rules: [{ required: true, message: '请填写序号' }],
+                    initialValue: current.index,
+                  })(<InputNumber placeholder="请输入" type="number" min={0} max={this.props.max}/>)}
                 </FormItem>
               </>
             )}

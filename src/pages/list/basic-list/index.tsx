@@ -133,7 +133,7 @@ class BasicList extends Component<
   deleteItem = (id: string) => {
     const { dispatch } = this.props;
     dispatch({
-      type: 'listBasicList/submit',
+      type: 'listBasicList/test',
       payload: { id },
     });
   };
