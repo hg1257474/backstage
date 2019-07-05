@@ -13,13 +13,16 @@ import {
   Radio,
   Row,
   Select,
-  InputNumber
+  InputNumber,
 } from 'antd';
 import styles from '../../style.less';
 import ImageUpload from '../ImageUpload';
 const { Option } = Select;
 import React, { FormEvent } from 'react';
 import Result from '../../Result';
+import { NewTargetType } from '../../index';
+import {getIndexPageTermCount} from '../../service'
+import { resolveSrv } from 'dns';
 
 const FormItem = Form.Item;
 
@@ -72,7 +75,9 @@ type GetFieldDecoratorOptions = {
   preserve?: boolean;
 };
 interface Props {
-  max:number;
+  newTarget?: NewTargetType;
+  indexPageCategories?: Array<string>;
+  max: number;
   visible: boolean | undefined;
   onDone: () => void;
   onCancel: () => void;
@@ -86,6 +91,7 @@ interface Props {
   ) => (node: React.ReactNode) => React.ReactNode;
 }
 interface State {
+  newTarget?: NewTargetType;
   current: {
     category?: String;
     categoryDescription?: String;
@@ -94,7 +100,7 @@ interface State {
     termSummary?: String;
     termDescription?: String;
     termIcon?: String;
-    index?:Number;
+    index?: number;
   };
 }
 export default class extends React.Component<Props, State> {
@@ -103,6 +109,7 @@ export default class extends React.Component<Props, State> {
     console.log(props);
     console.log('Dddddddddddddddddddddddddddddddddddd');
     this.state = {
+      newTarget: props.newTarget,
       current: props.current,
     };
   }
@@ -111,22 +118,27 @@ export default class extends React.Component<Props, State> {
     labelCol: { span: 7 },
     wrapperCol: { span: 13 },
   };
-
-  onSelectNewTarget = (e: any) => {
+  onSelectNewTarget = async (e: any) => {
     console.log(e);
     let newState = {};
-    if (e === 'category') newState = { category: '', categoryDescription: '', categoryIcon: '' };
-    if (e === 'term')
-      newState = { category: '', termSummary: '', termDescription: '', termIcon: '' };
+    if (e === 'category') {
+      newState = { category: '', categoryDescription: '', categoryIcon: '' };
+    }
+    if (e === 'IndexPageTerm'){
+      const count =await getIndexPageTermCount(0)
+      console.log(count)
+      newState = {termIcon: '', category: 0,term:'', termSummary: '', termDescription: '' ,index:count};
+    }
     console.log(newState);
-    this.setState({ current: newState });
+    this.setState({ current: newState,newTarget:e });
   };
   render() {
     const { getFieldDecorator, done, onDone, onCancel, onSubmit } = this.props;
-    const { current } = this.state;
-    const modalFooter = done
-      ? { footer: null, onCancel: onDone }
-      : { okText: '保存', onOk: onSubmit, onCancel: onCancel };
+    const { current, newTarget } = this.state;
+    const modalFooter =
+      done || !current
+        ? { footer: null, onCancel: onDone }
+        : { okText: '保存', onOk: onSubmit, onCancel: onCancel };
     console.log(current);
     console.log(this.props);
     return (
@@ -152,9 +164,18 @@ export default class extends React.Component<Props, State> {
             className={styles.formResult}
           />
         )}
+        
         {!this.props.done && (
           <>
-            {current.categoryDescription !== undefined && (
+          {this.state.newTarget && (
+          <FormItem label="请选择新加对象" {...this.formLayout}>
+              <Select defaultValue={this.state.newTarget} onChange={this.onSelectNewTarget}>
+                <Option value="IndexPageCategory">首页分类</Option>
+                <Option value="IndexPageTerm">首页子项</Option>
+              </Select>,
+          </FormItem>
+        )}
+            {(newTarget === 'IndexPageCategory' || current.categoryDescription !== undefined) && (
               <>
                 <FormItem label="服务类名" {...this.formLayout}>
                   {getFieldDecorator('category', {
@@ -177,18 +198,30 @@ export default class extends React.Component<Props, State> {
                 <FormItem label="序号" {...this.formLayout}>
                   {getFieldDecorator('index', {
                     rules: [{ required: true, message: '请填写序号' }],
-                    initialValue: current.index,
-                  })(<InputNumber placeholder="请输入" type="number" type="number" min={0} max={this.props.max}/>)}
+                    initialValue: current.index+1,
+                  })(
+                    <InputNumber
+                      placeholder="请输入"
+                      min={1}
+                      max={this.state.newTarget ? this.props.max + 1 : this.props.max}
+                    />,
+                  )}
                 </FormItem>
               </>
             )}
-            {current.termDescription !== undefined && (
+            {(newTarget === 'IndexPageTerm' || current.termDescription !== undefined) && (
               <>
                 <FormItem label="服务类别" {...this.formLayout}>
                   {getFieldDecorator('category', {
                     rules: [{ required: true, message: '请输入任务名称' }],
                     initialValue: current.category,
-                  })(<Input placeholder="请输入" />)}
+                  })(
+                    <Select>
+                      {this.props.indexPageCategories!.map((item, index) => (
+                        <Option value={index} key={index}>{item}</Option>
+                      ))}
+                    </Select>,
+                  )}
                 </FormItem>
                 <FormItem label="服务名" {...this.formLayout}>
                   {getFieldDecorator('term', {
@@ -217,8 +250,14 @@ export default class extends React.Component<Props, State> {
                 <FormItem label="序号" {...this.formLayout}>
                   {getFieldDecorator('index', {
                     rules: [{ required: true, message: '请填写序号' }],
-                    initialValue: current.index,
-                  })(<InputNumber placeholder="请输入" type="number" min={0} max={this.props.max}/>)}
+                    initialValue: current.index! + 1,
+                  })(
+                    <InputNumber
+                      placeholder="请输入"
+                      min={1}
+                      max={this.state.newTarget ? this.props.max + 1 : this.props.max}
+                    />,
+                  )}
                 </FormItem>
               </>
             )}

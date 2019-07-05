@@ -83,40 +83,45 @@ const rawData = [
     ],
   ],
 ];
-type DataType={data:List[],count:number}
-function list(params:any
-): DataType {
+type DataType = { data: List[]; count: number; indexPageCategories?: Array<string> };
+function list(params: any, isNeedIndexPageCategories?: boolean): DataType {
   const data = [];
-  const index=params.index
-  let count=null
-  if(params.part==="IndexPage"){
-    if(params.selectedCategory===undefined){
-      count=rawData.length
-      for (let key = index; key < index + 10 && key < rawData.length; key++) {
-        data.push({
-          index: key,
-          categoryIcon: rawData[key][0],
-          category: rawData[key][1],
-          categoryDescription: rawData[key][2],
-        });
-      }
+  const index = params.index;
+  let count = null;
+  let indexPageCategories: Array<string> = [];
+  if (params.part === 'IndexPage') {
+    if (true)
+      //!index){//||isNeedIndexPageCategories){
+      indexPageCategories = rawData.map(item => item[1]);
+  }
+  if (params.selectedCategory === undefined) {
+    count = rawData.length;
+    for (let key = index; key < index + 10 && key < rawData.length; key++) {
+      data.push({
+        index: key,
+        categoryIcon: rawData[key][0],
+        category: rawData[key][1],
+        categoryDescription: rawData[key][2],
+      });
     }
-    else {
-      const terms=rawData[params.selectedCategory][3]
-      count=terms.length
-      for (let key = index; key < index + 10 && key < terms.length; key++) {
-        data.push({
-          index: key,
-          category: rawData[params.selectedCategory][1],
-          termIcon: terms[key][0],
-          term:terms[key][1],
-          termSummary: terms[key][2],
-          termDescription: terms[key][3],
-        });
-      }
+  } else {
+    const terms = rawData[params.selectedCategory][3];
+    count = terms.length;
+    for (let key = index; key < index + 10 && key < terms.length; key++) {
+      data.push({
+        index: key,
+        category: rawData[params.selectedCategory][1],
+        termIcon: terms[key][0],
+        term: terms[key][1],
+        termSummary: terms[key][2],
+        termDescription: terms[key][3],
+      });
     }
   }
-  return {data,count};
+
+  const result: DataType = { data, count };
+  if (indexPageCategories.length > 0) result.indexPageCategories = indexPageCategories;
+  return result;
 }
 
 /*
@@ -132,10 +137,13 @@ function index(req: { query: any }, res: { json: (arg0: DataType) => void }) {
   return res.json(list(params));
 }
 function update(req: { query: any; body: any }, res: { json: (arg0: DataType) => void }) {
+  console.log("______2322222222222222222222222222")
+  
   const params = req.query;
   const body = req.body;
-  if (params.part === 'IndexPage') {
-    if (params.selectedCategory) {
+  console.log(params,body)
+  if (body.category !== undefined) {
+    if (body.term!==undefined) {
       rawData[params.selectedCategory][3].splice(body.oldIndex, 1);
       rawData[params.selectedCategory][3].splice(body.index, 0, [
         body.termIcon,
@@ -144,18 +152,20 @@ function update(req: { query: any; body: any }, res: { json: (arg0: DataType) =>
         body.termDescription,
       ]);
     } else {
+      console.log(body)
+      const terms=rawData[body.index][3].map((item:any)=>item)
       rawData.splice(body.oldIndex, 1);
 
-      rawData.splice(body.index, 0, [body.categoryIcon, body.category, body.categoryDescription]);
+      rawData.splice(body.index, 0, [body.categoryIcon, body.category, body.categoryDescription,terms]);
     }
   }
   params.index = body.index - 9 > -1 ? params.index - 10 : 0;
   return res.json(list(params));
 }
-function remove(req: { query: any }, res: { json: (arg0:DataType) => void }) {
-  console.log(111111111)
+function remove(req: { query: any }, res: { json: (arg0: DataType) => void }) {
+  console.log(111111111);
   const params = req.query;
-  console.log(params)
+  console.log(params);
   if (params.part === 'IndexPage') {
     if (params.selectedCategory) rawData[params.selectedCategory][3].splice(params.index, 1);
     else rawData.splice(params.index, 1);
@@ -164,25 +174,36 @@ function remove(req: { query: any }, res: { json: (arg0:DataType) => void }) {
   return res.json(list(params));
 }
 function add(req: any, res: { json: (arg0: DataType) => void }) {
-  const params = req.query;
   const body = req.body;
-  if (params.part === 'IndexPage') {
-    if (params.selectedCategory)
-      rawData[params.selectedCategory][3].splice(body.index, 0, [
-        body.termIcon,
-        body.term,
-        body.termSummary,
-        body.termDescription,
-      ]);
-    else
-      rawData.splice(body.index, 0, [body.categoryIcon, body.category, body.categoryDescription]);
-  }
-  params.index = body.index - 9 > -1 ? params.index - 10 : 0;
+  const params = req.params;
+  console.log(params,body)
+  if (body.categoryDescription)
+    rawData.splice(body.index, 0, [body.categoryIcon, body.category, body.categoryDescription]);
+  if (body.termDescription)
+    rawData[body.category][3].splice(body.index, 0, [
+      body.termIcon,
+      body.term,
+      body.termSummary,
+      body.termDescription,
+    ]);
+  params.index = body.index - 5 > -1 ? params.index - 5 : 0;
   return res.json(list(params));
+}
+function getIndexPageTermCount(req: any, res: { json: (arg0: number) => void }) {
+  return res.json(rawData[req.query.category][3].length);
+}
+function getIndexPageCategoryCount(req: any, res: { json: (arg0:number) => void }) {
+  return res.json(rawData.length);
+}
+function getIndexPageCategories(req: any, res: { json: (arg0:Array<string>) => void }) {
+  return res.json(rawData.map(item=>item[1]));
 }
 export default {
   'GET  /api/fake_list': index,
   'POST  /api/fake_list': add,
   'PUT /api/fake_list': update,
   'DELETE /api/fake_list': remove,
+  '/backstage/static/index_page/term/count':getIndexPageTermCount,
+  '/backstage/static/index_page/category/count':getIndexPageCategoryCount,
+  '/backstage/static/index_page/categories':getIndexPageCategories,
 };

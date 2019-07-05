@@ -31,30 +31,32 @@ import {
 } from './data.d';
 import styles from './style.less';
 import FormModal from './components/FormModal';
-type SelectedPartType<T extends "IndexPage"|"ConsultingPrice">={
-  part:T,
-
-  [T extends "asd"?"asd":"dsadas"]?:T extends "IndexPage"? never:void
+import { classBody } from '@babel/types';
+interface PartSelectedType<T extends 'IndexPage' | 'ConsultingPrice'> {
+  part: T;
+  categorySelected?: T extends 'IndexPage' ? number : void;
 }
-functio
-function asd
-const fuck1:SelectedPartType<"IndexPage">={part:"IndexPage"}
 //type bb<T>=T extends "qwe"
 const FormItem = Form.Item;
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
 const SelectOption = Select.Option;
 const { Search, TextArea } = Input;
-export type SelectedPage = 'indexCategory' | 'indexTerm' | 'price';
 interface BasicListProps extends FormComponentProps {
   listBasicList: StateType;
   dispatch: Dispatch<any>;
   loading: boolean;
 }
+export type NewTargetType = 'IndexPageCategory' | 'IndexPageTerm' | undefined;
+
 interface BasicListState {
   visible: boolean;
   done: boolean;
-  selectedPart: { part: 'IndexPage'; selectedCategory?: number } | 'ConsultingPrice';
+  partSelected: {
+    part: 'IndexPage' | 'ConsultingPrice';
+    categorySelected?: number;
+  };
+  newTarget?: NewTargetType;
   shouldNewItem: boolean;
   current?: Partial<
     IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType
@@ -66,6 +68,14 @@ const _maps2 = {
   indexTerm: '首页子项',
   price: '会员价格价格',
 };
+const empty1: IndexTermListItemDataType = {
+  termIcon: '',
+  category: -1,
+  term: '',
+  termSummary: '',
+  termDescription: '',
+  index: -1,
+};
 @connect((x: { listBasicList: StateType; loading: { models: { [key: string]: boolean } } }) => {
   return { listBasicList: x.listBasicList, loading: x.loading.models.listBasicList, x };
 })
@@ -75,11 +85,8 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     done: false,
     shouldNewItem: false,
     current: undefined,
-    selectedPart: { part: 'IndexPage' } as
-      | { part: 'IndexPage'; selectedCategory?: number }
-      | 'ConsultingPrice',
+    partSelected: { part: 'IndexPage' } as PartSelectedType<'IndexPage'>,
   };
-
   formLayout = {
     labelCol: { span: 7 },
     wrapperCol: { span: 13 },
@@ -99,21 +106,47 @@ class BasicList extends Component<BasicListProps, BasicListState> {
   }
 
   newItem = () => {
-    
-    if(this.state.selectedPart.part){
-      console.log()
+    let newTarget: NewTargetType = undefined;
+    let current:
+      | Partial<IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType>
+      | undefined = undefined;
+    if (
+      this.state.partSelected.part === 'IndexPage' &&
+      this.state.partSelected.categorySelected !== undefined
+    ) {
+      newTarget = 'IndexPageTerm';
+      current = {
+        term: '',
+        termSummary: '',
+        termDescription: '',
+        termIcon: '',
+        category: this.state.partSelected.categorySelected,
+        index:this.props.listBasicList.count
+      };
     }
-    //const current=
+    else if (
+      this.state.partSelected.part === 'IndexPage' 
+    ) {
+      newTarget = 'IndexPageCategory';
+      current = {
+        categoryIcon: '',
+        category: '',
+        categoryDescription: '',
+        index:this.props.listBasicList.indexPageCategories!.length
+      };
+    }
+    // console.log(newTarget)
     this.setState({
       visible: true,
-      current: undefined,
+      newTarget,
+      current,
     });
   };
 
   showEditModal = (
     item: IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType,
   ) => {
-    console.log(item);
+    // console.log(item);
     this.setState({
       visible: true,
       current: item,
@@ -151,21 +184,30 @@ class BasicList extends Component<BasicListProps, BasicListState> {
           | PriceListItemDataType,
       ) => {
         if (err) return;
-        console.log(fieldsValue);
-        this.setState({
-          done: true,
-          current: {},
-        });
-        if (!current!.index)
-          dispatch({
-            type: 'listBasicList/add',
-            payload: { id: new Date().getTime(), ...fieldsValue },
+        // console.log(current)
+        // console.log(fieldsValue);
+        fieldsValue.index--;
+        if (fieldsValue.category !== undefined) {
+          let params= {partSelected:{part:"IndexPage"}};
+          if(fieldsValue.term!==undefined) params.partSelected.categorySelected=fieldsValue.category
+          this.setState({
+            done: true,
+            partSelected: params.partSelected as PartSelectedType<"IndexPage">,
+            current: undefined,
           });
-        else
-          dispatch({
-            type: 'listBasicList/update',
-            payload: { selectedPage: this.state.selectedPage, ...fieldsValue },
-          });
+          params.index=fieldsValue.index
+          console.log(current)
+          if (this.state.newTarget)
+            dispatch({
+              type: 'listBasicList/postList',
+              payload: { params, data: fieldsValue },
+            });
+          else
+            dispatch({
+              type: 'listBasicList/putList',
+              payload: { params, data: {...fieldsValue,oldIndex:current!.index} },
+            });
+        }
       },
     );
   };
@@ -181,9 +223,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
           type: 'listBasicList/deleteList',
           payload: {
             index,
-            ...(typeof this.state.selectedPart === 'string'
-              ? { part: this.state.selectedPart }
-              : this.state.selectedPart),
+            ...this.state.partSelected,
           },
         });
       },
@@ -197,23 +237,16 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     const {
       form: { getFieldDecorator },
     } = this.props;
-    console.log(this.props);
-    const { visible, done, current = {}, selectedPart } = this.state;
+    // console.log(this.props);
+    const { visible, done, current = {}, partSelected } = this.state;
     const getReturnSuperiorContent = () => {
-      if (
-        (selectedPart as { part: 'IndexPage'; selectedCategory?: number }).selectedCategory !==
-        undefined
-      ) {
+      if (partSelected.part === 'IndexPage' && partSelected.categorySelected !== undefined) {
         return [<a onClick={e => e.preventDefault()}>返回上级分类</a>];
       }
     };
     const extraContent = (
       <div className={styles.extraContent}>
-        <RadioGroup
-          defaultValue={
-            (selectedPart as { part: 'IndexPage'; selectedCategory?: number }).part || selectedPart
-          }
-        >
+        <RadioGroup defaultValue={partSelected.part}>
           <RadioButton value="IndexPage">首页类目</RadioButton>
           <RadioButton value="ConsultingPrice">咨询价格</RadioButton>
         </RadioGroup>
@@ -258,7 +291,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       <div className={styles.listContent}>
         <div className={styles.listContentItem}>
           <span>类别</span>
-          <p>{category}</p>
+          <p>{this.props.listBasicList.indexPageCategories![category]}</p>
         </div>
 
         {term && (
@@ -302,9 +335,9 @@ class BasicList extends Component<BasicListProps, BasicListState> {
         </div>
       </div>
     );
-    console.log(this.props.listBasicList);
-    console.log(this.props.listBasicList.list);
-    console.log('DDDDDDDDDDDDD232323232');
+    // console.log(this.props.listBasicList);
+    // console.log(this.props.listBasicList.list);
+    // console.log('DDDDDDDDDDDDD232323232');
     return (
       <>
         <PageHeaderWrapper>
@@ -322,9 +355,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                 type="dashed"
                 style={{ width: '100%', marginBottom: 8 }}
                 icon="plus"
-                onClick={() => {
-                  this.showModal('new');
-                }}
+                onClick={this.newItem}
                 ref={component => {
                   // eslint-disable-next-line  react/no-find-dom-node
                   this.addBtn = findDOMNode(component) as HTMLButtonElement;
@@ -369,8 +400,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                       //<MoreBtn key="more" item={item} />,
                     ]}
                   >
-                    {(this.state.selectedPart as { part: 'IndexPage'; selectedCategory?: number })
-                      .part === 'IndexPage' && (
+                    {this.state.partSelected.part === 'IndexPage' && (
                       <List.Item.Meta
                         avatar={
                           <Avatar
@@ -384,15 +414,15 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                         }
                       />
                     )}
-                    {(selectedPart as { part: 'IndexPage'; selectedCategory?: number }).part ===
-                      'IndexPage' && (
-                      <IndexCategoryListContent data={item as IndexCategoryListItemDataType} />
-                    )}
-                    {(selectedPart as { part: 'IndexPage'; selectedCategory?: number })
-                      .selectedCategory !== undefined && (
-                      <IndexTermListContent data={item as IndexTermListItemDataType} />
-                    )}
-                    {selectedPart === 'ConsultingPrice' && (
+                    {partSelected.part === 'IndexPage' &&
+                      partSelected.categorySelected === undefined && (
+                        <IndexCategoryListContent data={item as IndexCategoryListItemDataType} />
+                      )}
+                    {partSelected.part === 'IndexPage' &&
+                      partSelected.categorySelected !== undefined && (
+                        <IndexTermListContent data={item as IndexTermListItemDataType} />
+                      )}
+                    {partSelected.part === 'ConsultingPrice' && (
                       <PriceListContent data={item as PriceListItemDataType} />
                     )}
                   </List.Item>
@@ -410,14 +440,15 @@ class BasicList extends Component<BasicListProps, BasicListState> {
             onSubmit={this.onSubmit}
             visible={visible}
             getFieldDecorator={getFieldDecorator}
-            max={this.props.listBasicList.count}
+            max={this.props.listBasicList.count!}
+            newTarget={this.state.newTarget}
+            indexPageCategories={this.props.listBasicList.indexPageCategories}
           />
         )}
       </>
     );
   }
 }
-
 export default Form.create<BasicListProps>()(BasicList);
 /*
 {this.state.indexPageCategorySelected && (

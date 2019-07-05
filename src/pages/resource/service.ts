@@ -4,10 +4,8 @@ import {
   IndexTermListItemDataType,
   PriceListItemDataType,
 } from './data.d';
-import { SelectedPage } from './index';
 interface Params {
-  index: number;
-  target: SelectedPage;
+  partSelected: {}
   current?: number;
 }
 type ParamsType = IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType;
@@ -26,21 +24,28 @@ export async function deleteList(params: Params) {
 }
 
 export async function putList(params: ParamsType) {
+  console.log(params)
   return request('/api/fake_list', {
     method: 'PUT',
-    data: {
       ...params,
-      method: 'post',
-    },
   });
 }
 
 export async function postList(params: ParamsType) {
+  console.log(params)
   return request('/api/fake_list', {
     method: 'POST',
-    data: {
       ...params,
-      method: 'update',
-    },
   });
+}
+export async function getIndexPageTermCount(category:number){
+  return request('/backstage/static/index_page/term/count',{
+    params:{category}
+  })
+}
+export async function getIndexPageCategoryCount(){
+  return request('/backstage/static/index_page/category/count')
+}
+export async function getIndexPageCategories(){
+  return request('/backstage/static/index_page/categories')
 }
