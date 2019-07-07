@@ -32,9 +32,10 @@ import {
 import styles from './style.less';
 import FormModal from './components/FormModal';
 import { classBody } from '@babel/types';
+import { getIndexPageCategories } from './service';
 interface PartSelectedType<T extends 'IndexPage' | 'ConsultingPrice'> {
   part: T;
-  categorySelected?: T extends 'IndexPage' ? number : void;
+  categorySelected?: T extends 'IndexPage' ? string : void;
 }
 //type bb<T>=T extends "qwe"
 const FormItem = Form.Item;
@@ -54,9 +55,10 @@ interface BasicListState {
   done: boolean;
   partSelected: {
     part: 'IndexPage' | 'ConsultingPrice';
-    categorySelected?: number;
+    categorySelected?: string;
   };
   newTarget?: NewTargetType;
+  indexPageCategories?: Array<string>;
   shouldNewItem: boolean;
   current?: Partial<
     IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType
@@ -105,7 +107,8 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     });
   }
 
-  newItem = () => {
+  newItem = async () => {
+    let newState = {};
     let newTarget: NewTargetType = undefined;
     let current:
       | Partial<IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType>
@@ -114,43 +117,48 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       this.state.partSelected.part === 'IndexPage' &&
       this.state.partSelected.categorySelected !== undefined
     ) {
-      newTarget = 'IndexPageTerm';
-      current = {
-        term: '',
-        termSummary: '',
-        termDescription: '',
-        termIcon: '',
-        category: this.state.partSelected.categorySelected,
-        index:this.props.listBasicList.count
+      const indexPageCategories = await getIndexPageCategories();
+      newState = {
+        newTarget: 'IndexPageTerm',
+        current: {
+          term: '',
+          termSummary: '',
+          termDescription: '',
+          termIcon: '',
+          category: this.state.partSelected.categorySelected,
+          index: this.props.listBasicList.count,
+        },
+        indexPageCategories,
       };
-    }
-    else if (
-      this.state.partSelected.part === 'IndexPage' 
-    ) {
-      newTarget = 'IndexPageCategory';
-      current = {
-        categoryIcon: '',
-        category: '',
-        categoryDescription: '',
-        index:this.props.listBasicList.indexPageCategories!.length
+    } else if (this.state.partSelected.part === 'IndexPage') {
+      newState = {
+        newTarget: 'IndexPageCategory',
+        current: {
+          categoryIcon: '',
+          category: '',
+          categoryDescription: '',
+          index: this.props.listBasicList.count,
+        },
       };
     }
     // console.log(newTarget)
-    this.setState({
-      visible: true,
-      newTarget,
-      current,
-    });
+    newState.visible = true;
+    this.setState(newState);
   };
 
-  showEditModal = (
+  showEditModal = async (
     item: IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType,
   ) => {
     // console.log(item);
-    this.setState({
+    let newState: { visible: true; current: typeof item; indexPageCategories?: string[] } = {
       visible: true,
       current: item,
-    });
+    };
+    if (this.state.partSelected.categorySelected) {
+      newState.indexPageCategories = await getIndexPageCategories();
+      newState.current.category = this.state.partSelected.categorySelected;
+    }
+    this.setState(newState);
   };
 
   onDone = () => {
@@ -158,6 +166,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     this.setState({
       done: false,
       visible: false,
+      newTarget: undefined,
       current: {},
     });
   };
@@ -166,6 +175,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     setTimeout(() => this.addBtn && this.addBtn.blur(), 0);
     this.setState({
       visible: false,
+      newTarget: undefined,
       current: {},
     });
   };
@@ -188,15 +198,16 @@ class BasicList extends Component<BasicListProps, BasicListState> {
         // console.log(fieldsValue);
         fieldsValue.index--;
         if (fieldsValue.category !== undefined) {
-          let params= {partSelected:{part:"IndexPage"}};
-          if(fieldsValue.term!==undefined) params.partSelected.categorySelected=fieldsValue.category
+          let params =  { part: 'IndexPage' } ;
+          if (fieldsValue.term !== undefined)
+            params.categorySelected = fieldsValue.category;
           this.setState({
             done: true,
-            partSelected: params.partSelected as PartSelectedType<"IndexPage">,
+            partSelected: params as PartSelectedType<'IndexPage'>,
             current: undefined,
           });
-          params.index=fieldsValue.index
-          console.log(current)
+          params.index = fieldsValue.index;
+          console.log(current);
           if (this.state.newTarget)
             dispatch({
               type: 'listBasicList/postList',
@@ -205,7 +216,14 @@ class BasicList extends Component<BasicListProps, BasicListState> {
           else
             dispatch({
               type: 'listBasicList/putList',
-              payload: { params, data: {...fieldsValue,oldIndex:current!.index} },
+              payload: {
+                params,
+                data: {
+                  ...fieldsValue,
+                  oldCategory: this.state.partSelected.categorySelected,
+                  oldIndex: current!.index,
+                },
+              },
             });
         }
       },
@@ -237,11 +255,26 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     const {
       form: { getFieldDecorator },
     } = this.props;
-    // console.log(this.props);
+    console.log(this.props);
     const { visible, done, current = {}, partSelected } = this.state;
     const getReturnSuperiorContent = () => {
       if (partSelected.part === 'IndexPage' && partSelected.categorySelected !== undefined) {
-        return [<a onClick={e => e.preventDefault()}>返回上级分类</a>];
+        return [
+          <a
+            onClick={e => {
+              this.setState({ partSelected: { part: 'IndexPage' } });
+              this.props.dispatch({
+                type: 'listBasicList/getList',
+                payload: {
+                  index: 0,
+                  part: 'IndexPage',
+                },
+              });
+            }}
+          >
+            返回上级分类
+          </a>,
+        ];
       }
     };
     const extraContent = (
@@ -266,14 +299,30 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       total: 50,
     };
     const IndexCategoryListContent = ({
-      data: { category, categoryDescription },
+      data: { category, categoryDescription, index },
     }: {
       data: IndexCategoryListItemDataType;
     }) => (
       <div className={styles.listContent}>
         <div className={styles.listContentItem}>
           <span>类别</span>
-          <p>{category}</p>
+          <p>
+            <a
+              onClick={() => {
+                const partSelected: PartSelectedType<'IndexPage'> = {
+                  part: 'IndexPage',
+                  categorySelected: category,
+                };
+                this.props.dispatch({
+                  type: 'listBasicList/getList',
+                  payload: { ...partSelected, index: 0 },
+                });
+                this.setState({ partSelected });
+              }}
+            >
+              {category}
+            </a>
+          </p>
         </div>
         {categoryDescription && (
           <div className={styles.listContentItem}>
@@ -291,7 +340,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       <div className={styles.listContent}>
         <div className={styles.listContentItem}>
           <span>类别</span>
-          <p>{this.props.listBasicList.indexPageCategories![category]}</p>
+          <p>{this.state.partSelected.categorySelected}</p>
         </div>
 
         {term && (
@@ -440,9 +489,9 @@ class BasicList extends Component<BasicListProps, BasicListState> {
             onSubmit={this.onSubmit}
             visible={visible}
             getFieldDecorator={getFieldDecorator}
-            max={this.props.listBasicList.count!}
+            max={this.props.listBasicList.count}
             newTarget={this.state.newTarget}
-            indexPageCategories={this.props.listBasicList.indexPageCategories}
+            indexPageCategories={this.state.indexPageCategories}
           />
         )}
       </>

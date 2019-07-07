@@ -5,7 +5,7 @@ export interface IndexCategoryListItemDataType {
   index:number
 }
 export interface IndexTermListItemDataType {
-  category: number;
+  category?: string;
   term: string;
   termSummary: string;
   termDescription: string;

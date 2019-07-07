@@ -21,7 +21,7 @@ const { Option } = Select;
 import React, { FormEvent } from 'react';
 import Result from '../../Result';
 import { NewTargetType } from '../../index';
-import {getIndexPageTermCount} from '../../service'
+import {getIndexPageTermCount, getIndexPageCategories, getIndexPageCategoryCount} from '../../service'
 import { resolveSrv } from 'dns';
 
 const FormItem = Form.Item;
@@ -91,7 +91,9 @@ interface Props {
   ) => (node: React.ReactNode) => React.ReactNode;
 }
 interface State {
+  max:number;
   newTarget?: NewTargetType;
+  indexPageCategories?:Array<string>;
   current: {
     category?: String;
     categoryDescription?: String;
@@ -109,8 +111,10 @@ export default class extends React.Component<Props, State> {
     console.log(props);
     console.log('Dddddddddddddddddddddddddddddddddddd');
     this.state = {
+      max:props.max,
       newTarget: props.newTarget,
       current: props.current,
+      indexPageCategories:props.indexPageCategories
     };
   }
 
@@ -122,15 +126,18 @@ export default class extends React.Component<Props, State> {
     console.log(e);
     let newState = {};
     if (e === 'category') {
-      newState = { category: '', categoryDescription: '', categoryIcon: '' };
+      const count=await getIndexPageCategoryCount()
+      newState={max:count,current:{ category: '', categoryDescription: '', categoryIcon: '' }}
     }
     if (e === 'IndexPageTerm'){
       const count =await getIndexPageTermCount(0)
+      const indexPageCategories=await getIndexPageCategories()
       console.log(count)
-      newState = {termIcon: '', category: 0,term:'', termSummary: '', termDescription: '' ,index:count};
+      newState={max:count,indexPageCategories,current:{termIcon: '', category: 0,term:'', termSummary: '', termDescription: '' ,index:count}};
     }
+    newState.newTarget=e
     console.log(newState);
-    this.setState({ current: newState,newTarget:e });
+    this.setState(newState);
   };
   render() {
     const { getFieldDecorator, done, onDone, onCancel, onSubmit } = this.props;
@@ -203,7 +210,7 @@ export default class extends React.Component<Props, State> {
                     <InputNumber
                       placeholder="请输入"
                       min={1}
-                      max={this.state.newTarget ? this.props.max + 1 : this.props.max}
+                      max={this.state.newTarget ? this.state.max + 1 : this.state.max}
                     />,
                   )}
                 </FormItem>
@@ -211,14 +218,14 @@ export default class extends React.Component<Props, State> {
             )}
             {(newTarget === 'IndexPageTerm' || current.termDescription !== undefined) && (
               <>
-                <FormItem label="服务类别" {...this.formLayout}>
+                <FormItem label="服务类别" {...this.formLayout} data-asd={this.state.indexPageCategories![current.category]}>
                   {getFieldDecorator('category', {
                     rules: [{ required: true, message: '请输入任务名称' }],
                     initialValue: current.category,
                   })(
                     <Select>
-                      {this.props.indexPageCategories!.map((item, index) => (
-                        <Option value={index} key={index}>{item}</Option>
+                      {this.state.indexPageCategories!.map((item, index) => (
+                        <Option value={item} key={index}>{item}</Option>
                       ))}
                     </Select>,
                   )}
@@ -255,7 +262,7 @@ export default class extends React.Component<Props, State> {
                     <InputNumber
                       placeholder="请输入"
                       min={1}
-                      max={this.state.newTarget ? this.props.max + 1 : this.props.max}
+                      max={this.state.newTarget ? this.state.max + 1 : this.state.max}
                     />,
                   )}
                 </FormItem>

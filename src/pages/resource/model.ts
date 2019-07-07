@@ -10,8 +10,7 @@ import {
 
 export interface StateType {
   list: Array<IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType>;
-  count?:number;
-  indexPageCategories?:Array<string>;
+  count:number;
 }
 
 export type Effect = (
@@ -38,6 +37,7 @@ const Model: ModelType = {
 
   state: {
     list: [],
+    count:-1
   },
 
   effects: {
@@ -73,14 +73,10 @@ const Model: ModelType = {
 
   reducers: {
     list(state, action) {
-      const other={
-      }
-      if(action.payload.count!==undefined) other.count=action.payload.count
-      if(action.payload.indexPageCategories!==undefined) other.indexPageCategories=action.payload.indexPageCategories
       return {
         ...state,
         list: action.payload.data,
-        ...other
+        count:action.payload.count
       };
     },
   },

@@ -83,18 +83,15 @@ const rawData = [
     ],
   ],
 ];
-type DataType = { data: List[]; count: number; indexPageCategories?: Array<string> };
-function list(params: any, isNeedIndexPageCategories?: boolean): DataType {
+type DataType = { data: List[]; count: number};
+function list(params: any): DataType {
   const data = [];
   const index = params.index;
   let count = null;
-  let indexPageCategories: Array<string> = [];
-  if (params.part === 'IndexPage') {
-    if (true)
-      //!index){//||isNeedIndexPageCategories){
-      indexPageCategories = rawData.map(item => item[1]);
-  }
-  if (params.selectedCategory === undefined) {
+  console.log(params)
+  //console.log(param.partSelected)
+  //console.log(rawData)
+  if (params.categorySelected === undefined) {
     count = rawData.length;
     for (let key = index; key < index + 10 && key < rawData.length; key++) {
       data.push({
@@ -105,12 +102,11 @@ function list(params: any, isNeedIndexPageCategories?: boolean): DataType {
       });
     }
   } else {
-    const terms = rawData[params.selectedCategory][3];
+    const terms = rawData.find(item=>item[1]===params.categorySelected)![3];
     count = terms.length;
     for (let key = index; key < index + 10 && key < terms.length; key++) {
       data.push({
         index: key,
-        category: rawData[params.selectedCategory][1],
         termIcon: terms[key][0],
         term: terms[key][1],
         termSummary: terms[key][2],
@@ -118,9 +114,7 @@ function list(params: any, isNeedIndexPageCategories?: boolean): DataType {
       });
     }
   }
-
   const result: DataType = { data, count };
-  if (indexPageCategories.length > 0) result.indexPageCategories = indexPageCategories;
   return result;
 }
 
@@ -137,15 +131,16 @@ function index(req: { query: any }, res: { json: (arg0: DataType) => void }) {
   return res.json(list(params));
 }
 function update(req: { query: any; body: any }, res: { json: (arg0: DataType) => void }) {
-  console.log("______2322222222222222222222222222")
+  //console.log("______2322222222222222222222222222")
   
   const params = req.query;
   const body = req.body;
-  console.log(params,body)
+  //console.log(params,body)
   if (body.category !== undefined) {
     if (body.term!==undefined) {
-      rawData[params.selectedCategory][3].splice(body.oldIndex, 1);
-      rawData[params.selectedCategory][3].splice(body.index, 0, [
+
+      rawData.find(item=>item[1]===body.oldCategory)![3].splice(body.oldIndex, 1);
+      rawData.find(item=>item[1]===body.category)![3].splice(body.index, 0, [
         body.termIcon,
         body.term,
         body.termSummary,
@@ -153,7 +148,7 @@ function update(req: { query: any; body: any }, res: { json: (arg0: DataType) =>
       ]);
     } else {
       console.log(body)
-      const terms=rawData[body.index][3].map((item:any)=>item)
+      const terms=rawData[body.oldIndex][3]
       rawData.splice(body.oldIndex, 1);
 
       rawData.splice(body.index, 0, [body.categoryIcon, body.category, body.categoryDescription,terms]);
