@@ -1,11 +1,12 @@
 import { AnyAction, Reducer } from 'redux';
 import { EffectsCommandMap } from 'dva';
-import { addFakeList, queryFakeList, removeFakeList, updateFakeList } from './service';
+import { get} from './service';
 
-import { BasicListItemDataType } from './data.d';
+import { ServiceListItemDataType } from './data.d';
 
 export interface StateType {
-  list: BasicListItemDataType[];
+  list: ServiceListItemDataType[];
+  count:number
 }
 
 export type Effect = (
@@ -17,64 +18,38 @@ export interface ModelType {
   namespace: string;
   state: StateType;
   effects: {
-    fetch: Effect;
-    appendFetch: Effect;
-    submit: Effect;
+    get: Effect;
   };
   reducers: {
-    queryList: Reducer<StateType>;
-    appendList: Reducer<StateType>;
+    cb: Reducer<StateType>;
   };
 }
 
 const Model: ModelType = {
-  namespace: 'listBasicList',
+  namespace: 'serviceList',
 
   state: {
     list: [],
+    count:-1
   },
 
   effects: {
-    *fetch({ payload }, { call, put }) {
-      const response = yield call(queryFakeList, payload);
+    *get({ payload }, { call, put }) {
+      console.log(1111)
+      const response = yield call(get, payload);
       yield put({
-        type: 'queryList',
-        payload: Array.isArray(response) ? response : [],
-      });
-    },
-    *appendFetch({ payload }, { call, put }) {
-      const response = yield call(queryFakeList, payload);
-      yield put({
-        type: 'appendList',
-        payload: Array.isArray(response) ? response : [],
-      });
-    },
-    *submit({ payload }, { call, put }) {
-      let callback;
-      if (payload.id) {
-        callback = Object.keys(payload).length === 1 ? removeFakeList : updateFakeList;
-      } else {
-        callback = addFakeList;
-      }
-      const response = yield call(callback, payload); // post
-      yield put({
-        type: 'queryList',
+        type: 'cb',
         payload: response,
       });
     },
   },
 
   reducers: {
-    queryList(state, action) {
+    cb(state = { list: [] ,count:-1}, action) {
       return {
         ...state,
-        list: action.payload,
-      };
-    },
-    appendList(state = { list: [] }, action) {
-      return {
-        ...state,
-        list: state.list.concat(action.payload),
+        list:action.payload.list,
+        count:action.payload.count
       };
     },
   },

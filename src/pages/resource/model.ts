@@ -1,6 +1,6 @@
 import { AnyAction, Reducer } from 'redux';
 import { EffectsCommandMap } from 'dva';
-import { getList, deleteList, postList, putList } from './service';
+import { getList, deleteItem, updateItem, newItem } from './service';
 
 import {
   IndexCategoryListItemDataType,
@@ -10,7 +10,7 @@ import {
 
 export interface StateType {
   list: Array<IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType>;
-  count:number;
+  total: number;
 }
 
 export type Effect = (
@@ -23,9 +23,9 @@ export interface ModelType {
   state: StateType;
   effects: {
     getList: Effect;
-    deleteList: Effect;
-    postList: Effect;
-    putList: Effect;
+    deleteItem: Effect;
+    updateItem: Effect;
+    newItem: Effect;
   };
   reducers: {
     list: Reducer<StateType>;
@@ -33,50 +33,75 @@ export interface ModelType {
 }
 
 const Model: ModelType = {
-  namespace: 'listBasicList',
+  namespace: 'resourceList',
 
   state: {
     list: [],
-    count:-1
+    total: 0,
   },
 
   effects: {
     *getList({ payload }, { call, put }) {
       const response = yield call(getList, payload);
+      console.log('111');
+      yield put({
+        type: 'list',
+        payload: { ...response, ...payload }, //Array.isArray(response) ? response : [],
+      });
+    },
+    *deleteItem({ payload }, { call, put }) {
+      const response = yield call(deleteItem, payload);
       yield put({
         type: 'list',
         payload: response, //Array.isArray(response) ? response : [],
       });
     },
-    *deleteList({ payload }, { call, put }) {
-      const response = yield call(deleteList, payload);
+    *updateItem({ payload }, { call, put }) {
+      console.log(payload);
+      const nextPayload = payload.payload;
+      const response = yield call(updateItem, payload.data);
       yield put({
         type: 'list',
-        payload: response, //Array.isArray(response) ? response : [],
+        payload: { ...response, ...nextPayload }, //Array.isArray(response) ? response : [],
       });
     },
-    *postList({ payload }, { call, put }) {
-      const response = yield call(postList, payload);
+    *newItem({ payload }, { call, put }) {
+      console.log(payload);
+      const nextPayload = payload.payload;
+      const response = yield call(newItem, payload.data);
       yield put({
         type: 'list',
-        payload: response, //Array.isArray(response) ? response : [],
-      });
-    },
-    *putList({ payload }, { call, put }) {
-      const response = yield call(putList, payload);
-      yield put({
-        type: 'list',
-        payload: response, //Array.isArray(response) ? response : [],
+        payload: { ...response, ...nextPayload }, //Array.isArray(response) ? response : [],
       });
     },
   },
 
   reducers: {
     list(state, action) {
+      console.log(action);
+      const list = action.payload.list.map((item, index) => {
+        if (action.payload.target === 'indexPage') {
+          if (action.payload.categorySelected) {
+            return {
+              termIcon: item[0],
+              term: item[1],
+              termSummary: item[2],
+              termDescription: item[3],
+              index: index + (action.payload.page - 1) * 10,
+            };
+          } else
+            return {
+              categoryIcon: item[0],
+              category: item[1],
+              categoryDescription: item[2],
+              index: index + (action.payload.page - 1) * 10,
+            };
+        }
+      });
       return {
         ...state,
-        list: action.payload.data,
-        count:action.payload.count
+        list,
+        total: action.payload.total,
       };
     },
   },

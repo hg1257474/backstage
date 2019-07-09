@@ -33,18 +33,15 @@ import styles from './style.less';
 import FormModal from './components/FormModal';
 import { classBody } from '@babel/types';
 import { getIndexPageCategories } from './service';
-interface PartSelectedType<T extends 'IndexPage' | 'ConsultingPrice'> {
+interface PartSelectedType<T extends 'indexPage' | 'payPage'> {
   part: T;
-  categorySelected?: T extends 'IndexPage' ? string : void;
+  categorySelected?: T extends 'indexPage' ? string : void;
 }
 //type bb<T>=T extends "qwe"
-const FormItem = Form.Item;
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
-const SelectOption = Select.Option;
-const { Search, TextArea } = Input;
 interface BasicListProps extends FormComponentProps {
-  listBasicList: StateType;
+  resourceList: StateType;
   dispatch: Dispatch<any>;
   loading: boolean;
 }
@@ -54,7 +51,7 @@ interface BasicListState {
   visible: boolean;
   done: boolean;
   partSelected: {
-    part: 'IndexPage' | 'ConsultingPrice';
+    part: 'indexPage' | 'payPage';
     categorySelected?: string;
   };
   newTarget?: NewTargetType;
@@ -78,8 +75,8 @@ const empty1: IndexTermListItemDataType = {
   termDescription: '',
   index: -1,
 };
-@connect((x: { listBasicList: StateType; loading: { models: { [key: string]: boolean } } }) => {
-  return { listBasicList: x.listBasicList, loading: x.loading.models.listBasicList, x };
+@connect((x: { resourceList: StateType; loading: { models: { [key: string]: boolean } } }) => {
+  return { resourceList: x.resourceList, loading: x.loading.models.listBasicList, x };
 })
 class BasicList extends Component<BasicListProps, BasicListState> {
   state: BasicListState = {
@@ -87,7 +84,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     done: false,
     shouldNewItem: false,
     current: undefined,
-    partSelected: { part: 'IndexPage' } as PartSelectedType<'IndexPage'>,
+    partSelected: { part: 'indexPage' } as PartSelectedType<'indexPage'>,
   };
   formLayout = {
     labelCol: { span: 7 },
@@ -99,10 +96,10 @@ class BasicList extends Component<BasicListProps, BasicListState> {
   componentDidMount() {
     const { dispatch } = this.props;
     dispatch({
-      type: 'listBasicList/getList',
+      type: 'resourceList/getList',
       payload: {
-        index: 0,
-        part: 'IndexPage',
+        page: 1,
+        target: 'indexPage',
       },
     });
   }
@@ -114,7 +111,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       | Partial<IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType>
       | undefined = undefined;
     if (
-      this.state.partSelected.part === 'IndexPage' &&
+      this.state.partSelected.part === 'indexPage' &&
       this.state.partSelected.categorySelected !== undefined
     ) {
       const indexPageCategories = await getIndexPageCategories();
@@ -126,18 +123,18 @@ class BasicList extends Component<BasicListProps, BasicListState> {
           termDescription: '',
           termIcon: '',
           category: this.state.partSelected.categorySelected,
-          index: this.props.listBasicList.count,
+          index: this.props.resourceList.total,
         },
         indexPageCategories,
       };
-    } else if (this.state.partSelected.part === 'IndexPage') {
+    } else if (this.state.partSelected.part === 'indexPage') {
       newState = {
         newTarget: 'IndexPageCategory',
         current: {
           categoryIcon: '',
           category: '',
           categoryDescription: '',
-          index: this.props.listBasicList.count,
+          index: this.props.resourceList.total,
         },
       };
     }
@@ -198,26 +195,30 @@ class BasicList extends Component<BasicListProps, BasicListState> {
         // console.log(fieldsValue);
         fieldsValue.index--;
         if (fieldsValue.category !== undefined) {
-          let params =  { part: 'IndexPage' } ;
-          if (fieldsValue.term !== undefined)
+          const payload = {};
+          let params = { part: 'indexPage' };
+          payload.target = 'indexPage';
+          if (fieldsValue.term !== undefined) {
             params.categorySelected = fieldsValue.category;
+            payload.categorySelected = fieldsValue.category;
+          }
+          payload.page = Math.ceil((fieldsValue.index + 1) / 10);
           this.setState({
             done: true,
-            partSelected: params as PartSelectedType<'IndexPage'>,
+            partSelected: params as PartSelectedType<'indexPage'>,
             current: undefined,
           });
-          params.index = fieldsValue.index;
           console.log(current);
           if (this.state.newTarget)
             dispatch({
-              type: 'listBasicList/postList',
-              payload: { params, data: fieldsValue },
+              type: 'resourceList/newItem',
+              payload: { payload, data: fieldsValue },
             });
           else
             dispatch({
-              type: 'listBasicList/putList',
+              type: 'resourceList/updateItem',
               payload: {
-                params,
+                payload,
                 data: {
                   ...fieldsValue,
                   oldCategory: this.state.partSelected.categorySelected,
@@ -249,7 +250,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
   };
   render() {
     const {
-      listBasicList: { list },
+      resourceList: { list },
       loading,
     } = this.props;
     const {
@@ -258,16 +259,16 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     console.log(this.props);
     const { visible, done, current = {}, partSelected } = this.state;
     const getReturnSuperiorContent = () => {
-      if (partSelected.part === 'IndexPage' && partSelected.categorySelected !== undefined) {
+      if (partSelected.part === 'indexPage' && partSelected.categorySelected !== undefined) {
         return [
           <a
             onClick={e => {
-              this.setState({ partSelected: { part: 'IndexPage' } });
+              this.setState({ partSelected: { part: 'indexPage' } });
               this.props.dispatch({
-                type: 'listBasicList/getList',
+                type: 'resourceList/getList',
                 payload: {
-                  index: 0,
-                  part: 'IndexPage',
+                  page: 1,
+                  target: 'indexPage',
                 },
               });
             }}
@@ -280,24 +281,11 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     const extraContent = (
       <div className={styles.extraContent}>
         <RadioGroup defaultValue={partSelected.part}>
-          <RadioButton value="IndexPage">首页类目</RadioButton>
-          <RadioButton value="ConsultingPrice">咨询价格</RadioButton>
+          <RadioButton value="indexPage">首页类目</RadioButton>
+          <RadioButton value="payPage">咨询价格</RadioButton>
         </RadioGroup>
-        <Search
-          style={{ display: 'none' }}
-          className={styles.extraContentSearch}
-          placeholder="请输入"
-          onSearch={() => ({})}
-        />
       </div>
     );
-
-    const paginationProps = {
-      showSizeChanger: true,
-      showQuickJumper: true,
-      pageSize: 5,
-      total: 50,
-    };
     const IndexCategoryListContent = ({
       data: { category, categoryDescription, index },
     }: {
@@ -309,13 +297,13 @@ class BasicList extends Component<BasicListProps, BasicListState> {
           <p>
             <a
               onClick={() => {
-                const partSelected: PartSelectedType<'IndexPage'> = {
-                  part: 'IndexPage',
+                const partSelected: PartSelectedType<'indexPage'> = {
+                  part: 'indexPage',
                   categorySelected: category,
                 };
                 this.props.dispatch({
-                  type: 'listBasicList/getList',
-                  payload: { ...partSelected, index: 0 },
+                  type: 'resourceList/getList',
+                  payload: { target: 'indexPage', categorySelected: category, page: 1 },
                 });
                 this.setState({ partSelected });
               }}
@@ -420,11 +408,8 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                 size="large"
                 rowKey="index"
                 loading={loading}
-                pagination={false /*paginationProps*/}
-                dataSource={
-                  this.props.listBasicList
-                    .list /*this.state.selectedPage === 'index' ? index : payment*/
-                }
+                pagination={{ total: this.props.resourceList.total } /*paginationProps*/}
+                dataSource={list /*this.state.selectedPage === 'index' ? index : payment*/}
                 renderItem={item => (
                   <List.Item
                     actions={[
@@ -449,7 +434,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                       //<MoreBtn key="more" item={item} />,
                     ]}
                   >
-                    {this.state.partSelected.part === 'IndexPage' && (
+                    {this.state.partSelected.part === 'indexPage' && (
                       <List.Item.Meta
                         avatar={
                           <Avatar
@@ -463,15 +448,15 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                         }
                       />
                     )}
-                    {partSelected.part === 'IndexPage' &&
+                    {partSelected.part === 'indexPage' &&
                       partSelected.categorySelected === undefined && (
                         <IndexCategoryListContent data={item as IndexCategoryListItemDataType} />
                       )}
-                    {partSelected.part === 'IndexPage' &&
+                    {partSelected.part === 'indexPage' &&
                       partSelected.categorySelected !== undefined && (
                         <IndexTermListContent data={item as IndexTermListItemDataType} />
                       )}
-                    {partSelected.part === 'ConsultingPrice' && (
+                    {partSelected.part === 'payPage' && (
                       <PriceListContent data={item as PriceListItemDataType} />
                     )}
                   </List.Item>
@@ -489,7 +474,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
             onSubmit={this.onSubmit}
             visible={visible}
             getFieldDecorator={getFieldDecorator}
-            max={this.props.listBasicList.count}
+            max={this.props.resourceList.total}
             newTarget={this.state.newTarget}
             indexPageCategories={this.state.indexPageCategories}
           />

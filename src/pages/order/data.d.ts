@@ -1,19 +1,10 @@
-export interface TableListItem {
-  key: number;
-  disabled?: boolean;
-  href: string;
-  avatar: string;
+export interface OrderTableItem {
   name: string;
-  title: string;
-  owner: string;
-  desc: string;
-  callNo: number;
-  status: number;
-  updatedAt: Date;
-  createdAt: Date;
-  progress: number;
+  createdAt:string;
+  fee:number;
+  orderId:string;
 }
-
+/*
 export interface TableListPagination {
   total: number;
   pageSize: number;
@@ -32,3 +23,4 @@ export interface TableListParams {
   pageSize: number;
   currentPage: number;
 }
+*/

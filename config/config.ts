@@ -106,7 +106,7 @@ export default {
         {
           name: 'home',
           path: '/',
-          component: './dashboard/analysis',
+          component: './index',
         },
         {
           name: 'service',
@@ -159,6 +159,24 @@ export default {
               hideInMenu: true,
               path: '/order/:id',
               component: './order/$id',
+            },
+          ],
+        },
+        {
+          name: 'customer',
+          icon: 'book',
+          path: '/customer',
+          routes: [
+            {
+              component: './customer',
+              hideInMenu: true,
+              path: '/customer',
+            },
+            {
+              name: 'detail',
+              hideInMenu: true,
+              path: '/customer/:id',
+              component: './customer/$id',
             },
           ],
         },

@@ -7,6 +7,7 @@ export default {
   'menu.service':'服务',
   'menu.order':'订单',
   'menu.servicer':'成员',
+  'menu.customer':'客户',
   'menu.resource':'资源',
   'menu.register.result': '注册结果',
   'menu.dashboard': 'Dashboard',

@@ -24,136 +24,69 @@ import { PageHeaderWrapper } from '@ant-design/pro-layout';
 import { connect } from 'dva';
 import { findDOMNode } from 'react-dom';
 import moment from 'moment';
-import Link from 'umi/link'
+import Link from 'umi/link';
 import Result from './Result';
 import { StateType } from './model';
-import { BasicListItemDataType } from './data.d';
+import { ServiceListItemDataType } from './data.d';
 import styles from './style.less';
-
+const statusArray=["处理中","已完结"]
 const FormItem = Form.Item;
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
 const SelectOption = Select.Option;
-const { Search, TextArea } = Input;
 
 interface BasicListProps extends FormComponentProps {
-  listBasicList: StateType;
+  serviceList: StateType;
   dispatch: Dispatch<any>;
   loading: boolean;
 }
 interface BasicListState {
-  visible: boolean;
-  done: boolean;
-  current?: Partial<BasicListItemDataType>;
+  conditionSelected: 'processing' | 'end' | 'all';
 }
 @connect(
   ({
-    listBasicList,
+    serviceList,
     loading,
   }: {
-    listBasicList: StateType;
+    serviceList: StateType;
     loading: {
       models: { [key: string]: boolean };
     };
   }) => ({
-    listBasicList,
+    serviceList,
     loading: loading.models.listBasicList,
   }),
 )
-class BasicList extends Component<BasicListProps, BasicListState> {
-  state: BasicListState = { visible: false, done: false, current: undefined };
-
-  formLayout = {
-    labelCol: { span: 7 },
-    wrapperCol: { span: 13 },
-  };
-
-  addBtn: HTMLButtonElement | undefined | null = undefined;
-
+class ServiceList extends Component<BasicListProps, BasicListState> {
+  state: BasicListState = { conditionSelected: 'all' };
   componentDidMount() {
     const { dispatch } = this.props;
+    console.log(1111111111111)
     dispatch({
-      type: 'listBasicList/fetch',
+      type: 'serviceList/get',
       payload: {
-        count: 5,
+        page:1,
       },
     });
   }
-
-  handleDone = () => {
-    setTimeout(() => this.addBtn && this.addBtn.blur(), 0);
-    this.setState({
-      done: false,
-      visible: false,
-    });
-  };
-
-  handleCancel = () => {
-    setTimeout(() => this.addBtn && this.addBtn.blur(), 0);
-    this.setState({
-      visible: false,
-    });
-  };
-
-  handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const { dispatch, form } = this.props;
-    const { current } = this.state;
-    const id = current ? current.id : '';
-
-    setTimeout(() => this.addBtn && this.addBtn.blur(), 0);
-    form.validateFields((err: string | undefined, fieldsValue: BasicListItemDataType) => {
-      if (err) return;
-      this.setState({
-        done: true,
-      });
-      dispatch({
-        type: 'listBasicList/submit',
-        payload: { id, ...fieldsValue },
-      });
-    });
-  };
-
-  deleteItem = (id: string) => {
-    const { dispatch } = this.props;
-    dispatch({
-      type: 'listBasicList/submit',
-      payload: { id },
-    });
-  };
-
   render() {
     const {
-      listBasicList: { list },
+       serviceList: { list },
       loading,
     } = this.props;
-    const {
-      form: { getFieldDecorator },
-    } = this.props;
-
-    const { visible, done, current = {} } = this.state;
-
-    const editAndDelete = (key: string, currentItem: BasicListItemDataType) => {
-      if (key === 'edit') this.showEditModal(currentItem);
-      else if (key === 'delete') {
-        Modal.confirm({
-          title: '删除任务',
-          content: '确定删除该任务吗？',
-          okText: '确认',
-          cancelText: '取消',
-          onOk: () => this.deleteItem(currentItem.id),
-        });
-      }
-    };
-
     const extraContent = (
       <div className={styles.extraContent}>
-        <RadioGroup defaultValue="all">
+        <RadioGroup
+          defaultValue="all"
+          onChange={(e: any) => {
+            console.log(e);
+            this.setState({ conditionSelected: e });
+          }}
+        >
           <RadioButton value="all">全部</RadioButton>
-          <RadioButton value="progress">进行中</RadioButton>
-          <RadioButton value="waiting">等待中</RadioButton>
+          <RadioButton value="processing">进行中</RadioButton>
+          <RadioButton value="end">已完结</RadioButton>
         </RadioGroup>
-        <Search className={styles.extraContentSearch} placeholder="请输入" onSearch={() => ({})} />
       </div>
     );
 
@@ -165,30 +98,24 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     };
 
     const ListContent = ({
-      data: { name, startTime, endTime, processor, status, id },
+      data: { name, createdAt, status },
     }: {
-      data: BasicListItemDataType;
+      data: ServiceListItemDataType;
     }) => (
       <div className={styles.listContent}>
         <div className={styles.listContentItem}>{name}</div>
         <div className={styles.listContentItem}>
-          <span>处理律师</span>
-          <p>{processor}</p>
-        </div>
-        <div className={styles.listContentItem}>
           <span>状态</span>
-          <p>{status}</p>
+          <p>{statusArray[status]}</p>
         </div>
         <div className={styles.listContentItem}>
           <span>发起时间</span>
-          <p>{moment(startTime).format('YYYY-MM-DD HH:mm')}</p>
-        </div>
-        <div className={styles.listContentItem}>
-          <span>完结时间</span>
-          <p>{moment(endTime).format('YYYY-MM-DD HH:mm')}</p>
+          <p>{moment(createdAt).format('YYYY年MM月DD日')}</p>
         </div>
       </div>
     );
+    console.log(this.props)
+    const that=this
     return (
       <>
         <PageHeaderWrapper>
@@ -199,21 +126,26 @@ class BasicList extends Component<BasicListProps, BasicListState> {
               title="服务列表"
               style={{ marginTop: 24 }}
               bodyStyle={{ padding: '0 32px 40px 32px' }}
-              extra={extraContent}
+              extra={null/*extraContent*/}
             >
               <List
                 size="large"
                 rowKey="id"
                 loading={loading}
-                pagination={paginationProps}
-                dataSource={list}
+                pagination={{
+                  total:this.props.serviceList.count,
+                  onChange(e){
+                    that.props.dispatch({
+                      type:"serviceList/get",
+                      payload:{
+                        page:e
+                      }
+                    })
+                  }
+                }}
+                dataSource={this.props.serviceList.list}
                 renderItem={item => (
-                  <List.Item
-                    actions={[
-                    
-                      <Link to={`/service/${item.id}`}>查看</Link>,
-                    ]}
-                  >
+                  <List.Item actions={[<Link to={`/service/${item.serviceId}`}>查看</Link>]}>
                     <ListContent data={item} />
                   </List.Item>
                 )}
@@ -226,4 +158,4 @@ class BasicList extends Component<BasicListProps, BasicListState> {
   }
 }
 
-export default Form.create<BasicListProps>()(BasicList);
+export default ServiceList;

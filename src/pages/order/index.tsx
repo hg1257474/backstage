@@ -18,7 +18,7 @@ import {
 } from 'antd';
 import Link from 'umi/link';
 
-import { TableListItem } from './data.d';
+import { OrderTableItem } from './data.d';
 import React, { Component, Fragment } from 'react';
 
 import { Dispatch } from 'redux';
@@ -32,49 +32,39 @@ import styles from './style.less';
 interface TableListProps extends FormComponentProps {
   dispatch: Dispatch<any>;
   loading: boolean;
-  listTableList: StateType;
+  orderTable: StateType;
 }
 
 interface TableListState {
   modalVisible: boolean;
   updateModalVisible: boolean;
   expandForm: boolean;
-  selectedRows: TableListItem[];
   formValues: { [key: string]: string };
-  stepFormValues: Partial<TableListItem>;
-}
-interface test1 {
-  key: string;
-  fee: number;
-  time: moment.Moment;
-  name: string;
 }
 /* eslint react/no-multi-comp:0 */
 @connect(
   ({
-    listTableList,
+    orderTable,
     loading,
   }: {
-    listTableList: StateType;
+    orderTable: StateType;
     loading: {
       models: {
         [key: string]: boolean;
       };
     };
   }) => ({
-    listTableList,
+    orderTable,
     loading: loading.models.rule,
   }),
 )
 // interface momentType extends typeof moment={}
-class TableList extends Component<TableListProps, TableListState> {
+class OrderTable extends Component<TableListProps, TableListState> {
   state: TableListState = {
     modalVisible: false,
     updateModalVisible: false,
     expandForm: false,
-    selectedRows: [],
     formValues: {},
-    stepFormValues: {},
   };
 
   columns = [
@@ -85,58 +75,50 @@ class TableList extends Component<TableListProps, TableListState> {
     {
       title: '金额',
       dataIndex: 'fee',
-      align: 'right' as 'left' | 'center' | 'right',
-      render: (val: string) => `${val} 万`,
-      // mark to display a total number
+      render(data: number) {
+        return data/100
+      },
     },
     {
-      title: '时间',
-      dataIndex: 'time',
+      title: '交易时间',
+      dataIndex: 'createdAt',
       render(date: moment.Moment) {
-        return date.format('YYYY年MM月DD日 HH时mm分SS秒');
+        return moment(date).format('YYYY年MM月DD日 HH时mm分SS秒');
       },
     },
     {
       title: '操作',
-      render: (text: string, record: test1) => <Link to={`order/asdasdasd`}>查看</Link>,
+      render: (text: string, record: OrderTableItem) => <Link to={`order/${record.orderId}`}>查看</Link>,
     },
   ];
 
   componentDidMount() {
     const { dispatch } = this.props;
     dispatch({
-      type: 'listTableList/fetch',
+      type: 'orderTable/get',
+      payload:{page:1}
     });
   }
 
   render() {
-    console.log(this);
-    const dataSource: test1[] = [
-      {
-        key: '1',
-        name: '胡彦斌',
-        fee: 32,
-        time: moment(),
-      },
-      {
-        key: '2',
-        name: '胡彦祖',
-        fee: 42,
-        time: moment(),
-      },
-    ];
+    console.log(this.props);
     const { loading } = this.props;
-    console.log(this);
-
+    const that=this
     return (
       <PageHeaderWrapper>
         <Card bordered={false}>
           <div className={styles.tableList}>
             <Table
               loading={loading}
+              rowKey="orderId"
               columns={this.columns}
-              dataSource={dataSource}
-              pagination={{}}
+              dataSource={this.props.orderTable.data}
+              pagination={{total:this.props.orderTable.count,onChange(page){
+                that.props.dispatch({
+                  type: 'orderTable/get',
+                  payload:{page}
+                });
+              }}}
             />
           </div>
         </Card>
@@ -145,4 +127,4 @@ class TableList extends Component<TableListProps, TableListState> {
   }
 }
 
-export default Form.create<TableListProps>()(TableList);
+export default OrderTable;
