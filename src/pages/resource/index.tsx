@@ -50,6 +50,7 @@ export type NewTargetType = 'IndexPageCategory' | 'IndexPageTerm' | undefined;
 interface BasicListState {
   visible: boolean;
   done: boolean;
+  page:number;
   partSelected: {
     part: 'indexPage' | 'payPage';
     categorySelected?: string;
@@ -82,6 +83,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
   state: BasicListState = {
     visible: false,
     done: false,
+    page:1,
     shouldNewItem: false,
     current: undefined,
     partSelected: { part: 'indexPage' } as PartSelectedType<'indexPage'>,
@@ -98,7 +100,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     dispatch({
       type: 'resourceList/getList',
       payload: {
-        page: 1,
+        page: this.state.page,
         target: 'indexPage',
       },
     });
@@ -239,10 +241,12 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       onOk: () => {
         const { dispatch } = this.props;
         dispatch({
-          type: 'listBasicList/deleteList',
+          type: 'resourceList/deleteItem',
           payload: {
             index,
-            ...this.state.partSelected,
+            page: this.state.page,
+            target: this.state.partSelected.part,
+            categorySelected: this.state.partSelected.categorySelected,
           },
         });
       },
@@ -372,6 +376,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
         </div>
       </div>
     );
+    const that=this
     // console.log(this.props.listBasicList);
     // console.log(this.props.listBasicList.list);
     // console.log('DDDDDDDDDDDDD232323232');
@@ -408,7 +413,15 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                 size="large"
                 rowKey="index"
                 loading={loading}
-                pagination={{ total: this.props.resourceList.total } /*paginationProps*/}
+                pagination={
+                  {
+                    total: this.props.resourceList.total,
+                    current:this.state.page,
+                    onChange(e) {
+                      that.setState({ page: e });
+                    },
+                  } /*paginationProps*/
+                }
                 dataSource={list /*this.state.selectedPage === 'index' ? index : payment*/}
                 renderItem={item => (
                   <List.Item

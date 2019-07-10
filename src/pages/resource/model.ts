@@ -53,16 +53,15 @@ const Model: ModelType = {
       const response = yield call(deleteItem, payload);
       yield put({
         type: 'list',
-        payload: response, //Array.isArray(response) ? response : [],
+        payload: {...response,...payload} //Array.isArray(response) ? response : [],
       });
     },
     *updateItem({ payload }, { call, put }) {
       console.log(payload);
-      const nextPayload = payload.payload;
       const response = yield call(updateItem, payload.data);
       yield put({
         type: 'list',
-        payload: { ...response, ...nextPayload }, //Array.isArray(response) ? response : [],
+        payload: { ...response, ...payload.payload }, //Array.isArray(response) ? response : [],
       });
     },
     *newItem({ payload }, { call, put }) {
