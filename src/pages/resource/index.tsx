@@ -40,6 +40,11 @@ interface PartSelectedType<T extends 'indexPage' | 'payPage'> {
 //type bb<T>=T extends "qwe"
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
+const getImage = x => {
+  const y = x;
+  if (y.includes('base64')) return y;
+  return `http://192.168.0.29:7001/resource_test/${x}`;
+};
 interface BasicListProps extends FormComponentProps {
   resourceList: StateType;
   dispatch: Dispatch<any>;
@@ -50,7 +55,7 @@ export type NewTargetType = 'IndexPageCategory' | 'IndexPageTerm' | undefined;
 interface BasicListState {
   visible: boolean;
   done: boolean;
-  page:number;
+  page: number;
   partSelected: {
     part: 'indexPage' | 'payPage';
     categorySelected?: string;
@@ -83,7 +88,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
   state: BasicListState = {
     visible: false,
     done: false,
-    page:1,
+    page: 1,
     shouldNewItem: false,
     current: undefined,
     partSelected: { part: 'indexPage' } as PartSelectedType<'indexPage'>,
@@ -376,7 +381,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
         </div>
       </div>
     );
-    const that=this
+    const that = this;
     // console.log(this.props.listBasicList);
     // console.log(this.props.listBasicList.list);
     // console.log('DDDDDDDDDDDDD232323232');
@@ -416,7 +421,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                 pagination={
                   {
                     total: this.props.resourceList.total,
-                    current:this.state.page,
+                    current: this.state.page,
                     onChange(e) {
                       that.setState({ page: e });
                     },
@@ -451,10 +456,10 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                       <List.Item.Meta
                         avatar={
                           <Avatar
-                            src={
+                            src={getImage(
                               (item as IndexCategoryListItemDataType).categoryIcon ||
-                              (item as IndexTermListItemDataType).termIcon
-                            }
+                                (item as IndexTermListItemDataType).termIcon,
+                            )}
                             shape="square"
                             size="large"
                           />

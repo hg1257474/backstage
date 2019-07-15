@@ -21,7 +21,7 @@ import TableForm from './components/TableForm';
 import FooterToolbar from './components/FooterToolbar';
 import styles from './style.less';
 import { image } from './images';
-import ImageUpload from '../../components/ImageUpload'
+import ImageUpload from '../../components/ImageUpload';
 const { Option } = Select;
 
 const fieldLabels = {
@@ -116,8 +116,8 @@ class AdvancedForm extends Component<AdvancedFormProps> {
       grade: 1,
       expert: [],
       privilege: [],
-      serviceTotal:10,
-      id:"dsdsds"
+      serviceTotal: 10,
+      id: 'dsdsds',
     },
     {
       account: '2',
@@ -128,8 +128,8 @@ class AdvancedForm extends Component<AdvancedFormProps> {
       grade: 2,
       expert: [],
       privilege: [],
-      serviceTotal:6,
-      id:"232222222222222222"
+      serviceTotal: 6,
+      id: '232222222222222222',
     },
   ];
   resizeFooterToolbar = () => {
@@ -205,7 +205,7 @@ class AdvancedForm extends Component<AdvancedFormProps> {
                       {getFieldDecorator('avatar', {
                         initialValue: this.state.inputTarget.avatar,
                         rules: [{ required: true, message: '请选择' }],
-                      })(<ImageUpload onChange={()=>null}/>)}
+                      })(<ImageUpload onChange={() => null} />)}
                     </Form.Item>
                   </Col>
                   <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>
@@ -231,13 +231,7 @@ class AdvancedForm extends Component<AdvancedFormProps> {
                       {getFieldDecorator('expert', {
                         initialValue: this.state.inputTarget.expert,
                         rules: [{ required: true, message: '请输入' }],
-                      })(
-                        <Select mode="multiple" style={{ width: '100%' }} placeholder="请选择">
-                          <Option value="taxReporting">税收报账</Option>
-                          <Option value="licenseProcessing">许可证办理</Option>
-                          <Option value="equityDistribution">股权分配</Option>
-                        </Select>,
-                      )}
+                      })(<Input placeholder="请输入" />)}
                     </Form.Item>
                   </Col>
                   <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>

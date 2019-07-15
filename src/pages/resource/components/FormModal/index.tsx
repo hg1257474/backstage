@@ -212,7 +212,7 @@ export default class extends React.Component<Props, State> {
                 <FormItem label="服务类别说明" {...this.formLayout}>
                   {getFieldDecorator('categoryDescription', {
                     rules: [{ required: true, message: '请输入服务类别说明' }],
-                    initialValue: current.categoryDescription,
+                    initialValue: current.categoryDescription||"-",
                   })(<Input placeholder="请输入" />)}
                 </FormItem>
                 <FormItem label="服务图标" {...this.formLayout}>
@@ -270,7 +270,7 @@ export default class extends React.Component<Props, State> {
                 <FormItem label="服务说明" {...this.formLayout}>
                   {getFieldDecorator('termDescription', {
                     rules: [{ required: true, message: '请输入任务名称' }],
-                    initialValue: current.termDescription,
+                    initialValue: current.termDescription||"-",
                   })(<Input placeholder="请输入" />)}
                 </FormItem>
                 <FormItem label="服务图标" {...this.formLayout}>

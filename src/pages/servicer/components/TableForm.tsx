@@ -11,7 +11,7 @@ export interface TableFormDateType {
   avatar: string;
   total: number;
   grade: number;
-  expert: [];
+  expert: string;
   privilege: [];
   serviceTotal?: number;
   id:string;

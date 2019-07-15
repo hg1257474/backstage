@@ -1,12 +1,11 @@
 import { AnyAction, Reducer } from 'redux';
 import { EffectsCommandMap } from 'dva';
-import { get} from './service';
+import { addRule, queryRule, removeRule, updateRule } from './service';
 
-import { ServiceListItemDataType } from './data.d';
+import { TableListDate } from './data.d';
 
 export interface StateType {
-  list: ServiceListItemDataType[];
-  count:number
+  data: TableListDate;
 }
 
 export type Effect = (
@@ -18,38 +17,65 @@ export interface ModelType {
   namespace: string;
   state: StateType;
   effects: {
-    get: Effect;
+    fetch: Effect;
+    add: Effect;
+    remove: Effect;
+    update: Effect;
   };
   reducers: {
-    cb: Reducer<StateType>;
+    save: Reducer<StateType>;
   };
 }
 
 const Model: ModelType = {
-  namespace: 'serviceList',
+  namespace: 'listTableList',
 
   state: {
-    list: [],
-    count:-1
+    data: {
+      list: [],
+      pagination: {},
+    },
   },
 
   effects: {
-    *get({ payload }, { call, put }) {
-      console.log(1111)
-      const response = yield call(get, payload);
+    *fetch({ payload }, { call, put }) {
+      const response = yield call(queryRule, payload);
       yield put({
-        type: 'cb',
+        type: 'save',
         payload: response,
       });
+    },
+    *add({ payload, callback }, { call, put }) {
+      const response = yield call(addRule, payload);
+      yield put({
+        type: 'save',
+        payload: response,
+      });
+      if (callback) callback();
+    },
+    *remove({ payload, callback }, { call, put }) {
+      const response = yield call(removeRule, payload);
+      yield put({
+        type: 'save',
+        payload: response,
+      });
+      if (callback) callback();
+    },
+    *update({ payload, callback }, { call, put }) {
+      const response = yield call(updateRule, payload);
+      yield put({
+        type: 'save',
+        payload: response,
+      });
+      if (callback) callback();
     },
   },
 
   reducers: {
-    cb(state = { list: [] ,count:-1}, action) {
+    save(state, action) {
       return {
         ...state,
-        list:action.payload.list,
-        count:action.payload.count
+        data: action.payload,
       };
     },
   },

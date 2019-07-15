@@ -5,6 +5,11 @@ interface Props {
   onChange?: (x: string) => void;
   value?: string;
 }
+const getImage = x => {
+  const y = x;
+  if (y.includes('base64')) return y;
+  return `https://www.huishenghuo.net/resource_test/${x}`;
+};
 export default class extends React.Component<Props, { image: string }> {
   constructor(props: Props) {
     super(props);
@@ -24,7 +29,7 @@ export default class extends React.Component<Props, { image: string }> {
     console.log(this.props);
     return (
       <div>
-        <img src={this.state.image} className={styles.img} />
+        <img src={getImage(this.state.image)} className={styles.img} />
         <Button className={styles.button}>
           {this.state.image ? '修改' : '上传'}
           <input className={styles.input} onChange={this.onChange} type="file" accept="image/*" />
