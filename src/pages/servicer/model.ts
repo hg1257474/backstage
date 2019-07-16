@@ -1,7 +1,11 @@
-import { AnyAction } from 'redux';
+import { AnyAction, Reducer } from 'redux';
 import { EffectsCommandMap } from 'dva';
 import { message } from 'antd';
-import { fakeSubmitForm } from './service';
+import { fakeSubmitForm, getServicers } from './service';
+import { ServicerTableItemDataType } from './data';
+export interface StateType {
+  servicers: Array<ServicerTableItemDataType>;
+}
 
 export type Effect = (
   action: AnyAction,
@@ -10,21 +14,44 @@ export type Effect = (
 
 export interface ModelType {
   namespace: string;
-  state: {};
+  state: StateType;
   effects: {
+    getServicers: Effect;
     submitAdvancedForm: Effect;
+  };
+  reducers: {
+    servicers: Reducer<StateType>;
   };
 }
 
 const Model: ModelType = {
-  namespace: 'formAdvancedForm',
+  namespace: 'servicerTable',
 
-  state: {},
+  state: {
+    servicers: [],
+  },
 
   effects: {
-    *submitAdvancedForm({ payload }, { call }) {
-      yield call(fakeSubmitForm, payload);
+    *getServicers({ payload }, { call, put }) {
+      const res = yield call(getServicers, payload);
+      yield put({
+        type: 'servicers',
+        payload: { servicers: res },
+      });
+    },
+
+    *submitAdvancedForm({ payload }, { call, put }) {
+      const res = yield call(fakeSubmitForm, payload);
       message.success('提交成功');
+      yield put({
+        type: 'servicers',
+        payload: res,
+      });
+    },
+  },
+  reducers: {
+    servicers(state, action) {
+      return { ...state, ...action.payload };
     },
   },
 };

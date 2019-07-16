@@ -2,30 +2,25 @@ import { Button, Divider, Input, Popconfirm, Table, message } from 'antd';
 import React, { Fragment, PureComponent } from 'react';
 import Link from 'umi/link';
 import { isEqual } from 'lodash';
+import { ServicerTableItemDataType } from '../data';
 import styles from '../style.less';
-
-export interface TableFormDateType {
-  account: string;
-  password: string;
-  name: string;
-  avatar: string;
-  total: number;
-  grade: number;
-  expert: string;
-  privilege: [];
-  serviceTotal?: number;
-  id:string;
-}
+const privilegeMap = {
+  canAssignService: '分配服务',
+  canProcessingService: '处理服务',
+  canManageServicer: '管理成员',
+};
 interface TableFormProps {
+  pagination:any;
   loading?: boolean;
-  value?: TableFormDateType[];
-  onChoose: (value: TableFormDateType | null | 'new') => void;
+  value?: ServicerTableItemDataType[];
+  onChangeCondition: (x: any) => void;
+  onChoose: (value: ServicerTableItemDataType | null | 'new') => void;
 }
 
 interface TableFormState {
   loading?: boolean;
-  value?: TableFormDateType[];
-  data?: TableFormDateType[];
+  value?: ServicerTableItemDataType[];
+  data?: ServicerTableItemDataType[];
   editing: number;
 }
 class TableForm extends PureComponent<TableFormProps, TableFormState> {
@@ -51,15 +46,9 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
   };
   columns = [
     {
-      title: '账号',
-      dataIndex: 'account',
-      key: 'account',
-      width: '20%',
-    },
-    {
-      title: '密码',
-      dataIndex: 'password',
-      key: 'password',
+      title: '用户名',
+      dataIndex: 'username',
+      key: 'username',
       width: '20%',
     },
     {
@@ -69,18 +58,44 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
       width: '20%',
     },
     {
+      title: '权限',
+      dataIndex: 'privilege',
+      key: 'privilege',
+      width: '30%',
+      filters: [
+        {
+          text: privilegeMap['canManageServicer'],
+          value: 'canManageServicer',
+        },
+        {
+          text: privilegeMap['canProcessingService'],
+          value: 'canProcessingService',
+        },
+        {
+          text: privilegeMap['canAssignService'],
+          value: 'canAssignService',
+        },
+      ],
+      render(text: {}) {
+        return Object.keys(text)
+          .map(item => privilegeMap[item])
+          .join(',');
+      },
+    },
+    {
       title: '处理服务数',
-      dataIndex: 'serviceTotal',
-      key: 'serviceTotal',
-      width: '20%',
-      render(text: number, record: TableFormDateType) {
+      dataIndex: 'servicesTotal',
+      key: 'servicesTotal',
+      sorter: true,
+      width: '15%',
+      render(text: number, record: ServicerTableItemDataType) {
         return <Link to={`/servicer/${record.id}/service`}>{text}</Link>;
       },
     },
     {
       title: '操作',
       key: 'action',
-      render: (text: string, record: TableFormDateType, index: number) => {
+      render: (text: string, record: ServicerTableItemDataType, index: number) => {
         /*
         const { loading } = this.state;
         if (!!record.editable && loading) {
@@ -129,17 +144,19 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
   }
 
   render() {
-    console.log(this);
     const { loading, data } = this.state;
+    console.log(data);
 
     return (
       <Fragment>
-        <Table<TableFormDateType>
+        <Table<ServicerTableItemDataType>
           loading={loading}
           columns={this.columns}
           dataSource={data}
-          pagination={{ total: 10 }}
+          rowKey="id"
+          pagination={this.props.pagination}
           rowClassName={record => ''}
+          onChange={this.props.onChangeCondition}
         />
         <Button
           style={{ width: '100%', marginTop: 16, marginBottom: 8 }}

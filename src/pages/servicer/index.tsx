@@ -11,6 +11,7 @@ import {
   Select,
   TimePicker,
 } from 'antd';
+import _ from 'lodash';
 import React, { Component } from 'react';
 import { TableFormDateType } from './components/TableForm';
 import { Dispatch } from 'redux';
@@ -22,8 +23,11 @@ import FooterToolbar from './components/FooterToolbar';
 import styles from './style.less';
 import { image } from './images';
 import ImageUpload from '../../components/ImageUpload';
-const { Option } = Select;
+import { StateType } from './model';
+import { threadId } from 'worker_threads';
 
+const { Option } = Select;
+const { Search } = Input;
 const fieldLabels = {
   account: '账号',
   password: '密码',
@@ -35,28 +39,87 @@ const fieldLabels = {
   privilege: '权限',
 };
 
+let oldSearchValue: string = 'undefined';
+let oldTableCondition = undefined;
+let q = 0;
 interface AdvancedFormProps extends FormComponentProps {
   dispatch: Dispatch<any>;
   submitting: boolean;
+  servicerTable: StateType;
 }
-
+/*
 @connect(({ loading }: { loading: { effects: { [key: string]: boolean } } }) => ({
   submitting: loading.effects['formAdvancedForm/submitAdvancedForm'],
 }))
+*/
+@connect(x => {
+  return {
+    submitting: x.loading.effects['formAdvancedForm/submitAdvancedForm'],
+    servicerTable: x.servicerTable,
+  };
+})
 class AdvancedForm extends Component<AdvancedFormProps> {
+
   state = {
+    needRemount: false,
     width: '100%',
+    page: 1,
     inputTarget: null,
+    pagination: { total: 10 },
   };
 
   componentDidMount() {
     console.log(this.props);
+    this.props.dispatch({
+      type: 'servicerTable/getServicers',
+      payload: {
+        page: 1,
+      },
+    });
     window.addEventListener('resize', this.resizeFooterToolbar, { passive: true });
   }
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.resizeFooterToolbar);
   }
+
+  onSearch = (value: string) => {
+    if (value.trim() !== oldSearchValue) {
+      oldSearchValue = value.trim();
+      this.props.dispatch({
+        type: 'servicerTable/getServicers',
+        payload: {
+          page: 1,
+          searchValue: oldSearchValue,
+        },
+      });
+      this.setState({ page: 1, inputTarget: null });
+    }
+  };
+
+  onChangeCondition = (pagination, filtersArg, sorter) => {
+    
+    console.log(pagination);
+    console.log(sorter);
+    console.log(filtersArg);
+    const tableCondition = {
+      pageCurrent: pagination.current,
+      privilegeFilter: filtersArg.privilege,
+      servicesTotalOrder: sorter.order,
+    };
+    if (_.isEqual(tableCondition, oldTableCondition)) {
+      oldTableCondition = tableCondition;
+      this.props.dispatch({
+        type: 'servicerTable/getServicers',
+        payload: {
+          search: {
+            allName: oldSearchValue,
+            ...oldTableCondition,
+          },
+        },
+      });
+    }
+  };
 
   getErrorInfo = () => {
     const {
@@ -106,32 +169,7 @@ class AdvancedForm extends Component<AdvancedFormProps> {
       </span>
     );
   };
-  test: TableFormDateType[] = [
-    {
-      account: '1',
-      password: '1',
-      name: '1',
-      avatar: image,
-      total: 1,
-      grade: 1,
-      expert: [],
-      privilege: [],
-      serviceTotal: 10,
-      id: 'dsdsds',
-    },
-    {
-      account: '2',
-      password: '2',
-      name: '2',
-      avatar: image,
-      total: 2,
-      grade: 2,
-      expert: [],
-      privilege: [],
-      serviceTotal: 6,
-      id: '232222222222222222',
-    },
-  ];
+
   resizeFooterToolbar = () => {
     requestAnimationFrame(() => {
       const sider = document.querySelectorAll('.ant-layout-sider')[0] as HTMLDivElement;
@@ -252,9 +290,15 @@ class AdvancedForm extends Component<AdvancedFormProps> {
               </Form>
             </Card>
           )}
-          <Card title="成员管理" bordered={false}>
+          <Card
+            title="成员管理"
+            bordered={false}
+            extra={<Search placeholder="输入用户名或姓名搜索" onSearch={this.onSearch} />}
+          >
             <TableForm
-              value={this.test}
+              pagination={this.state.pagination}
+              onChangeCondition={this.onChangeCondition}
+              value={this.props.servicerTable.servicers}
               onChoose={inputTarget => {
                 console.log(inputTarget);
                 this.setState({ inputTarget });

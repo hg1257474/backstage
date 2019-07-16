@@ -75,13 +75,18 @@ const _maps2 = {
 };
 const empty1: IndexTermListItemDataType = {
   termIcon: '',
-  category: -1,
   term: '',
   termSummary: '',
   termDescription: '',
   index: -1,
 };
+/*
 @connect((x: { resourceList: StateType; loading: { models: { [key: string]: boolean } } }) => {
+  return { resourceList: x.resourceList, loading: x.loading.models.listBasicList, x };
+})
+*/
+@connect((x: { resourceList: StateType; loading: { models: { [key: string]: boolean } } }) => {
+  console.log(x)
   return { resourceList: x.resourceList, loading: x.loading.models.listBasicList, x };
 })
 class BasicList extends Component<BasicListProps, BasicListState> {
