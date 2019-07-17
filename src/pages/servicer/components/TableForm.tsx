@@ -3,6 +3,8 @@ import React, { Fragment, PureComponent } from 'react';
 import Link from 'umi/link';
 import { isEqual } from 'lodash';
 import { ServicerTableItemDataType } from '../data';
+
+import { TableCondition } from '../index';
 import styles from '../style.less';
 const privilegeMap = {
   canAssignService: '分配服务',
@@ -10,11 +12,11 @@ const privilegeMap = {
   canManageServicer: '管理成员',
 };
 interface TableFormProps {
-  pagination:any;
   loading?: boolean;
   value?: ServicerTableItemDataType[];
-  onChangeCondition: (x: any) => void;
-  onChoose: (value: ServicerTableItemDataType | null | 'new') => void;
+  tableCondition: TableCondition;
+  onChange: (x: any) => void;
+  onChoose: (id: string | null, type?: 'new' | 'delete') => void;
 }
 
 interface TableFormState {
@@ -44,7 +46,7 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
     const newData = data.filter((value, key) => key !== index);
     this.setState({ data: newData, value: newData });
   };
-  columns = [
+  getColumns = () => [
     {
       title: '用户名',
       dataIndex: 'username',
@@ -62,6 +64,7 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
       dataIndex: 'privilege',
       key: 'privilege',
       width: '30%',
+      filteredValue: this.props.tableCondition.filteredValue,
       filters: [
         {
           text: privilegeMap['canManageServicer'],
@@ -88,14 +91,15 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
       key: 'servicesTotal',
       sorter: true,
       width: '15%',
+      sortOrder: this.props.tableCondition.sortOrder,
       render(text: number, record: ServicerTableItemDataType) {
         return <Link to={`/servicer/${record.id}/service`}>{text}</Link>;
       },
     },
     {
       title: '操作',
-      key: 'action',
-      render: (text: string, record: ServicerTableItemDataType, index: number) => {
+      dataIndex: 'id',
+      render: (id: string, record: ServicerTableItemDataType, index: number) => {
         /*
         const { loading } = this.state;
         if (!!record.editable && loading) {
@@ -105,9 +109,20 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
         if (index === this.state.editing) {
           return (
             <span>
-              <a onClick={e => this.props.onChoose(null)}>取消</a>
+              <a
+                onClick={e => {
+                  this.setState({ editing: -1 });
+                  this.props.onChoose(null);
+                }}
+              >
+                取消
+              </a>
+
               <Divider type="vertical" />
-              <Popconfirm title="是否要删除此行？" onConfirm={() => this.remove(index)}>
+              <Popconfirm
+                title="是否要删除此行？"
+                onConfirm={() => this.props.onChoose(id, 'delete')}
+              >
                 <a>删除</a>
               </Popconfirm>
             </span>
@@ -118,13 +133,16 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
             <a
               onClick={e => {
                 this.setState({ editing: index });
-                this.props.onChoose(record);
+                this.props.onChoose(id);
               }}
             >
               编辑
             </a>
             <Divider type="vertical" />
-            <Popconfirm title="是否要删除此行？" onConfirm={() => this.remove(index)}>
+            <Popconfirm
+              title="是否要删除此行？"
+              onConfirm={() => this.props.onChoose(id, 'delete')}
+            >
               <a>删除</a>
             </Popconfirm>
           </span>
@@ -146,22 +164,22 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
   render() {
     const { loading, data } = this.state;
     console.log(data);
-
+    console.log(this.props);
     return (
       <Fragment>
         <Table<ServicerTableItemDataType>
           loading={loading}
-          columns={this.columns}
+          columns={this.getColumns()}
           dataSource={data}
           rowKey="id"
-          pagination={this.props.pagination}
           rowClassName={record => ''}
-          onChange={this.props.onChangeCondition}
+          onChange={this.props.onChange}
+          pagination={this.props.tableCondition.pagination}
         />
         <Button
           style={{ width: '100%', marginTop: 16, marginBottom: 8 }}
           type="dashed"
-          onClick={() => this.props.onChoose('new')}
+          onClick={() => this.props.onChoose(null, 'new')}
           icon="plus"
         >
           新增成员
