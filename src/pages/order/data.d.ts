@@ -1,8 +1,9 @@
 export interface OrderTableItem {
   name: string;
-  createdAt:string;
-  fee:number;
-  orderId:string;
+  updateAt: string;
+  totalFee: number;
+  customerId: string;
+  _id: string;
 }
 /*
 export interface TableListPagination {

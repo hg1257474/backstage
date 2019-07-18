@@ -37,6 +37,9 @@ interface TableListProps extends FormComponentProps {
 
 interface TableListState {
   modalVisible: boolean;
+  current: number;
+  updateAtSort: boolean;
+  totalFeeSort: boolean;
   updateModalVisible: boolean;
   expandForm: boolean;
   formValues: { [key: string]: string };
@@ -65,45 +68,69 @@ class OrderTable extends Component<TableListProps, TableListState> {
     updateModalVisible: false,
     expandForm: false,
     formValues: {},
+    current: 1,
+    totalFeeSort: false,
+    updateAtSort: false,
   };
 
-  columns = [
+  getColumns = () => [
     {
       title: '订单名',
       dataIndex: 'name',
     },
     {
       title: '金额',
-      dataIndex: 'fee',
+      sorter: true,
+      dataIndex: 'totalFee',
+      sortOrder: this.state.totalFeeSort,
       render(data: number) {
-        return data/100
+        return data / 100;
       },
     },
     {
       title: '交易时间',
-      dataIndex: 'createdAt',
+      sorter: true,
+      dataIndex: 'updateAt',
+      sortOrder: this.state.updateAtSort,
       render(date: moment.Moment) {
         return moment(date).format('YYYY年MM月DD日 HH时mm分SS秒');
       },
     },
     {
-      title: '操作',
-      render: (text: string, record: OrderTableItem) => <Link to={`order/${record.orderId}`}>查看</Link>,
+      title: '客户ID',
+      dataIndex: 'customerId',
+      render: (text: string) => <Link to={`customer/${text}`}>{text}</Link>,
     },
   ];
+
+  onChange = (pagination, filter, sorter) => {
+    const { current } = pagination;
+    //const {};
+    const { field } = sorter;
+    const newState = {
+      current,
+      totalFeeSorter: field === 'totalFee' ? sorter.order : this.state.totalFeeSort,
+      updateAtSorter: field === 'updateAt' ? sorter.order : this.state.updateAtSort,
+    };
+    this.setState({ ...newState });
+    this.props.dispatch({
+      type: 'orderTable/getOrders',
+      payload: newState,
+    });
+  };
 
   componentDidMount() {
     const { dispatch } = this.props;
     dispatch({
       type: 'orderTable/get',
-      payload:{page:1}
+      payload: { page: 1 },
     });
   }
 
   render() {
     console.log(this.props);
     const { loading } = this.props;
-    const that=this
+    const that = this;
     return (
       <PageHeaderWrapper>
         <Card bordered={false}>
@@ -111,14 +138,10 @@ class OrderTable extends Component<TableListProps, TableListState> {
             <Table
               loading={loading}
               rowKey="orderId"
-              columns={this.columns}
-              dataSource={this.props.orderTable.data}
-              pagination={{total:this.props.orderTable.count,onChange(page){
-                that.props.dispatch({
-                  type: 'orderTable/get',
-                  payload:{page}
-                });
-              }}}
+              columns={this.getColumns()}
+              dataSource={this.props.orderTable.orders}
+              onChange={(...x) => console.log(x)}
+              pagination={{ total: this.props.orderTable.total, current: this.state.current }}
             />
           </div>
         </Card>

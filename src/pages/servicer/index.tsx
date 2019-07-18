@@ -40,7 +40,7 @@ const fieldLabels = {
   privilege: '权限',
 };
 
-let oldSearchValue: string = 'undefined';
+let oldSearchValue: string = "";
 export interface TableCondition {
   pagination: { total: number; current: number };
   filteredValue: [];

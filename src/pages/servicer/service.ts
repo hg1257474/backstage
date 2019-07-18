@@ -26,7 +26,7 @@ export async function getServicers(params: any) {
   console.log(params);
   params.currentPage = params.pagination.current;
   delete params.pagination;
-  if (params.allName === undefined || params.allName === 'undefined') delete params.allName;
+  if (!params.allName || params.allName === 'undefined') delete params.allName;
   if (params.sortOrder) params.sortOrder = params.sortOrder === 'ascend' ? 1 : -1;
   return request(url + '/backstage/servicer', { params, mode: 'cors' });
 }
