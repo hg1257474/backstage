@@ -34,12 +34,18 @@ interface TableListProps extends FormComponentProps {
   loading: boolean;
   customerTable: StateType;
 }
-
+type SortType = boolean | 'ascend' | 'descend';
 interface TableListState {
   modalVisible: boolean;
   updateModalVisible: boolean;
   expandForm: boolean;
   formValues: { [key: string]: string };
+  pointsTotalSort: SortType;
+  serviceTotalSort: SortType;
+  orderTotalSort: SortType;
+  consumptionSort: SortType;
+  current: number;
+  isCompanyFiltered: boolean;
 }
 /* eslint react/no-multi-comp:0 */
 @connect(
@@ -65,53 +71,139 @@ class TableList extends Component<TableListProps, TableListState> {
     updateModalVisible: false,
     expandForm: false,
     formValues: {},
+    serviceTotalSort: false,
+    orderTotalSort: false,
+    consumptionSort: false,
+    pointsTotalSort: false,
+    current: 1,
+    isCompanyFiltered: false,
   };
-
-  columns = [
+  companyFilterIcon = filtered => (
+    <Icon type="search" style={{ color: filtered ? '#1890ff' : undefined }} />
+  );
+  companySearchInput: Input | null = null;
+  onCompanyFilterDropdownVisibleChange = visible => {
+    if (visible) {
+      setTimeout(() => this.companySearchInput!.select());
+    }
+  };
+  companyFilterDropdown = ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => {
+    const that = this;
+    return (
+      <div style={{ padding: 8 }}>
+        <Input
+          ref={node => {
+            that.companySearchInput = node;
+          }}
+          placeholder={`Search`}
+          value={selectedKeys[0]}
+          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={confirm}
+          style={{ width: 188, marginBottom: 8, display: 'block' }}
+        />
+        <Button
+          type="primary"
+          onClick={confirm}
+          icon="search"
+          size="small"
+          style={{ width: 90, marginRight: 8 }}
+        >
+          Search
+        </Button>
+        <Button onClick={clearFilters} size="small" style={{ width: 90 }}>
+          Reset
+        </Button>
+      </div>
+    );
+  };
+  getColumns = () => [
     {
-      title: '客户id',
-      dataIndex: 'customerId',
+      title: '公司名',
+      dataIndex: 'company',
+      filterIcon: this.companyFilterIcon,
+      filterDropdown: this.companyFilterDropdown,
+      filtered: this.state.isCompanyFiltered,
+      onFilterDropdownVisibleChange: this.onCompanyFilterDropdownVisibleChange,
     },
     {
-      title: '注册日期',
-      dataIndex: 'createdAt',
-      render(date: moment.Moment) {
-        return moment(date).format('YYYY年MM月DD日');
-      },
+      title: '积分',
+      sorter: true,
+      sortOrder: this.state.pointsTotalSort,
+      dataIndex: 'pointsTotal',
+    },
+    {
+      title: '消费金额',
+      sorter: true,
+      sortOrder: this.state.consumptionSort,
+      dataIndex: 'consumption',
+    },
+    {
+      title: '服务数',
+      sorter: true,
+      sortOrder: this.state.serviceTotalSort,
+      dataIndex: 'serviceTotal',
+    },
+    {
+      title: '订单数',
+      sorter: true,
+      sortOrder: this.state.orderTotalSort,
+      dataIndex: 'orderTotal',
     },
     {
       title: '操作',
-      render: (text: string, record: CustomerTableItem) => <Link to={`customer/${record.customerId}`}>查看</Link>,
+      dataIndex: '_id',
+      render: (text: string) => <Link to={`customer/${text}`}>查看</Link>,
     },
   ];
 
   componentDidMount() {
     const { dispatch } = this.props;
     dispatch({
-      type: 'customerTable/get',
-      payload:{page:1}
+      type: 'customerTable/getCustomers',
+      payload: { current: 1 },
     });
   }
+  onChange = (pagination, filter, sorter) => {
+    const { current } = pagination;
+    //const {};
 
+    const { field, order } = sorter;
+    console.log(pagination);
+    console.log(filter);
+    console.log(sorter);
+    const newState = {
+      current: field ? 1 : current,
+      pointsTotalSort: field === 'pointsTotal' && order,
+      orderTotalSort: field === 'orderTotal' && order,
+      serviceTotalSort: field === 'serviceTotal' && order,
+      consumptionSort: field === 'consumption' && order,
+      isCompanyFiltered: filter.company && filter.company ? filter.company[0] : false,
+    };
+
+    console.log(newState);
+    this.setState(newState);
+    this.props.dispatch({
+      type: 'customerTable/getCustomers',
+      payload: { ...newState },
+    });
+  };
   render() {
     console.log(this.props);
     const { loading } = this.props;
-    const that=this
     return (
       <PageHeaderWrapper>
         <Card bordered={false}>
           <div className={styles.tableList}>
             <Table
               loading={loading}
-              rowKey="customerId"
-              columns={this.columns}
-              dataSource={this.props.customerTable.data}
-              pagination={{total:this.props.customerTable.count,onChange(page){
-                that.props.dispatch({
-                  type: 'customerTable/get',
-                  payload:{page}
-                });
-              }}}
+              rowKey="_id"
+              onChange={this.onChange}
+              columns={this.getColumns()}
+              dataSource={this.props.customerTable.customers}
+              pagination={{
+                total: this.props.customerTable.total,
+                current: this.state.current,
+              }}
             />
           </div>
         </Card>

@@ -1,6 +1,10 @@
 export interface CustomerTableItem {
-  customerId: string;
-  createdAt:string
+  company: string;
+  serviceTotal: number;
+  pointsTotal: number;
+  orderTotal: number;
+  _id: string;
+  consumption: number;
 }
 /*
 export interface TableListPagination {

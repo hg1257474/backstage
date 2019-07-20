@@ -1,38 +1,7 @@
 import request from 'umi-request';
-import { TableListParams } from './data.d';
-
-export async function queryRule(params: TableListParams) {
-  return request('/api/rule', {
+const url = 'http://192.168.0.29:7001';
+export async function getServices(params: any) {
+  return request('/backstage/service', {
     params,
-  });
-}
-
-export async function removeRule(params: TableListParams) {
-  return request('/api/rule', {
-    method: 'POST',
-    data: {
-      ...params,
-      method: 'delete',
-    },
-  });
-}
-
-export async function addRule(params: TableListParams) {
-  return request('/api/rule', {
-    method: 'POST',
-    data: {
-      ...params,
-      method: 'post',
-    },
-  });
-}
-
-export async function updateRule(params: TableListParams) {
-  return request('/api/rule', {
-    method: 'POST',
-    data: {
-      ...params,
-      method: 'update',
-    },
   });
 }

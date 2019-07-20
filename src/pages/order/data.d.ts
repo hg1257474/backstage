@@ -1,6 +1,6 @@
 export interface OrderTableItem {
   name: string;
-  updateAt: string;
+  updatedAt: string;
   totalFee: number;
   customerId: string;
   _id: string;

@@ -1,12 +1,12 @@
 import { AnyAction, Reducer } from 'redux';
 import { EffectsCommandMap } from 'dva';
-import { get } from './service';
+import { getCustomers } from './service';
 
 import { CustomerTableItem } from './data.d';
 
 export interface StateType {
-  data: CustomerTableItem[];
-  count: number;
+  customers: CustomerTableItem[];
+  total: number;
 }
 
 export type Effect = (
@@ -18,10 +18,10 @@ export interface ModelType {
   namespace: string;
   state: StateType;
   effects: {
-    get: Effect;
+    getCustomers: Effect;
   };
   reducers: {
-    save: Reducer<StateType>;
+    customers: Reducer<StateType>;
   };
 }
 
@@ -29,26 +29,25 @@ const Model: ModelType = {
   namespace: 'customerTable',
 
   state: {
-    data: [],
-    count: 0,
+    customers: [],
+    total: 0,
   },
 
   effects: {
-    *get({ payload }, { call, put }) {
-      const response = yield call(get, payload);
+    *getCustomers({ payload }, { call, put }) {
+      const response = yield call(getCustomers, payload);
       yield put({
-        type: 'save',
+        type: 'customers',
         payload: response,
       });
     },
   },
 
   reducers: {
-    save(state, action) {
+    customers(state, action) {
       return {
         ...state,
-        data: action.payload.data,
-        count: action.payload.count,
+        ...action.payload,
       };
     },
   },

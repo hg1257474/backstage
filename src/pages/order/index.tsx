@@ -19,7 +19,7 @@ import {
 import Link from 'umi/link';
 
 import { OrderTableItem } from './data.d';
-import React, { Component, Fragment } from 'react';
+import React, { Component, Fragment, ClassicComponent } from 'react';
 
 import { Dispatch } from 'redux';
 import { FormComponentProps } from 'antd/es/form';
@@ -29,6 +29,9 @@ import * as moment from 'moment';
 import { StateType } from './model';
 
 import styles from './style.less';
+import { RangePickerProps } from 'antd/lib/date-picker/interface';
+
+const { RangePicker } = DatePicker;
 interface TableListProps extends FormComponentProps {
   dispatch: Dispatch<any>;
   loading: boolean;
@@ -36,15 +39,20 @@ interface TableListProps extends FormComponentProps {
 }
 
 interface TableListState {
+  shouldFilterName: boolean;
   modalVisible: boolean;
   current: number;
-  updateAtSort: boolean;
+  updatedAtSort: boolean;
   totalFeeSort: boolean;
   updateModalVisible: boolean;
   expandForm: boolean;
   formValues: { [key: string]: string };
+  isNameFiltered: boolean;
+  isUpdatedAtFiltered: boolean;
+  isRangePickerOpen: boolean;
 }
 /* eslint react/no-multi-comp:0 */
+/*
 @connect(
   ({
     orderTable,
@@ -61,22 +69,141 @@ interface TableListState {
     loading: loading.models.rule,
   }),
 )
+*/
+@connect(
+  ({
+    orderTable,
+    loading,
+  }: {
+    orderTable: StateType;
+    loading: {
+      models: {
+        [key: string]: boolean;
+      };
+    };
+  }) => {
+    console.log(loading);
+    return {
+      orderTable,
+      loading: loading.models.orderTable,
+    };
+  },
+)
 // interface momentType extends typeof moment={}
 class OrderTable extends Component<TableListProps, TableListState> {
   state: TableListState = {
+    shouldFilterName: false,
     modalVisible: false,
     updateModalVisible: false,
     expandForm: false,
     formValues: {},
     current: 1,
     totalFeeSort: false,
-    updateAtSort: false,
+    updatedAtSort: false,
+    isNameFiltered: false,
+    isUpdatedAtFiltered: false,
+    isRangePickerOpen: false,
+  };
+  nameFilterIcon = filtered => (
+    <Icon type="search" style={{ color: filtered ? '#1890ff' : undefined }} />
+  );
+  updatedAtFilterIcon = filtered => (
+    <Icon type="calendar" style={{ color: filtered ? '#1890ff' : undefined }} />
+  );
+  nameSearchInput: Input | null = null;
+  updatedAtRangePicker: null | ClassicComponent<RangePickerProps, any> = null;
+  onNameSearch = (selectedKeys, confirm) => {
+    confirm();
+    this.setState({
+      current: 1,
+      totalFeeSort: false,
+      updatedAtSort: false,
+    });
+    console.log(this.nameSearchInput);
+    this.props.dispatch({
+      type: 'orderTable/getOrders',
+      payload: {
+        current: 1,
+        name: this.nameSearchInput!.input.value,
+      },
+    });
+  };
+  onNameFilterDropdownVisibleChange = visible => {
+    if (visible) {
+      setTimeout(() => this.nameSearchInput!.select());
+    }
+  };
+  onUpdatedAtFilterDropdownVisibleChange = visible => {
+    if (visible) {
+      this.setState({ isRangePickerOpen: true });
+      setTimeout(() => this.updatedAtRangePicker!.focus());
+    } else this.setState({ isRangePickerOpen: false });
+  };
+  onNameFilter = (value, record) =>
+    record['dsdsds']
+      .toString()
+      .toLowerCase()
+      .includes(value.toLowerCase());
+
+  handleReset = clearFilters => {
+    clearFilters();
+    this.setState({ searchText: '' });
+  };
+  updatedAtFilterDropdown = ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => {
+    const that = this;
+    return (
+      <div style={{ padding: 8 }}>
+        <RangePicker
+          open={this.state.isRangePickerOpen}
+          onChange={(momentDate, date) => {
+            setSelectedKeys(date);
+            confirm();
+          }}
+          ref={node => {
+            that.updatedAtRangePicker = node;
+          }}
+        />
+      </div>
+    );
   };
 
+  nameFilterDropdown = ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => {
+    const that = this;
+    return (
+      <div style={{ padding: 8 }}>
+        <Input
+          ref={node => {
+            that.nameSearchInput = node;
+          }}
+          placeholder={`Search`}
+          value={selectedKeys[0]}
+          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => this.onNameSearch(selectedKeys, confirm)}
+          style={{ width: 188, marginBottom: 8, display: 'block' }}
+        />
+        <Button
+          type="primary"
+          onClick={confirm}
+          icon="search"
+          size="small"
+          style={{ width: 90, marginRight: 8 }}
+        >
+          Search
+        </Button>
+        <Button onClick={() => this.handleReset(clearFilters)} size="small" style={{ width: 90 }}>
+          Reset
+        </Button>
+      </div>
+    );
+  };
   getColumns = () => [
     {
       title: '订单名',
       dataIndex: 'name',
+      filterIcon: this.nameFilterIcon,
+      filterDropdown: this.nameFilterDropdown,
+      filtered: this.state.isNameFiltered,
+      onFilterDropdownVisibleChange: this.onNameFilterDropdownVisibleChange,
     },
     {
       title: '金额',
@@ -90,8 +217,12 @@ class OrderTable extends Component<TableListProps, TableListState> {
     {
       title: '交易时间',
       sorter: true,
-      dataIndex: 'updateAt',
-      sortOrder: this.state.updateAtSort,
+      dataIndex: 'updatedAt',
+      filtered: this.state.isUpdatedAtFiltered,
+      filterIcon: this.updatedAtFilterIcon,
+      filterDropdown: this.updatedAtFilterDropdown,
+      sortOrder: this.state.updatedAtSort,
+      onFilterDropdownVisibleChange: this.onUpdatedAtFilterDropdownVisibleChange,
       render(date: moment.Moment) {
         return moment(date).format('YYYY年MM月DD日 HH时mm分SS秒');
       },
@@ -106,24 +237,32 @@ class OrderTable extends Component<TableListProps, TableListState> {
   onChange = (pagination, filter, sorter) => {
     const { current } = pagination;
     //const {};
-    const { field } = sorter;
+
+    const { field, order } = sorter;
+    console.log(pagination);
+    console.log(filter);
+    console.log(sorter);
     const newState = {
-      current,
-      totalFeeSorter: field === 'totalFee' ? sorter.order : this.state.totalFeeSort,
-      updateAtSorter: field === 'updateAt' ? sorter.order : this.state.updateAtSort,
+      current: field ? 1 : current,
+      totalFeeSort: field === 'totalFee' && order,
+      updatedAtSort: field === 'updatedAt' && order,
+      isNameFiltered: filter.name ? filter.name[0] : false,
+      isUpdatedAtFiltered: filter.updatedAt ? filter.updatedAt : false,
     };
-    this.setState({ ...newState });
+
+    console.log(newState);
+    this.setState(newState);
     this.props.dispatch({
       type: 'orderTable/getOrders',
-      payload: newState,
+      payload: { ...newState },
     });
   };
 
   componentDidMount() {
     const { dispatch } = this.props;
     dispatch({
-      type: 'orderTable/get',
-      payload: { page: 1 },
+      type: 'orderTable/getOrders',
+      payload: { current: 1 },
     });
   }
 
@@ -137,10 +276,10 @@ class OrderTable extends Component<TableListProps, TableListState> {
           <div className={styles.tableList}>
             <Table
               loading={loading}
-              rowKey="orderId"
+              rowKey="_id"
               columns={this.getColumns()}
               dataSource={this.props.orderTable.orders}
-              onChange={(...x) => console.log(x)}
+              onChange={this.onChange}
               pagination={{ total: this.props.orderTable.total, current: this.state.current }}
             />
           </div>
