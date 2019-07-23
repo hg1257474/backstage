@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './index.less';
 import { Button } from 'antd';
 interface Props {
-  onChange?: (x: string) => void;
+  onChange?: ([x, y]: [string, string]) => void;
   value?: string;
 }
 const getImage = x => {
@@ -18,10 +18,12 @@ export default class extends React.Component<Props, { image: string }> {
   state = { image: '' };
   onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const reader = new FileReader();
+    const fileName = e.target.files![0].name;
     reader.onload = () => {
-      console.log(reader.result);
+      console.log('321312093u45u34');
+      console.log(fileName);
       this.setState({ image: reader.result as string });
-      this.props.onChange!(reader.result as string);
+      this.props.onChange!([fileName, reader.result as string]);
     };
     reader.readAsDataURL(e.target.files![0]);
   };

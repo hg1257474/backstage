@@ -101,6 +101,7 @@ class StandardTable extends Component<StandardTableProps<TableListItem>, Standar
   };
 
   render() {
+    console.log(this.props)
     const { selectedRowKeys, needTotalList } = this.state;
     const { data, rowKey, ...rest } = this.props;
     const { list = [], pagination = false } = data || {};
@@ -118,7 +119,6 @@ class StandardTable extends Component<StandardTableProps<TableListItem>, Standar
         disabled: record.disabled,
       }),
     };
-    console.log(this)
 
     return (
       <div className={styles.standardTable}>

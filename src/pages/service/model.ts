@@ -37,7 +37,7 @@ const Model: ModelType = {
     *getServices({ payload }, { call, put }) {
       const response = yield call(getServices, payload);
       yield put({
-        type: 'save',
+        type: 'services',
         payload: response,
       });
     },

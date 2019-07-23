@@ -18,7 +18,7 @@ import {
 } from 'antd';
 import Link from 'umi/link';
 
-import { ServiceTableItem } from './data.d';
+import { ConclusionTableItem } from './data.d';
 import React, { Component, Fragment } from 'react';
 const { RangePicker } = DatePicker;
 import { Dispatch } from 'redux';
@@ -43,95 +43,92 @@ import styles from './style.less';
 interface TableListProps extends FormComponentProps {
   dispatch: Dispatch<any>;
   loading: boolean;
-  serviceTable: StateType;
+  conclusionTable: StateType;
 }
 type SortType = boolean | 'ascend' | 'descend';
 interface TableListState {
-  modalVisible: boolean;
-  updateModalVisible: boolean;
-  expandForm: boolean;
-  formValues: { [key: string]: string };
   current: number;
-  updatedAtSort: SortType;
-  isNameFiltered: boolean;
-  isStatusFiltered: boolean;
-  isUpdatedAtFiltered: boolean;
+  isServiceNameFiltered: boolean;
+  isProcessorFiltered: boolean;
 }
 /* eslint react/no-multi-comp:0 */
 @connect(
   ({
-    serviceTable,
+    conclusionTable,
     loading,
   }: {
-    serviceTable: StateType;
+    conclusionTable: StateType;
     loading: {
       models: {
         [key: string]: boolean;
       };
     };
   }) => ({
-    serviceTable,
+    conclusionTable,
     loading: loading.models.rule,
   }),
 )
 // interface momentType extends typeof moment={}
-class TableList extends Component<TableListProps, TableListState> {
+class ConclusionTable extends Component<TableListProps, TableListState> {
   state: TableListState = {
-    modalVisible: false,
-    updateModalVisible: false,
-    expandForm: false,
-    formValues: {},
     current: 1,
-    updatedAtSort: false,
-    isStatusFiltered: false,
-    isNameFiltered: false,
-    isUpdatedAtFiltered: false,
+    isServiceNameFiltered: false,
+    isProcessorFiltered: false,
   };
-  nameFilterIcon = filtered => (
+  filterIcon = filtered => (
     <Icon type="search" style={{ color: filtered ? '#1890ff' : undefined }} />
   );
-  updatedAtFilterIcon = filtered => (
-    <Icon type="calendar" style={{ color: filtered ? '#1890ff' : undefined }} />
-  );
-  nameSearchInput: Input | null = null;
-  updatedAtRangePicker: null | ClassicComponent<RangePickerProps, any> = null;
 
-  onNameFilterDropdownVisibleChange = visible => {
+  serviceNameSearchInput: Input | null = null;
+  processorSearchInput: Input | null = null;
+
+  onServiceNameFilterDropdownVisibleChange = visible => {
     if (visible) {
-      setTimeout(() => this.nameSearchInput!.select());
+      setTimeout(() => this.serviceNameSearchInput!.select());
     }
   };
-  onUpdatedAtFilterDropdownVisibleChange = visible => {
+  onProcessorFilterDropdownVisibleChange = visible => {
     if (visible) {
-      this.setState({ isRangePickerOpen: true });
-      setTimeout(() => this.updatedAtRangePicker!.focus());
-    } else this.setState({ isRangePickerOpen: false });
+      setTimeout(() => this.processorSearchInput!.select());
+    }
   };
-  updatedAtFilterDropdown = ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => {
-    const that = this;
-    return (
-      <div style={{ padding: 8 }}>
-        <RangePicker
-          allowClear={true}
-          open={this.state.isRangePickerOpen}
-          onChange={(momentDate, date) => {
-            setSelectedKeys(date);
-            confirm();
-          }}
-          ref={node => {
-            that.updatedAtRangePicker = node;
-          }}
-        />
-      </div>
-    );
-  };
-  nameFilterDropdown = ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => {
+
+  serviceNameFilterDropdown = ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => {
     const that = this;
     return (
       <div style={{ padding: 8 }}>
         <Input
           ref={node => {
-            that.nameSearchInput = node;
+            that.serviceNameSearchInput = node;
+          }}
+          placeholder={`Search`}
+          value={selectedKeys[0]}
+          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={confirm}
+          style={{ width: 188, marginBottom: 8, display: 'block' }}
+        />
+        <Button
+          type="primary"
+          onClick={confirm}
+          icon="search"
+          size="small"
+          style={{ width: 90, marginRight: 8 }}
+        >
+          Search
+        </Button>
+        <Button onClick={clearFilters} size="small" style={{ width: 90 }}>
+          Reset
+        </Button>
+      </div>
+    );
+  };
+  processorFilterDropdown = ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => {
+    const that = this;
+    return (
+      <div style={{ padding: 8 }}>
+        <Input
+          ref={node => {
+            that.processorSearchInput = node;
           }}
           placeholder={`Search`}
           value={selectedKeys[0]}
@@ -157,11 +154,11 @@ class TableList extends Component<TableListProps, TableListState> {
   getColumns = () => [
     {
       title: '服务名',
-      dataIndex: 'name',
-      filterIcon: this.nameFilterIcon,
-      filterDropdown: this.nameFilterDropdown,
-      filtered: this.state.isNameFiltered,
-      onFilterDropdownVisibleChange: this.onNameFilterDropdownVisibleChange,
+      dataIndex: 'serviceName',
+      filterIcon: this.filterIcon,
+      filterDropdown: this.serviceNameFilterDropdown,
+      filtered: this.state.isServiceNameFiltered,
+      onFilterDropdownVisibleChange: this.onServiceNameFilterDropdownVisibleChange,
       render: (value: []) => (
         <span>
           {value
@@ -174,43 +171,12 @@ class TableList extends Component<TableListProps, TableListState> {
       ),
     },
     {
-      title: '状态',
-
-      filtered: this.state.isStatusFiltered,
-      filters: [
-        {
-          text: '已完结',
-          value: 'end',
-        },
-        {
-          text: '待支付',
-          value: 'wait_pay',
-        },
-        {
-          text: '服务中',
-          value: 'processing',
-        },
-        {
-          text: '待分配',
-          value: 'wait_assign',
-        },
-        {
-          text: '待报价',
-          value: 'wait_quote',
-        },
-      ],
-      dataIndex: 'status',
-      render: text => <span>{maps[text]}</span>,
-    },
-    {
-      title: '更新时间',
-      sorter: true,
-      filtered: this.state.isUpdatedAtFiltered,
-      filterIcon: this.updatedAtFilterIcon,
-      filterDropdown: this.updatedAtFilterDropdown,
-      onFilterDropdownVisibleChange: this.onUpdatedAtFilterDropdownVisibleChange,
-      sortOrder: this.state.updatedAtSort,
-      dataIndex: 'updatedAt',
+      title: '处理律师',
+      dataIndex: 'processor',
+      filterIcon: this.filterIcon,
+      filterDropdown: this.processorFilterDropdown,
+      filtered: this.state.isProcessorFiltered,
+      onFilterDropdownVisibleChange: this.onProcessorFilterDropdownVisibleChange,
     },
     {
       title: '操作',
@@ -222,7 +188,7 @@ class TableList extends Component<TableListProps, TableListState> {
   componentDidMount() {
     const { dispatch } = this.props;
     dispatch({
-      type: 'serviceTable/getServices',
+      type: 'conclusionTable/getConclusions',
       payload: { current: 1 },
     });
   }
@@ -236,17 +202,14 @@ class TableList extends Component<TableListProps, TableListState> {
     console.log(sorter);
     const newState = {
       current: field ? 1 : current,
-
-      updatedAtSort: field === 'updatedAt' && order,
-      isNameFiltered: filter.name && filter.name[0] ? filter.name[0] : false,
-      isStatusFiltered: filter.status && filter.status[0] ? filter.status : false,
-      isUpdatedAtFiltered: filter.updatedAt && filter.updatedAt ? filter.updatedAt : false,
+      isServiceNameFiltered: filter.name && filter.name[0] ? filter.name[0] : false,
+      isProcessorFiltered: filter.status && filter.status[0] ? filter.status : false,
     };
 
     console.log(newState);
     this.setState(newState);
     this.props.dispatch({
-      type: 'serviceTable/getServices',
+      type: 'conclusionTable/getConclusions',
       payload: { ...newState },
     });
   };
@@ -257,14 +220,14 @@ class TableList extends Component<TableListProps, TableListState> {
       <PageHeaderWrapper>
         <Card bordered={false}>
           <div className={styles.tableList}>
-            <Table
+            <Table<ConclusionTableItem>
               loading={loading}
               rowKey="_id"
               onChange={this.onChange}
               columns={this.getColumns()}
-              dataSource={this.props.serviceTable.services}
+              dataSource={this.props.conclusionTable.conclusions}
               pagination={{
-                total: this.props.serviceTable.total,
+                total: this.props.conclusionTable.total,
                 current: this.state.current,
               }}
             />
@@ -275,4 +238,4 @@ class TableList extends Component<TableListProps, TableListState> {
   }
 }
 
-export default Form.create<TableListProps>()(TableList);
+export default ConclusionTable;

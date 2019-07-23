@@ -1,12 +1,12 @@
 import { AnyAction, Reducer } from 'redux';
 import { EffectsCommandMap } from 'dva';
-import { get} from './service';
+import { getConclusions } from './service';
 
-import { ServiceListItemDataType } from './data.d';
+import { ConclusionTableItem } from './data.d';
 
 export interface StateType {
-  list: ServiceListItemDataType[];
-  count:number
+  conclusions: ConclusionTableItem[];
+  total: number;
 }
 
 export type Effect = (
@@ -18,38 +18,36 @@ export interface ModelType {
   namespace: string;
   state: StateType;
   effects: {
-    get: Effect;
+    getConclusions: Effect;
   };
   reducers: {
-    cb: Reducer<StateType>;
+    conclusions: Reducer<StateType>;
   };
 }
 
 const Model: ModelType = {
-  namespace: 'serviceList',
+  namespace: 'conclusionTable',
 
   state: {
-    list: [],
-    count:-1
+    conclusions: [],
+    total: 0,
   },
 
   effects: {
-    *get({ payload }, { call, put }) {
-      console.log(1111)
-      const response = yield call(get, payload);
+    *getConclusions({ payload }, { call, put }) {
+      const response = yield call(getConclusions, payload);
       yield put({
-        type: 'cb',
+        type: 'conclusions',
         payload: response,
       });
     },
   },
 
   reducers: {
-    cb(state = { list: [] ,count:-1}, action) {
+    conclusions(state, action) {
       return {
         ...state,
-        list:action.payload.list,
-        count:action.payload.count
+        ...action.payload,
       };
     },
   },

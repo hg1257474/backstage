@@ -1,6 +1,6 @@
 import request from 'umi-request';
 const url = 'http://192.168.0.29:7001';
-export async function getServices(params: any) {
+export async function getConclusions(params: any) {
   console.log(params);
   Object.keys(params).forEach(item => {
     if (params[item] === 'false' || !params[item]) delete params[item];
@@ -23,7 +23,7 @@ export async function getServices(params: any) {
       delete params[item];
     }
   });
-  return request(`${url}/backstage/service`, {
+  return request(`${url}/backstage/conclusion`, {
     mode: 'cors',
     params,
   });

@@ -9,6 +9,7 @@ export default {
   'menu.servicer':'成员',
   'menu.customer':'客户',
   'menu.resource':'资源',
+  'menu.conclusion':'总结',
   'menu.register.result': '注册结果',
   'menu.dashboard': 'Dashboard',
   'menu.dashboard.analysis': '分析页',

@@ -145,6 +145,24 @@ export default {
           ],
         },
         {
+          name: 'conclusion',
+          icon: 'book',
+          path: '/conclusion',
+          routes: [
+            {
+              component: './conclusion',
+              hideInMenu: true,
+              path: '/conclusion',
+            },
+            {
+              name: '详情',
+              hideInMenu: true,
+              path: '/conclusion/:id',
+              component: './conclusion/$id',
+            },
+          ],
+        },
+        {
           name: 'order',
           icon: 'book',
           path: '/order',

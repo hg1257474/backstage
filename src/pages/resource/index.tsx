@@ -40,10 +40,12 @@ interface PartSelectedType<T extends 'indexPage' | 'payPage'> {
 //type bb<T>=T extends "qwe"
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
+// const url="http://192.168.0.29:7001"
+const url = 'http://www.huishenghuo.net';
 const getImage = x => {
   const y = x;
   if (y.includes('base64')) return y;
-  return `http://192.168.0.29:7001/resource_test/${x}`;
+  return `${url}/resource_test/${x}`;
 };
 interface BasicListProps extends FormComponentProps {
   resourceList: StateType;
@@ -86,7 +88,7 @@ const empty1: IndexTermListItemDataType = {
 })
 */
 @connect((x: { resourceList: StateType; loading: { models: { [key: string]: boolean } } }) => {
-  console.log(x)
+  console.log(x);
   return { resourceList: x.resourceList, loading: x.loading.models.listBasicList, x };
 })
 class BasicList extends Component<BasicListProps, BasicListState> {

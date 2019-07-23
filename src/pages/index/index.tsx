@@ -135,6 +135,8 @@ class Analysis extends Component<dashboardAnalysisProps, dashboardAnalysisState>
       salesTypeDataOnline,
       salesTypeDataOffline,
     } = dashboardAnalysis;
+    console.log(visitData)
+    
     let salesPieData;
     if (salesType === 'all') {
       salesPieData = salesTypeData;
