@@ -8,8 +8,8 @@ interface Params {
   partSelected: {};
   current?: number;
 }
-// const url = 'http://192.168.0.29:7001';
-const url = 'https://www.huishenghuo.net';
+ const url = 'http://192.168.0.29:7001';
+// const url = 'https://www.huishenghuo.net';
 type ParamsType = IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType;
 export async function getList(params: Params) {
   return request(url + '/backstage/resource', {

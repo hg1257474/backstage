@@ -1,7 +1,7 @@
 import { AnyAction, Reducer } from 'redux';
 import { EffectsCommandMap } from 'dva';
 import { getList, deleteItem, updateItem, newItem } from './service';
-
+import { Item as IndexPageTermListItem } from './components/IndexPageTermList';
 import {
   IndexCategoryListItemDataType,
   IndexTermListItemDataType,
@@ -9,8 +9,14 @@ import {
 } from './data.d';
 
 export interface StateType {
-  list: Array<IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType>;
+  resources: Array<
+    IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType
+  >;
   total: number;
+  indexPageTermList?: {
+    total: number;
+    data: IndexPageTermListItem[];
+  };
 }
 
 export type Effect = (
@@ -22,7 +28,7 @@ export interface ModelType {
   namespace: string;
   state: StateType;
   effects: {
-    getList: Effect;
+    getResources: Effect;
     deleteItem: Effect;
     updateItem: Effect;
     newItem: Effect;
@@ -36,24 +42,23 @@ const Model: ModelType = {
   namespace: 'resourceList',
 
   state: {
-    list: [],
+    resources: [],
     total: 0,
   },
 
   effects: {
-    *getList({ payload }, { call, put }) {
+    *getResources({ payload }, { call, put }) {
       const response = yield call(getList, payload);
-      console.log('111');
       yield put({
         type: 'list',
-        payload: { ...response, ...payload }, //Array.isArray(response) ? response : [],
+        payload: response, //Array.isArray(response) ? response : [],
       });
     },
     *deleteItem({ payload }, { call, put }) {
       const response = yield call(deleteItem, payload);
       yield put({
         type: 'list',
-        payload: {...response,...payload} //Array.isArray(response) ? response : [],
+        payload: { ...response, ...payload }, //Array.isArray(response) ? response : [],
       });
     },
     *updateItem({ payload }, { call, put }) {
@@ -77,7 +82,8 @@ const Model: ModelType = {
 
   reducers: {
     list(state, action) {
-      console.log(action);
+      return { ...state, ...action.payload };
+      /*
       const list = action.payload.list.map((item, index) => {
         if (action.payload.target === 'indexPage') {
           if (action.payload.categorySelected) {
@@ -102,6 +108,7 @@ const Model: ModelType = {
         list,
         total: action.payload.total,
       };
+      */
     },
   },
 };
