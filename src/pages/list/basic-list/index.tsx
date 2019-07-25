@@ -59,10 +59,7 @@ interface BasicListState {
     loading: loading.models.listBasicList,
   }),
 )
-class BasicList extends Component<
-  BasicListProps,
-  BasicListState
-> {
+class BasicList extends Component<BasicListProps, BasicListState> {
   state: BasicListState = { visible: false, done: false, current: undefined };
 
   formLayout = {
@@ -133,7 +130,7 @@ class BasicList extends Component<
   deleteItem = (id: string) => {
     const { dispatch } = this.props;
     dispatch({
-      type: 'listBasicList/submit',
+      type: 'listBasicList/test',
       payload: { id },
     });
   };

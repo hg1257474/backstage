@@ -2,31 +2,27 @@ import { Button, Divider, Input, Popconfirm, Table, message } from 'antd';
 import React, { Fragment, PureComponent } from 'react';
 import Link from 'umi/link';
 import { isEqual } from 'lodash';
+import { ServicerTableItemDataType } from '../data';
+import { TableCondition } from '../index';
 import styles from '../style.less';
-
-export interface TableFormDateType {
-  account: string;
-  password: string;
-  name: string;
-  avatar: string;
-  total: number;
-  grade: number;
-  expert: any;
-  privilege: any;
-  id: string;
-}
+const privilegeMap = {
+  canAssignService: '分配服务',
+  canProcessingService: '处理服务',
+  canManageServicer: '管理成员',
+};
 interface TableFormProps {
   loading?: boolean;
-  value?: TableFormDateType[];
-  onChange: (value: TableFormDateType) => void;
-  onCancel: () => void;
+  value?: ServicerTableItemDataType[];
+  tableCondition: TableCondition;
+  onChange: (x: any) => void;
+  onChoose: (id: string | null, type?: 'new' | 'delete') => void;
 }
 
 interface TableFormState {
   loading?: boolean;
+  value?: ServicerTableItemDataType[];
+  data?: ServicerTableItemDataType[];
   editing: number;
-  value?: TableFormDateType[];
-  data?: TableFormDateType[];
 }
 class TableForm extends PureComponent<TableFormProps, TableFormState> {
   static getDerivedStateFromProps(nextProps: TableFormProps, preState: TableFormState) {
@@ -44,53 +40,89 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
   index = 0;
 
   cacheOriginData = {};
-
-  columns = [
+  remove = (index: number) => {
+    const { data = [] } = this.state;
+    const newData = data.filter((value, key) => key !== index);
+    this.setState({ data: newData, value: newData });
+  };
+  getColumns = () => [
     {
-      title: '账号',
-      dataIndex: 'account',
-      key: 'account',
+      title: '用户名',
+      dataIndex: 'username',
+      key: 'username',
       width: '20%',
-      render: (text: string, record: TableFormDateType) => {
-        return <Link to="/servicer/fdfsfsf">{text}</Link>;
-      },
-    },
-    {
-      title: '密码',
-      dataIndex: 'password',
-      key: 'password',
-      width: '20%',
-      render: (text: string, record: TableFormDateType) => {
-        return text;
-      },
     },
     {
       title: '姓名',
       dataIndex: 'name',
       key: 'name',
-      width: '40%',
-      render: (text: string, record: TableFormDateType) => {
-        return text;
+      width: '20%',
+    },
+    {
+      title: '权限',
+      dataIndex: 'privilege',
+      key: 'privilege',
+      width: '30%',
+      filteredValue: this.props.tableCondition.filteredValue,
+      filters: [
+        {
+          text: privilegeMap['canManageServicer'],
+          value: 'canManageServicer',
+        },
+        {
+          text: privilegeMap['canProcessingService'],
+          value: 'canProcessingService',
+        },
+        {
+          text: privilegeMap['canAssignService'],
+          value: 'canAssignService',
+        },
+      ],
+      render(text: {}) {
+        return Object.keys(text)
+          .map(item => privilegeMap[item])
+          .join(',');
+      },
+    },
+    {
+      title: '处理服务数',
+      dataIndex: 'servicesTotal',
+      key: 'servicesTotal',
+      sorter: true,
+      width: '15%',
+      sortOrder: this.props.tableCondition.sortOrder,
+      render(text: number, record: ServicerTableItemDataType) {
+        return <Link to={`/servicer/${record.id}/service`}>{text}</Link>;
       },
     },
     {
       title: '操作',
-      key: 'id',
+
       dataIndex: 'id',
-      render: (text: string, record: TableFormDateType, index: number) => {
-        if (this.state.editing === index) {
+      render: (id: string, record: ServicerTableItemDataType, index: number) => {
+        /*
+        const { loading } = this.state;
+        if (!!record.editable && loading) {
+          return null;
+        }
+        */
+        if (index === this.state.editing) {
           return (
             <span>
               <a
                 onClick={e => {
-                  this.props.onCancel();
                   this.setState({ editing: -1 });
+                  this.props.onChoose(null);
                 }}
               >
                 取消
               </a>
+
               <Divider type="vertical" />
-              <Popconfirm title="是否要删除此行？" onConfirm={() => this.remove(index)}>
+              <Popconfirm
+                title="是否要删除此行？"
+                onConfirm={() => this.props.onChoose(id, 'delete')}
+              >
                 <a>删除</a>
               </Popconfirm>
             </span>
@@ -98,9 +130,19 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
         }
         return (
           <span>
-            <a onClick={e => this.toggleEditable(e, index)}>编辑</a>
+            <a
+              onClick={e => {
+                this.setState({ editing: index });
+                this.props.onChoose(id);
+              }}
+            >
+              编辑
+            </a>
             <Divider type="vertical" />
-            <Popconfirm title="是否要删除此行？" onConfirm={() => this.remove(index)}>
+            <Popconfirm
+              title="是否要删除此行？"
+              onConfirm={() => this.props.onChoose(id, 'delete')}
+            >
               <a>删除</a>
             </Popconfirm>
           </span>
@@ -115,104 +157,29 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
       editing: -1,
       data: props.value,
       loading: false,
+      editing: -1,
       value: props.value,
     };
   }
-
-  toggleEditable = (e: React.MouseEvent | React.KeyboardEvent, index: number) => {
-    e.preventDefault();
-    const { data = [] } = this.state;
-    const newData = data.map(item => ({ ...item }));
-    const target = this.state.data![index];
-    console.log(target);
-    if (target) {
-      // 进入编辑状态时保存原始数据
-      this.props.onChange(target);
-      this.setState({ editing: index });
-    }
-  };
-
-  newMember = () => {
-    /*
-    const { data = [] } = this.state;
-    const newData = data.map(item => ({ ...item }));
-    newData.push({
-      key: `NEW_TEMP_ID_${this.index}`,
-      workId: '',
-      name: '',
-      department: '',
-      editable: true,
-      isNew: true,
-    });
-    this.index += 1;
-    this.setState({ data: newData });
-    */
-  };
-
-  remove(index: number) {
-    const { data = [] } = this.state;
-    this.props.onCancel();
-    data.splice(index, 1);
-    this.setState({ editing: -1, data, value: data });
-  }
-
-  handleKeyPress(e: React.KeyboardEvent, key: string) {
-    if (e.key === 'Enter') {
-      this.saveRow(e, key);
-    }
-  }
-
-  saveRow(e: React.MouseEvent | React.KeyboardEvent, key: string) {
-    /*
-    e.persist();
-    this.setState({
-      loading: true,
-    });
-    setTimeout(() => {
-      if (this.clickedCancel) {
-        this.clickedCancel = false;
-        return;
-      }
-      const target = this.getRowByKey(key) || {};
-      if (!target.workId || !target.name || !target.department) {
-        message.error('请填写完整成员信息。');
-        (e.target as HTMLInputElement).focus();
-        this.setState({
-          loading: false,
-        });
-        return;
-      }
-      delete target.isNew;
-      this.toggleEditable(e, key);
-      const { data = [] } = this.state;
-      const { onChange } = this.props;
-      if (onChange) {
-        onChange(data);
-      }
-      this.setState({
-        loading: false,
-      });
-    }, 500);
-    */
-  }
-
   render() {
-    console.log(this);
     const { loading, data } = this.state;
-
+    console.log(data);
+    console.log(this.props);
     return (
       <Fragment>
-        <Table<TableFormDateType>
+        <Table<ServicerTableItemDataType>
           loading={loading}
-          columns={this.columns}
+          columns={this.getColumns()}
           dataSource={data}
-          pagination={{ total: 10 }}
+          rowKey="id"
           rowClassName={record => ''}
+          onChange={this.props.onChange}
+          pagination={this.props.tableCondition.pagination}
         />
         <Button
           style={{ width: '100%', marginTop: 16, marginBottom: 8 }}
           type="dashed"
-          onClick={this.newMember}
+          onClick={() => this.props.onChoose(null, 'new')}
           icon="plus"
         >
           新增成员

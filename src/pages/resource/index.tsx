@@ -2,8 +2,6 @@ import {
   Avatar,
   Button,
   Card,
-  Option,
-  Col,
   DatePicker,
   Dropdown,
   Form,
@@ -12,11 +10,13 @@ import {
   List,
   Menu,
   Modal,
+  Table,
   Progress,
   Radio,
   Row,
   Select,
 } from 'antd';
+import _ from 'lodash';
 const { Option } = Select;
 import React, { Component } from 'react';
 
@@ -25,64 +25,71 @@ import { FormComponentProps } from 'antd/es/form';
 import { PageHeaderWrapper } from '@ant-design/pro-layout';
 import { connect } from 'dva';
 import { findDOMNode } from 'react-dom';
-import moment from 'moment';
-import Result from './Result';
 import { StateType } from './model';
-import { IndexListItemDataType, PaymentListItemDataType } from './data.d';
+import {
+  IndexCategoryListItemDataType,
+  IndexTermListItemDataType,
+  PriceListItemDataType,
+} from './data.d';
 import styles from './style.less';
-import ImageUploader from './components/ImageUploader'
-const FormItem = Form.Item;
+import IndexPageTermList from './components/IndexPageTermList';
+import FormModal from './components/FormModal';
+import { classBody } from '@babel/types';
+import { getIndexPageCategories } from './service';
+import { match } from 'minimatch';
+interface PartSelectedType<T extends 'indexPage' | 'payPage'> {
+  part: T;
+  categorySelected?: T extends 'indexPage' ? string : void;
+}
+//type bb<T>=T extends "qwe"
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
-const SelectOption = Select.Option;
-const { Search, TextArea } = Input;
+const url = 'http://192.168.0.29:7001';
+//const url = 'http://www.huishenghuo.net';
+const getImage = x => {
+  const y = x;
+  if (y.includes('base64')) return y;
+  return `${url}/resource_test/${x}`;
+};
 interface BasicListProps extends FormComponentProps {
-  listBasicList: StateType;
+  resourceList: StateType;
   dispatch: Dispatch<any>;
   loading: boolean;
 }
+export type NewTargetType = 'IndexPageCategory' | 'IndexPageTerm' | undefined;
+
 interface BasicListState {
-  visible: boolean;
+  editTarget?: 'indexPageCategory' | 'indexPageTerm';
   done: boolean;
-  current?: Partial<IndexListItemDataType | PaymentListItemDataType>;
-  selectedPage: 'index' | 'payment';
+  current: number;
+  partSelected: 'indexPageCategory';
+  callback?: {
+    timestamp: number;
+    newState: BasicListState;
+  };
+  newTarget?: NewTargetType;
+  shouldNewItem: boolean;
+  indexPageCategorySelected?: number;
+  inputTarget?: Partial<
+    IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType
+  >;
 }
-const index: IndexListItemDataType[] = [
-  { category: '合同', categoryDescription: 'Dsdsdsd', id: 'dsdsdsd', icon: 'dsdsdsd' },
-  {
-    category: '合同',
-    service: 'dsd3232',
-    serviceDescription: 'Dsdsdsd',
-    serviceSummary: 'dsds14980280543',
-    id: 'dsdsdsd',
-    icon: 'dsdsdsd',
-  },
-];
-const payment: PaymentListItemDataType[] = [
-  { category: '普通', fee: 23213, id: 'dsds', description: 'dsdsds' },
-];
-@connect(
-  ({
-    listBasicList,
-    loading,
-  }: {
-    listBasicList: StateType;
-    loading: {
-      models: { [key: string]: boolean };
-    };
-  }) => ({
-    listBasicList,
-    loading: loading.models.listBasicList,
-  }),
-)
+/*
+@connect((x: { resourceList: StateType; loading: { models: { [key: string]: boolean } } }) => {
+  return { resourceList: x.resourceList, loading: x.loading.models.listBasicList, x };
+})
+*/
+@connect((x: { resourceList: StateType; loading: { models: { [key: string]: boolean } } }) => {
+  console.log(x);
+  return { resourceList: x.resourceList, loading: x.loading.models.resourceList };
+})
 class BasicList extends Component<BasicListProps, BasicListState> {
   state: BasicListState = {
-    visible: false,
     done: false,
-    current: undefined,
-    selectedPage: 'index' as 'index' | 'payment',
+    shouldNewItem: false,
+    current: 1,
+    partSelected: 'indexPageCategory',
   };
-
   formLayout = {
     labelCol: { span: 7 },
     wrapperCol: { span: 13 },
@@ -91,182 +98,231 @@ class BasicList extends Component<BasicListProps, BasicListState> {
   addBtn: HTMLButtonElement | undefined | null = undefined;
 
   componentDidMount() {
-    /*
     const { dispatch } = this.props;
     dispatch({
-      type: 'listBasicList/fetch',
+      type: 'resourceList/getResources',
       payload: {
-        count: 5,
+        current: this.state.current,
+        target: 'indexPageCategory',
       },
     });
-    */
+  }
+  static getDerivedStateFromProps(props: BasicListProps, state: BasicListState) {
+    console.log(state);
+    if (state.callback && props.resourceList.timestamp === state.callback.timestamp) {
+      state = { ...state, ...state.callback.newState };
+      state.callback = undefined;
+      console.log(state);
+    }
+    return state;
   }
 
-  showModal = () => {
-    this.setState({
-      visible: true,
-      current: undefined,
-    });
+  newItem = editTarget => () => {
+    let newState = {};
+    this.setState({ editTarget });
+    this.setState(newState);
   };
 
-  showEditModal = (item: IndexListItemDataType | PaymentListItemDataType) => {
-    console.log(item);
-    this.setState({
-      visible: true,
-      current: item,
-    });
-  };
-
-  handleDone = () => {
+  onDone = () => {
     setTimeout(() => this.addBtn && this.addBtn.blur(), 0);
     this.setState({
       done: false,
-      visible: false,
+      editTarget: undefined,
+      inputTarget: undefined,
     });
   };
 
-  handleCancel = () => {
+  onCancel = () => {
     setTimeout(() => this.addBtn && this.addBtn.blur(), 0);
     this.setState({
-      visible: false,
+      editTarget: undefined,
+      inputTarget: undefined,
     });
   };
-
-  handleSubmit = (e: React.FormEvent) => {
+  indexPageTermListCurrent = 1;
+  onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const { dispatch, form } = this.props;
-    const { current } = this.state;
-    const id = current ? current.id : '';
-
+    const { inputTarget } = this.state;
     setTimeout(() => this.addBtn && this.addBtn.blur(), 0);
     form.validateFields(
-      (err: string | undefined, fieldsValue: IndexListItemDataType | PaymentListItemDataType) => {
+      (
+        err: string | undefined,
+        fieldsValue:
+          | IndexCategoryListItemDataType
+          | IndexTermListItemDataType
+          | PriceListItemDataType,
+      ) => {
         if (err) return;
-        console.log(fieldsValue);
-        this.setState({
-          done: true,
-        });
-        dispatch({
-          type: 'listBasicList/submit',
-          payload: { id, ...fieldsValue },
-        });
+        const timestamp = new Date().getTime();
+        let current = 0;
+        if (this.state.editTarget === 'indexPageCategory') {
+          fieldsValue.index! -= 1;
+          current = this.state.inputTarget
+            ? this.state.current
+            : Math.ceil((this.props.resourceList.total + 1) / 10);
+
+          this.setState({
+            callback: {
+              newState: { current, done: true },
+              timestamp,
+            },
+          });
+        } else if (this.state.editTarget === 'indexPageTerm') {
+          fieldsValue.index! -= 1;
+          current = this.indexPageTermCurrent;
+        }
+        const payload = {
+          timestamp,
+          params: {
+            current,
+            target: this.state.editTarget,
+            indexPageCategorySelcted: this.state.indexPageCategorySelected,
+          },
+          data: {
+            ...fieldsValue,
+            oldCategory: this.state.indexPageCategorySelected,
+            oldIndex: inputTarget && inputTarget.index,
+          },
+        };
+        if (this.state.inputTarget)
+          dispatch({
+            type: 'resourceList/updateItem',
+            payload,
+          });
+        else
+          dispatch({
+            type: 'resourceList/newItem',
+            payload,
+          });
       },
     );
   };
-
-  deleteItem = (id: string) => {
-    const { dispatch } = this.props;
-    dispatch({
-      type: 'listBasicList/submit',
-      payload: { id },
+  onChangeIndexPageTermListCurrent = current => {
+    this.indexPageTermListCurrent = current;
+    this.props.dispatch({
+      type: 'resourceList/getIndexPageTermList',
+      payload: {
+        target: 'indexPageTerm',
+        categorySelected: this.state.indexPageCategorySelected! + (this.state.current - 1) * 10,
+        current: 1,
+      },
     });
   };
-  
+
+  onDelete = (index: Number) => {
+    Modal.confirm({
+      title: '删除条目', //_maps1[this.state.selectedPage],
+      content: '您确定删除条目?', //_maps2[this.state.selectedPage],
+      okText: '确认',
+      cancelText: '取消',
+      onOk: () => {
+        const { dispatch } = this.props;
+        dispatch({
+          type: 'resourceList/deleteItem',
+          payload: {
+            index,
+            page: this.state.page,
+            target: this.state.partSelected.part,
+            categorySelected: this.state.partSelected.categorySelected,
+          },
+        });
+      },
+    });
+  };
   render() {
+    const ActionBar = ({
+      target,
+      inputTarget,
+      callback,
+    }: {
+      target: any;
+      inputTarget: any;
+      callback?: any;
+    }) => (
+      <>
+        <a
+          className={styles['action-btn']}
+          onClick={e => {
+            e.preventDefault();
+            if (callback) callback();
+            this.setState({ editTarget: target, inputTarget });
+          }}
+        >
+          编辑
+        </a>
+        <a
+          className={styles['action-btn']}
+          key="remove"
+          onClick={e => {
+            e.preventDefault();
+            if (callback) callback();
+            this.onDelete(target, inputTarget);
+          }}
+        >
+          删除
+        </a>
+      </>
+    );
     const {
-      listBasicList: { list },
+      resourceList: { list },
       loading,
     } = this.props;
     const {
       form: { getFieldDecorator },
     } = this.props;
-
-    const { visible, done, current = {} } = this.state;
-
-    const editAndDelete = (
-      key: string,
-      currentItem: IndexListItemDataType | PaymentListItemDataType,
-    ) => {
-      if (key === 'edit') this.showEditModal(currentItem);
-      else if (key === 'delete') {
-        Modal.confirm({
-          title: '删除任务',
-          content: '确定删除该任务吗？',
-          okText: '确认',
-          cancelText: '取消',
-          onOk: () => this.deleteItem(currentItem.id),
-        });
-      }
-    };
-
-    const modalFooter = done
-      ? { footer: null, onCancel: this.handleDone }
-      : { okText: '保存', onOk: this.handleSubmit, onCancel: this.handleCancel };
-
-    const Info: React.SFC<{
-      title: React.ReactNode;
-      value: React.ReactNode;
-      bordered?: boolean;
-    }> = ({ title, value, bordered }) => (
-      <div className={styles.headerInfo}>
-        <span>{title}</span>
-        <p>{value}</p>
-        {bordered && <em />}
-      </div>
-    );
-
+    console.log(this.props);
+    const { done, inputTarget = {}, partSelected } = this.state;
     const extraContent = (
       <div className={styles.extraContent}>
-        <RadioGroup defaultValue="all">
-          <RadioButton value="index">首页</RadioButton>
-          <RadioButton value="payment">支付页</RadioButton>
+        <RadioGroup defaultValue={partSelected}>
+          <RadioButton value="indexPageCategory">首页类目</RadioButton>
+          <RadioButton value="payPage">咨询价格</RadioButton>
         </RadioGroup>
-        <Search
-          style={{ display: 'none' }}
-          className={styles.extraContentSearch}
-          placeholder="请输入"
-          onSearch={() => ({})}
-        />
       </div>
     );
-
-    const paginationProps = {
-      showSizeChanger: true,
-      showQuickJumper: true,
-      pageSize: 5,
-      total: 50,
-    };
-    const IndexListContent = ({
-      data: { category, service, categoryDescription, serviceSummary, serviceDescription },
-    }: {
-      data: IndexListItemDataType;
-    }) => (
+    const IndexCategoryListContent = ({ index, category }: IndexCategoryListItemDataType) => (
       <div className={styles.listContent}>
         <div className={styles.listContentItem}>
-          <span>类别</span>
-          <p>{category}</p>
+          {category}
+          <ActionBar
+            inputTarget={{ index: index! + 10 * (this.state.current - 1), category }}
+            target="indexPageCategory"
+          />
+          <a
+            className={styles['action-btn']}
+            onClick={() => {
+              this.props.dispatch({
+                type: 'resourceList/getIndexPageTermList',
+                payload: {
+                  target: 'indexPageTerm',
+                  categorySelected: index! + (this.state.current - 1) * 10,
+                  current: 1,
+                },
+              });
+              this.setState(prevState => ({
+                indexPageCategorySelected:
+                  prevState.indexPageCategorySelected === index ? undefined : index,
+              }));
+            }}
+          >
+            {this.state.indexPageCategorySelected === index ? '隐藏' : '查看'}
+          </a>
+          {this.state.indexPageCategorySelected === index && (
+            <IndexPageTermList
+              loading={this.props.loading}
+              ActionBar={ActionBar}
+              onCurrentChange={this.onChangeIndexPageTermListCurrent}
+              {...this.props.resourceList.indexPageTermList}
+            />
+          )}
         </div>
-
-        {service && (
-          <div className={styles.listContentItem}>
-            <span>服务</span>
-            <p>{service}</p>
-          </div>
-        )}
-        {categoryDescription && (
-          <div className={styles.listContentItem}>
-            <span>类别说明</span>
-            <p>{categoryDescription}</p>
-          </div>
-        )}
-        {serviceSummary && (
-          <div className={styles.listContentItem}>
-            <span>服务简略</span>
-            <p>{serviceSummary}</p>
-          </div>
-        )}
-        {serviceDescription && (
-          <div className={styles.listContentItem}>
-            <span>服务说明</span>
-            <p>{serviceDescription}</p>
-          </div>
-        )}
       </div>
     );
-    const PaymentListContent = ({
+    const PriceListContent = ({
       data: { category, description, fee },
     }: {
-      data: PaymentListItemDataType;
+      data: PriceListItemDataType;
     }) => (
       <div className={styles.listContent}>
         <div className={styles.listContentItem}>
@@ -284,161 +340,12 @@ class BasicList extends Component<BasicListProps, BasicListState> {
         </div>
       </div>
     );
-
-    const MoreBtn: React.SFC<{
-      item: IndexListItemDataType | PaymentListItemDataType;
-    }> = ({ item }) => (
-      <Dropdown
-        overlay={
-          <Menu onClick={({ key }) => editAndDelete(key, item)}>
-            <Menu.Item key="edit">编辑</Menu.Item>
-            <Menu.Item key="delete">删除</Menu.Item>
-          </Menu>
-        }
-      >
-        <a>
-          更多 <Icon type="down" />
-        </a>
-      </Dropdown>
-    );
-
-    const getModalContent = () => {
-      console.log(this);
-      if (done) {
-        return (
-          <Result
-            type="success"
-            title="操作成功"
-            description="一系列的信息描述，很短同样也可以带标点。"
-            actions={
-              <Button type="primary" onClick={this.handleDone}>
-                知道了
-              </Button>
-            }
-            className={styles.formResult}
-          />
-        );
-      }
-      return (
-        <Form onSubmit={this.handleSubmit}>
-          <FormItem label="任务名称" {...this.formLayout}>
-            {getFieldDecorator('title', {
-              rules: [{ required: true, message: '请输入任务名称' }],
-              initialValue: current.service,
-            })(<Input placeholder="请输入" />)}
-          </FormItem>
-          <FormItem label="开始时间" {...this.formLayout}>
-            {getFieldDecorator('createdAt', {
-              rules: [{ required: true, message: '请选择开始时间' }],
-              initialValue: current.createdAt ? moment(current.createdAt) : null,
-            })(
-              <DatePicker
-                showTime
-                placeholder="请选择"
-                format="YYYY-MM-DD HH:mm:ss"
-                style={{ width: '100%' }}
-              />,
-            )}
-          </FormItem>
-          <FormItem label="任务负责人" {...this.formLayout}>
-            {getFieldDecorator('owner', {
-              rules: [{ required: true, message: '请选择任务负责人' }],
-              initialValue: current.owner,
-            })(
-              <Select placeholder="请选择">
-                <SelectOption value="付晓晓">付晓晓</SelectOption>
-                <SelectOption value="周毛毛">周毛毛</SelectOption>
-              </Select>,
-            )}
-          </FormItem>
-          <FormItem {...this.formLayout} label="产品描述">
-            {getFieldDecorator('subDescription', {
-              rules: [{ message: '请输入至少五个字符的产品描述！', min: 5 }],
-              initialValue: current.subDescription,
-            })(<TextArea rows={4} placeholder="请输入至少五个字符" />)}
-          </FormItem>
-        </Form>
-      );
-    };
-    const getModalContent2 = () => {
-      console.log(this);
-      let current = {};
-      if (this.state.current) current = this.state.current;
-      if (done) {
-        return (
-          <Result
-            type="success"
-            title="操作成功"
-            description="一系列的信息描述，很短同样也可以带标点。"
-            actions={
-              <Button type="primary" onClick={this.handleDone}>
-                知道了
-              </Button>
-            }
-            className={styles.formResult}
-          />
-        );
-      }
-      return (
-        <Form onSubmit={this.handleSubmit}>
-          {current.categoryDescription && (
-            <>
-              <FormItem label="服务类名" {...this.formLayout}>
-                {getFieldDecorator('category', {
-                  rules: [{ required: true, message: '请输入任务名称' }],
-                  initialValue: current.category,
-                })(<Input placeholder="请输入" />)}
-              </FormItem>
-              <FormItem label="服务类别说明" {...this.formLayout}>
-                {getFieldDecorator('categoryDescription', {
-                  rules: [{ required: true, message: '请输入任务名称' }],
-                  initialValue: current.categoryDescription,
-                })(<Input placeholder="请输入" />)}
-              </FormItem>
-              <FormItem label="服务图标" {...this.formLayout}>
-                {getFieldDecorator('icon', {
-                  rules: [{ required: true, message: '请输入任务名称' }],
-                  initialValue: current.icon,
-                })(<ImageUploader />)}
-              </FormItem>
-            </>
-          )}
-          {current.serviceDescription && (
-            <>
-              <FormItem label="服务类别" {...this.formLayout}>
-                {getFieldDecorator('category', {
-                  rules: [{ required: true, message: '请输入任务名称' }],
-                  initialValue: current.category,
-                })(
-                  <Select>
-                    <Option value="merger">融资并购</Option>
-                    <Option value="laborDispute">劳务纠纷</Option>
-                  </Select>,
-                )}
-              </FormItem>
-              <FormItem label="服务名" {...this.formLayout}>
-                {getFieldDecorator('title', {
-                  rules: [{ required: true, message: '请输入任务名称' }],
-                  initialValue: current.service,
-                })(<Input placeholder="请输入" />)}
-              </FormItem>
-              <FormItem label="服务概要" {...this.formLayout}>
-                {getFieldDecorator('title', {
-                  rules: [{ required: true, message: '请输入任务名称' }],
-                  initialValue: current.serviceSummary,
-                })(<Input placeholder="请输入" />)}
-              </FormItem>
-              <FormItem label="服务说明" {...this.formLayout}>
-                {getFieldDecorator('title', {
-                  rules: [{ required: true, message: '请输入任务名称' }],
-                  initialValue: current.serviceDescription,
-                })(<Input placeholder="请输入" />)}
-              </FormItem>
-            </>
-          )}
-        </Form>
-      );
-    };
+    const that = this;
+    console.log(this.props);
+    console.log(this.state);
+    // console.log(this.props.listBasicList);
+    // console.log(this.props.listBasicList.list);
+    // console.log('DDDDDDDDDDDDD232323232');
     return (
       <>
         <PageHeaderWrapper>
@@ -455,7 +362,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                 type="dashed"
                 style={{ width: '100%', marginBottom: 8 }}
                 icon="plus"
-                onClick={this.showModal}
+                onClick={this.newItem(this.state.partSelected)}
                 ref={component => {
                   // eslint-disable-next-line  react/no-find-dom-node
                   this.addBtn = findDOMNode(component) as HTMLButtonElement;
@@ -463,43 +370,43 @@ class BasicList extends Component<BasicListProps, BasicListState> {
               >
                 添加
               </Button>
-              <List<IndexListItemDataType | PaymentListItemDataType>
+              <List<
+                | IndexCategoryListItemDataType
+                | IndexCategoryListItemDataType
+                | PriceListItemDataType
+              >
                 size="large"
-                rowKey="id"
+                rowKey="index"
                 loading={loading}
-                pagination={paginationProps}
-                dataSource={this.state.selectedPage === 'index' ? index : payment}
-                renderItem={item => (
-                  <List.Item
-                    actions={[
-                      <a
-                        key="edit"
-                        onClick={e => {
-                          e.preventDefault();
-                          this.showEditModal(item);
-                        }}
-                      >
-                        编辑
-                      </a>,
-                      <MoreBtn key="more" item={item} />,
-                    ]}
-                  >
-                    {this.state.selectedPage === 'index' && (
-                      <List.Item.Meta
-                        avatar={
-                          <Avatar
-                            src={(item as IndexListItemDataType).icon}
-                            shape="square"
-                            size="large"
-                          />
-                        }
-                      />
-                    )}
-                    {this.state.selectedPage === 'index' && (
-                      <IndexListContent data={item as IndexListItemDataType} />
-                    )}
-                    {this.state.selectedPage === 'payment' && (
-                      <PaymentListContent data={item as PaymentListItemDataType} />
+                pagination={
+                  {
+                    total: this.props.resourceList.total,
+                    current: this.state.current,
+                    onChange(e) {
+                      that.setState({
+                        callback: {
+                          oldProps: that.props,
+                          newState: { current: e, indexPageCategorySelected: undefined },
+                        },
+                      });
+                      that.props.dispatch({
+                        type: 'resourceList/getResources',
+                        payload: {
+                          current: e,
+                          target: that.state.partSelected,
+                        },
+                      });
+                    },
+                  } /*paginationProps*/
+                }
+                dataSource={
+                  this.props.resourceList
+                    .resources /*this.state.selectedPage === 'index' ? index : payment*/
+                }
+                renderItem={(item, index) => (
+                  <List.Item className={styles.test123456789}>
+                    {partSelected === 'indexPageCategory' && (
+                      <IndexCategoryListContent index={index} category={item} />
                     )}
                   </List.Item>
                 )}
@@ -507,21 +414,20 @@ class BasicList extends Component<BasicListProps, BasicListState> {
             </Card>
           </div>
         </PageHeaderWrapper>
-
-        <Modal
-          title={done ? null : `任务${current ? '编辑' : '添加'}`}
-          className={styles.standardListForm}
-          width={640}
-          bodyStyle={done ? { padding: '72px 0' } : { padding: '28px 0 0' }}
-          destroyOnClose
-          visible={visible}
-          {...modalFooter}
-        >
-          {getModalContent2()}
-        </Modal>
+        {this.state.editTarget && (
+          <FormModal
+            target={this.state.editTarget}
+            inputTarget={inputTarget}
+            onCancel={this.onCancel}
+            onDone={this.onDone}
+            done={done}
+            onSubmit={this.onSubmit}
+            getFieldDecorator={getFieldDecorator}
+            max={this.props.resourceList.total}
+          />
+        )}
       </>
     );
   }
 }
-
 export default Form.create<BasicListProps>()(BasicList);

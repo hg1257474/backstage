@@ -1,11 +1,12 @@
 import { AnyAction, Reducer } from 'redux';
 import { EffectsCommandMap } from 'dva';
-import { addRule, queryRule, removeRule, updateRule } from './service';
+import { getServices } from './service';
 
-import { TableListDate } from './data.d';
+import { ServiceTableItem } from './data.d';
 
 export interface StateType {
-  data: TableListDate;
+  services: ServiceTableItem[];
+  total: number;
 }
 
 export type Effect = (
@@ -17,65 +18,36 @@ export interface ModelType {
   namespace: string;
   state: StateType;
   effects: {
-    fetch: Effect;
-    add: Effect;
-    remove: Effect;
-    update: Effect;
+    getServices: Effect;
   };
   reducers: {
-    save: Reducer<StateType>;
+    services: Reducer<StateType>;
   };
 }
 
 const Model: ModelType = {
-  namespace: 'listTableList',
+  namespace: 'serviceTable',
 
   state: {
-    data: {
-      list: [],
-      pagination: {},
-    },
+    services: [],
+    total: 0,
   },
 
   effects: {
-    *fetch({ payload }, { call, put }) {
-      const response = yield call(queryRule, payload);
+    *getServices({ payload }, { call, put }) {
+      const response = yield call(getServices, payload);
       yield put({
-        type: 'save',
+        type: 'services',
         payload: response,
       });
-    },
-    *add({ payload, callback }, { call, put }) {
-      const response = yield call(addRule, payload);
-      yield put({
-        type: 'save',
-        payload: response,
-      });
-      if (callback) callback();
-    },
-    *remove({ payload, callback }, { call, put }) {
-      const response = yield call(removeRule, payload);
-      yield put({
-        type: 'save',
-        payload: response,
-      });
-      if (callback) callback();
-    },
-    *update({ payload, callback }, { call, put }) {
-      const response = yield call(updateRule, payload);
-      yield put({
-        type: 'save',
-        payload: response,
-      });
-      if (callback) callback();
     },
   },
 
   reducers: {
-    save(state, action) {
+    services(state, action) {
       return {
         ...state,
-        data: action.payload,
+        ...action.payload,
       };
     },
   },

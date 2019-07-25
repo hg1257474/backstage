@@ -104,12 +104,30 @@ export default {
       authority: [''],
       routes: [
         {
-          name: 'table-list',
-          path: '/list/table-list',
-          component: './list/table-list',
+          name: 'home',
+          path: '/',
+          component: './index',
         },
         {
-          name: '管理员',
+          name: 'service',
+          icon: 'book',
+          path: '/service',
+          routes: [
+            {
+              component: './service',
+              hideInMenu: true,
+              path: '/service',
+            },
+            {
+              name: 'detail',
+              hideInMenu: true,
+              path: '/service/:id',
+              component: './service/$id',
+            },
+          ],
+        },
+        {
+          name: 'servicer',
           icon: 'book',
           path: '/servicer',
           routes: [
@@ -127,7 +145,25 @@ export default {
           ],
         },
         {
-          name: '订单',
+          name: 'conclusion',
+          icon: 'book',
+          path: '/conclusion',
+          routes: [
+            {
+              component: './conclusion',
+              hideInMenu: true,
+              path: '/conclusion',
+            },
+            {
+              name: '详情',
+              hideInMenu: true,
+              path: '/conclusion/:id',
+              component: './conclusion/$id',
+            },
+          ],
+        },
+        {
+          name: 'order',
           icon: 'book',
           path: '/order',
           routes: [
@@ -137,7 +173,7 @@ export default {
               path: '/order',
             },
             {
-              name: '详情',
+              name: 'detail',
               hideInMenu: true,
               path: '/order/:id',
               component: './order/$id',
@@ -145,7 +181,25 @@ export default {
           ],
         },
         {
-          name: '资源管理',
+          name: 'customer',
+          icon: 'book',
+          path: '/customer',
+          routes: [
+            {
+              component: './customer',
+              hideInMenu: true,
+              path: '/customer',
+            },
+            {
+              name: 'detail',
+              hideInMenu: true,
+              path: '/customer/:id',
+              component: './customer/$id',
+            },
+          ],
+        },
+        {
+          name: 'resource',
           icon: 'book',
           path: '/resource',
           component: './resource',
@@ -177,7 +231,7 @@ export default {
         resourcePath: string;
       },
       localIdentName: string,
-      localName: string
+      localName: string,
     ) => {
       if (
         context.resourcePath.includes('node_modules') ||

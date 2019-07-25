@@ -20,6 +20,7 @@ export interface ModelType {
     fetch: Effect;
     appendFetch: Effect;
     submit: Effect;
+    test: any;
   };
   reducers: {
     queryList: Reducer<StateType>;
@@ -35,6 +36,10 @@ const Model: ModelType = {
   },
 
   effects: {
+    *test(...x: any) {
+      console.log(x);
+      return 1;
+    },
     *fetch({ payload }, { call, put }) {
       const response = yield call(queryFakeList, payload);
       yield put({

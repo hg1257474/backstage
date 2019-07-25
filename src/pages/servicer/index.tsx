@@ -11,6 +11,7 @@ import {
   Select,
   TimePicker,
 } from 'antd';
+import _ from 'lodash';
 import React, { Component } from 'react';
 import { TableFormDateType } from './components/TableForm';
 import { Dispatch } from 'redux';
@@ -20,9 +21,15 @@ import { connect } from 'dva';
 import TableForm from './components/TableForm';
 import FooterToolbar from './components/FooterToolbar';
 import styles from './style.less';
-import { img1, img2 } from './data';
-const { Option } = Select;
 
+import { image } from './images';
+import ImageUpload from '../../components/ImageUpload';
+import { StateType } from './model';
+import { threadId } from 'worker_threads';
+import { getServicer } from './service';
+
+const { Option } = Select;
+const { Search } = Input;
 const fieldLabels = {
   account: '账号',
   password: '密码',
@@ -34,28 +41,143 @@ const fieldLabels = {
   privilege: '权限',
 };
 
-interface AdvancedFormProps extends FormComponentProps {
+let oldSearchValue: string = '';
+export interface TableCondition {
+  pagination: { total: number; current: number };
+  filteredValue: [];
+  sortOrder: 'ascend' | 'descend' | false;
+}
+interface Props extends FormComponentProps {
   dispatch: Dispatch<any>;
   submitting: boolean;
+  servicerTable: StateType;
 }
-
+interface State {
+  width: string;
+  inputTarget: any;
+  tableCondition: TableCondition;
+}
+/*
 @connect(({ loading }: { loading: { effects: { [key: string]: boolean } } }) => ({
   submitting: loading.effects['formAdvancedForm/submitAdvancedForm'],
 }))
-class AdvancedForm extends Component<AdvancedFormProps> {
-  state = {
-    width: '100%',
-    shouldInput: false,
+*/
+function getPrevilegeSelectValue(value) {
+  if (value) return value;
+}
+const initialTableCondition: TableCondition = {
+  pagination: { total: 0, current: 1 },
+  filteredValue: [],
+  sortOrder: false,
+};
+@connect(x => {
+  return {
+    submitting: x.loading.effects['formAdvancedForm/submitAdvancedForm'],
+    servicerTable: x.servicerTable,
   };
+})
+class AdvancedForm extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      tableCondition: {
+        pagination: { total: props.servicerTable.total, current: 1 },
+        filteredValue: [],
+        sortOrder: false,
+      },
+      width: '100%',
+      inputTarget: null,
+    };
+  }
+
+  searchRef = React.createRef();
 
   componentDidMount() {
     console.log(this.props);
+    this.props.dispatch({
+      type: 'servicerTable/getServicers',
+      payload: {
+        pagination: { current: 1 },
+      },
+    });
     window.addEventListener('resize', this.resizeFooterToolbar, { passive: true });
   }
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.resizeFooterToolbar);
   }
+
+  onSearch = (value: string) => {
+    if (value.trim() !== oldSearchValue) {
+      oldSearchValue = value.trim();
+      this.props.dispatch({
+        type: 'servicerTable/getServicers',
+        payload: {
+          pagination: { current: 1 },
+          allName: oldSearchValue,
+        },
+      });
+
+      this.setState({
+        tableCondition: initialTableCondition,
+        inputTarget: null,
+      });
+    }
+  };
+
+  onChoose = async (id: string | null, type?: 'new' | 'delete') => {
+    if (type === 'delete') {
+      const { total } = this.props.servicerTable;
+      const { current } = this.state.tableCondition.pagination;
+      const currentPage = total - 1 > (current - 1) * 10 ? current : current - 1;
+      const tableCondition = {
+        ...initialTableCondition,
+        pagination: { total: total - 1, current: currentPage },
+      };
+      this.setState({ tableCondition });
+      this.searchRef.current.input.input.value = '';
+      this.props.dispatch({
+        type: 'servicerTable/updateServicers',
+        payload: {
+          params: { pagination: { current: currentPage } },
+          data: { method: 'DELETE', id },
+        },
+      });
+      return;
+    }
+    let inputTarget = type === 'new' ? {} : null;
+    if (id !== null) inputTarget = await getServicer(id);
+    this.setState({ inputTarget });
+  };
+
+  onChangeTableCondition = (pagination, filtersArg, sorter) => {
+    console.log((this.searchRef.current.input.input.value = ''));
+    console.log(pagination);
+    console.log(sorter);
+    console.log(filtersArg);
+
+    const newTableCondition: TableCondition = {
+      pagination: { total: this.props.servicerTable.total, current: pagination.current },
+      filteredValue: filtersArg.privilege,
+      sortOrder: sorter.order,
+    };
+    console.log(newTableCondition);
+    console.log(this.state.tableCondition);
+    if (!_.isEqual(newTableCondition, this.state.tableCondition)) {
+      this.setState({
+        tableCondition: newTableCondition,
+        inputTarget: null,
+      });
+
+      this.props.dispatch({
+        type: 'servicerTable/getServicers',
+        payload: {
+          allName: oldSearchValue,
+          ...newTableCondition,
+        },
+      });
+    }
+  };
 
   getErrorInfo = () => {
     const {
@@ -105,30 +227,7 @@ class AdvancedForm extends Component<AdvancedFormProps> {
       </span>
     );
   };
-  test: TableFormDateType[] = [
-    {
-      account: 'admin',
-      password: 'password',
-      name: '阿斯顿',
-      avatar: img1,
-      total: 10,
-      grade: 100,
-      expert: '擅长',
-      privilege: '权限',
-      id: '111111111111111',
-    },
-    {
-      account: '账号',
-      password: '密码',
-      name: '成员姓名',
-      avatar: img2,
-      total: 20,
-      grade: 200,
-      expert: '擅长',
-      privilege: '权限',
-      id: '22222222222222',
-    },
-  ];
+
   resizeFooterToolbar = () => {
     requestAnimationFrame(() => {
       const sider = document.querySelectorAll('.ant-layout-sider')[0] as HTMLDivElement;
@@ -142,6 +241,11 @@ class AdvancedForm extends Component<AdvancedFormProps> {
     });
   };
 
+  static getDerivedStateFromProps(props: Props, state: State) {
+    if (props.servicerTable.total !== state.tableCondition.pagination.total)
+      state.tableCondition.pagination.total = props.servicerTable.total;
+    return state;
+  }
   validate = () => {
     const {
       form: { validateFieldsAndScroll },
@@ -150,16 +254,37 @@ class AdvancedForm extends Component<AdvancedFormProps> {
     validateFieldsAndScroll((error, values) => {
       if (!error) {
         // submit the values
+        console.log(values);
+        const data = values;
+        data.method = data.id ? 'PUT' : 'POST';
+        const { total } = this.props.servicerTable;
+        const { current } = this.state.tableCondition.pagination;
+        let params = undefined;
+        let currentPage = undefined;
+        if (values.method === 'PUT') currentPage = current;
+        else {
+          currentPage = Math.ceil((total + 1) / 10);
+        }
+        params = { pagination: { current: currentPage, total: total + 1 } };
         dispatch({
-          type: 'formAdvancedForm/submitAdvancedForm',
-          payload: values,
+          type: 'servicerTable/updateServicers',
+          payload: {
+            data,
+            params,
+          },
         });
+        const tableCondition = {
+          ...initialTableCondition,
+          ...params,
+        };
+        this.setState({ tableCondition, inputTarget: null });
+        this.searchRef.current.input.input.value = '';
       }
     });
   };
-
   render() {
     console.log(this);
+    const that = this;
     const {
       form: { getFieldDecorator },
       submitting,
@@ -168,13 +293,14 @@ class AdvancedForm extends Component<AdvancedFormProps> {
     return (
       <>
         <PageHeaderWrapper content="在此页面管理律师和管理员">
-          {this.state.shouldInput && (
+          {this.state.inputTarget && (
             <Card title="详细信息" className={styles.card} bordered={false}>
               <Form layout="vertical" hideRequiredMark>
                 <Row gutter={16}>
                   <Col lg={6} md={12} sm={24}>
                     <Form.Item label={fieldLabels.account}>
-                      {getFieldDecorator('account', {
+                      {getFieldDecorator('username', {
+                        initialValue: this.state.inputTarget.username,
                         rules: [{ required: true, message: '请输入' }],
                       })(<Input placeholder="请输入" />)}
                     </Form.Item>
@@ -182,6 +308,7 @@ class AdvancedForm extends Component<AdvancedFormProps> {
                   <Col xl={{ span: 6, offset: 2 }} lg={{ span: 8 }} md={{ span: 12 }} sm={24}>
                     <Form.Item label={fieldLabels.password}>
                       {getFieldDecorator('password', {
+                        initialValue: this.state.inputTarget.password,
                         rules: [{ required: true, message: '请选择' }],
                       })(<Input placeholder="请输入" />)}
                     </Form.Item>
@@ -189,7 +316,8 @@ class AdvancedForm extends Component<AdvancedFormProps> {
                   <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>
                     <Form.Item label={fieldLabels.name}>
                       {getFieldDecorator('name', {
-                        rules: [{ required: true, message: '请选择管理员' }],
+                        initialValue: this.state.inputTarget.name,
+                        rules: [],
                       })(<Input placeholder="请输入" />)}
                     </Form.Item>
                   </Col>
@@ -198,14 +326,16 @@ class AdvancedForm extends Component<AdvancedFormProps> {
                   <Col xl={{ span: 6, offset: 2 }} lg={{ span: 8 }} md={{ span: 12 }} sm={24}>
                     <Form.Item label={fieldLabels.avatar}>
                       {getFieldDecorator('avatar', {
-                        rules: [{ required: true, message: '请选择' }],
-                      })(<Input placeholder="请输入" />)}
+                        initialValue: this.state.inputTarget.avatar,
+                        rules: [],
+                      })(<ImageUpload />)}
                     </Form.Item>
                   </Col>
                   <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>
                     <Form.Item label={fieldLabels.total}>
-                      {getFieldDecorator('owner2', {
-                        rules: [{ required: true, message: '请选择管理员' }],
+                      {getFieldDecorator('serviceTotal', {
+                        initialValue: this.state.inputTarget.total,
+                        rules: [],
                       })(<Input placeholder="请输入" />)}
                     </Form.Item>
                   </Col>
@@ -213,33 +343,32 @@ class AdvancedForm extends Component<AdvancedFormProps> {
                 <Row gutter={16}>
                   <Col lg={6} md={12} sm={24}>
                     <Form.Item label={fieldLabels.grade}>
-                      {getFieldDecorator('approver2', {
-                        rules: [{ required: true, message: '请选择审批员' }],
+                      {getFieldDecorator('grade', {
+                        initialValue: this.state.inputTarget.grade,
+                        rules: [],
                       })(<Input placeholder="请输入" />)}
                     </Form.Item>
                   </Col>
                   <Col xl={{ span: 6, offset: 2 }} lg={{ span: 8 }} md={{ span: 12 }} sm={24}>
                     <Form.Item label={fieldLabels.expert}>
-                      {getFieldDecorator('dateRange2', {
-                        rules: [{ required: true, message: '请输入' }],
-                      })(
-                        <Select mode="multiple" style={{ width: '100%' }} placeholder="请选择">
-                          <Option value="taxReporting">税收报账</Option>
-                          <Option value="licenseProcessing">许可证办理</Option>
-                          <Option value="equityDistribution">股权分配</Option>
-                        </Select>,
-                      )}
+                      {getFieldDecorator('expert', {
+                        initialValue: this.state.inputTarget.expert,
+                        rules: [],
+                      })(<Input placeholder="请输入" />)}
                     </Form.Item>
                   </Col>
                   <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>
                     <Form.Item label={fieldLabels.privilege}>
-                      {getFieldDecorator('type2', {
-                        rules: [{ required: true, message: '请选择仓库类型' }],
+                      {getFieldDecorator('privilege', {
+                        initialValue:
+                          this.state.inputTarget.privilege &&
+                          Object.keys(this.state.inputTarget.privilege),
+                        rules: [{ required: true, message: '请选择律师权限' }],
                       })(
                         <Select mode="multiple" style={{ width: '100%' }} placeholder="请选择">
-                          <Option value="assignLawyer">分配律师</Option>
-                          <Option value="manageManager">管理管理员</Option>
-                          <Option value="manageLawyer">管理律师</Option>
+                          <Option value="canAssignService">分配服务</Option>
+                          <Option value="canManageServicer">管理成员</Option>
+                          <Option value="canProcessingService">处理服务</Option>
                         </Select>,
                       )}
                     </Form.Item>
@@ -248,15 +377,22 @@ class AdvancedForm extends Component<AdvancedFormProps> {
               </Form>
             </Card>
           )}
-          <Card title="成员管理" bordered={false}>
+          <Card
+            title="成员管理"
+            bordered={false}
+            extra={
+              <Search
+                placeholder="输入用户名或姓名搜索"
+                ref={this.searchRef}
+                onSearch={this.onSearch}
+              />
+            }
+          >
             <TableForm
-              value={this.test}
-              onCancel={() => this.setState({ shouldInput: false, inputTarget: null })}
-              onChange={(x: TableFormDateType) => {
-                console.log(x);
-                console.log('dddddddddddddddddddddddddddd');
-                this.setState({ shouldInput: true, inputTarget: x });
-              }}
+              tableCondition={this.state.tableCondition}
+              onChange={this.onChangeTableCondition}
+              value={this.props.servicerTable.servicers}
+              onChoose={this.onChoose}
             />
           </Card>
         </PageHeaderWrapper>

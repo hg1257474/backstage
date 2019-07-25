@@ -1,150 +1,206 @@
-import { BasicListItemDataType } from './data.d';
-
-const titles = [
-  'Alipay',
-  'Angular',
-  'Ant Design',
-  'Ant Design Pro',
-  'Bootstrap',
-  'React',
-  'Vue',
-  'Webpack',
-];
-const avatars = [
-  'https://gw.alipayobjects.com/zos/rmsportal/WdGqmHpayyMjiEhcKoVE.png', // Alipay
-  'https://gw.alipayobjects.com/zos/rmsportal/zOsKZmFRdUtvpqCImOVY.png', // Angular
-  'https://gw.alipayobjects.com/zos/rmsportal/dURIMkkrRFpPgTuzkwnB.png', // Ant Design
-  'https://gw.alipayobjects.com/zos/rmsportal/sfjbOqnsXXJgNCjCzDBL.png', // Ant Design Pro
-  'https://gw.alipayobjects.com/zos/rmsportal/siCrBXXhmvTQGWPNLBow.png', // Bootstrap
-  'https://gw.alipayobjects.com/zos/rmsportal/kZzEzemZyKLKFsojXItE.png', // React
-  'https://gw.alipayobjects.com/zos/rmsportal/ComBAopevLwENQdKWiIn.png', // Vue
-  'https://gw.alipayobjects.com/zos/rmsportal/nxkuOJlFJuAUhzlMTCEe.png', // Webpack
-];
-
-const covers = [
-  'https://gw.alipayobjects.com/zos/rmsportal/uMfMFlvUuceEyPpotzlq.png',
-  'https://gw.alipayobjects.com/zos/rmsportal/iZBVOIhGJiAnhplqjvZW.png',
-  'https://gw.alipayobjects.com/zos/rmsportal/iXjVmWVHbCJAyqvDxdtx.png',
-  'https://gw.alipayobjects.com/zos/rmsportal/gLaIAoVWTtLbBWZNYEMg.png',
-];
-const desc = [
-  '那是一种内在的东西， 他们到达不了，也无法触及的',
-  '希望是一个好东西，也许是最好的，好东西是不会消亡的',
-  '生命就像一盒巧克力，结果往往出人意料',
-  '城镇中有那么多的酒馆，她却偏偏走进了我的酒馆',
-  '那时候我只会想自己想要什么，从不想自己拥有什么',
-];
-
-const user = [
-  '付小小',
-  '曲丽丽',
-  '林东东',
-  '周星星',
-  '吴加好',
-  '朱偏右',
-  '鱼酱',
-  '乐哥',
-  '谭小仪',
-  '仲尼',
-];
-
-function fakeList(count: number): BasicListItemDataType[] {
-  const list = [];
-  for (let i = 0; i < count; i += 1) {
-    list.push({
-      id: `fake-list-${i}`,
-      owner: user[i % 10],
-      title: titles[i % 8],
-      avatar: avatars[i % 8],
-      cover: parseInt(`${i / 4}`, 10) % 2 === 0 ? covers[i % 4] : covers[3 - (i % 4)],
-      status: ['active', 'exception', 'normal'][i % 3] as
-        | 'normal'
-        | 'exception'
-        | 'active'
-        | 'success',
-      percent: Math.ceil(Math.random() * 50) + 50,
-      logo: avatars[i % 8],
-      href: 'https://ant.design',
-      updatedAt: new Date(new Date().getTime() - 1000 * 60 * 60 * 2 * i).getTime(),
-      createdAt: new Date(new Date().getTime() - 1000 * 60 * 60 * 2 * i).getTime(),
-      subDescription: desc[i % 5],
-      description:
-        '在中台产品的研发过程中，会出现不同的设计规范和实现方式，但其中往往存在很多类似的页面和组件，这些类似的组件会被抽离成一套标准规范。',
-      activeUser: Math.ceil(Math.random() * 100000) + 100000,
-      newUser: Math.ceil(Math.random() * 1000) + 1000,
-      star: Math.ceil(Math.random() * 100) + 100,
-      like: Math.ceil(Math.random() * 100) + 100,
-      message: Math.ceil(Math.random() * 10) + 10,
-      content:
-        '段落示意：蚂蚁金服设计平台 ant.design，用最小的工作量，无缝接入蚂蚁金服生态，提供跨越设计与开发的体验解决方案。蚂蚁金服设计平台 ant.design，用最小的工作量，无缝接入蚂蚁金服生态，提供跨越设计与开发的体验解决方案。',
-      members: [
-        {
-          avatar: 'https://gw.alipayobjects.com/zos/rmsportal/ZiESqWwCXBRQoaPONSJe.png',
-          name: '曲丽丽',
-          id: 'member1',
-        },
-        {
-          avatar: 'https://gw.alipayobjects.com/zos/rmsportal/tBOxZPlITHqwlGjsJWaF.png',
-          name: '王昭君',
-          id: 'member2',
-        },
-        {
-          avatar: 'https://gw.alipayobjects.com/zos/rmsportal/sBxjgqiuHMGRkIjqlQCd.png',
-          name: '董娜娜',
-          id: 'member3',
-        },
+/*
+import {
+  IndexCategoryListItemDataType,
+  IndexTermListItemDataType,
+  PriceListItemDataType,
+} from './data.d';
+import { query } from '@/services/user';
+type List = IndexCategoryListItemDataType | IndexTermListItemDataType;
+const { categoryIcon, serviceIcon } = require('./images.js');
+const rawData = [
+  [
+    categoryIcon,
+    '合同-1',
+    '法律咨询提供合同',
+    [
+      [
+        serviceIcon,
+        '合作伙伴-7',
+        '介绍法务官所在律所，法务官团队及餐饮法律咨询服务',
+        '本着平等互利共同发展的原则，经甲乙双方友好协商，就甲方委托加工生产生产事宜达成协议，双方应遵守本条规定所行事。',
       ],
-    });
+      [
+        serviceIcon,
+        '合作伙伴-8',
+        '介绍法务官所在律所，法务官团队及餐饮法律咨询服务',
+        '本着平等互利共同发展的原则，经甲乙双方友好协商，就甲方委托加工生产生产事宜达成协议，双方应遵守本条规定所行事。',
+      ],
+      [
+        serviceIcon,
+        '合作伙伴-9',
+        '介绍法务官所在律所，法务官团队及餐饮法律咨询服务',
+        '本着平等互利共同发展的原则，经甲乙双方友好协商，就甲方委托加工生产生产事宜达成协议，双方应遵守本条规定所行事。',
+      ],
+    ],
+  ],
+  [
+    categoryIcon,
+    '合同-2',
+    '法律咨询提供合同',
+    [
+      [
+        serviceIcon,
+        '合作伙伴-1',
+        '介绍法务官所在律所，法务官团队及餐饮法律咨询服务',
+        '本着平等互利共同发展的原则，经甲乙双方友好协商，就甲方委托加工生产生产事宜达成协议，双方应遵守本条规定所行事。',
+      ],
+      [
+        serviceIcon,
+        '合作伙伴-2',
+        '介绍法务官所在律所，法务官团队及餐饮法律咨询服务',
+        '本着平等互利共同发展的原则，经甲乙双方友好协商，就甲方委托加工生产生产事宜达成协议，双方应遵守本条规定所行事。',
+      ],
+      [
+        serviceIcon,
+        '合作伙伴-3',
+        '介绍法务官所在律所，法务官团队及餐饮法律咨询服务',
+        '本着平等互利共同发展的原则，经甲乙双方友好协商，就甲方委托加工生产生产事宜达成协议，双方应遵守本条规定所行事。',
+      ],
+    ],
+  ],
+  [
+    categoryIcon,
+    '合同-3',
+    '法律咨询提供合同',
+    [
+      [
+        serviceIcon,
+        '合作伙伴-4',
+        '介绍法务官所在律所，法务官团队及餐饮法律咨询服务',
+        '本着平等互利共同发展的原则，经甲乙双方友好协商，就甲方委托加工生产生产事宜达成协议，双方应遵守本条规定所行事。',
+      ],
+      [
+        serviceIcon,
+        '合作伙伴-5',
+        '介绍法务官所在律所，法务官团队及餐饮法律咨询服务',
+        '本着平等互利共同发展的原则，经甲乙双方友好协商，就甲方委托加工生产生产事宜达成协议，双方应遵守本条规定所行事。',
+      ],
+      [
+        serviceIcon,
+        '合作伙伴-6',
+        '介绍法务官所在律所，法务官团队及餐饮法律咨询服务',
+        '本着平等互利共同发展的原则，经甲乙双方友好协商，就甲方委托加工生产生产事宜达成协议，双方应遵守本条规定所行事。',
+      ],
+    ],
+  ],
+];
+type DataType = { data: List[]; count: number};
+function list(params: any): DataType {
+  const data = [];
+  const index = params.index;
+  let count = null;
+  console.log(params)
+  //console.log(param.partSelected)
+  //console.log(rawData)
+  if (params.categorySelected === undefined) {
+    count = rawData.length;
+    for (let key = index; key < index + 10 && key < rawData.length; key++) {
+      data.push({
+        index: key,
+        categoryIcon: rawData[key][0],
+        category: rawData[key][1],
+        categoryDescription: rawData[key][2],
+      });
+    }
+  } else {
+    const terms = rawData.find(item=>item[1]===params.categorySelected)![3];
+    count = terms.length;
+    for (let key = index; key < index + 10 && key < terms.length; key++) {
+      data.push({
+        index: key,
+        termIcon: terms[key][0],
+        term: terms[key][1],
+        termSummary: terms[key][2],
+        termDescription: terms[key][3],
+      });
+    }
   }
-
-  return list;
+  const result: DataType = { data, count };
+  return result;
 }
 
-let sourceData: BasicListItemDataType[] = [];
-
+/*
 function getFakeList(req: { query: any }, res: { json: (arg0: BasicListItemDataType[]) => void }) {
   const params = req.query;
-
-  const count = params.count * 1 || 20;
-
-  const result = fakeList(count);
+  const result = fakeList(params.target, params.index, params.category);
   sourceData = result;
   return res.json(result);
 }
 
-function postFakeList(req: { body: any }, res: { json: (arg0: BasicListItemDataType[]) => void }) {
-  const { /* url = '', */ body } = req;
-  // const params = getUrlParams(url);
-  const { method, id } = body;
-  // const count = (params.count * 1) || 20;
-  let result = sourceData || [];
-
-  switch (method) {
-    case 'delete':
-      result = result.filter(item => item.id !== id);
-      break;
-    case 'update':
-      result.forEach((item, i) => {
-        if (item.id === id) {
-          result[i] = { ...item, ...body };
-        }
-      });
-      break;
-    case 'post':
-      result.unshift({
-        ...body,
-        id: `fake-list-${result.length}`,
-        createdAt: new Date().getTime(),
-      });
-      break;
-    default:
-      break;
-  }
-
-  return res.json(result);
+function index(req: { query: any }, res: { json: (arg0: DataType) => void }) {
+  const params = req.query;
+  return res.json(list(params));
 }
+function update(req: { query: any; body: any }, res: { json: (arg0: DataType) => void }) {
+  //console.log("______2322222222222222222222222222")
+  
+  const params = req.query;
+  const body = req.body;
+  //console.log(params,body)
+  if (body.category !== undefined) {
+    if (body.term!==undefined) {
 
+      rawData.find(item=>item[1]===body.oldCategory)![3].splice(body.oldIndex, 1);
+      rawData.find(item=>item[1]===body.category)![3].splice(body.index, 0, [
+        body.termIcon,
+        body.term,
+        body.termSummary,
+        body.termDescription,
+      ]);
+    } else {
+      console.log(body)
+      const terms=rawData[body.oldIndex][3]
+      rawData.splice(body.oldIndex, 1);
+
+      rawData.splice(body.index, 0, [body.categoryIcon, body.category, body.categoryDescription,terms]);
+    }
+  }
+  params.index = body.index - 9 > -1 ? params.index - 10 : 0;
+  return res.json(list(params));
+}
+function remove(req: { query: any }, res: { json: (arg0: DataType) => void }) {
+  console.log(111111111);
+  const params = req.query;
+  console.log(params);
+  if (params.part === 'IndexPage') {
+    if (params.selectedCategory) rawData[params.selectedCategory][3].splice(params.index, 1);
+    else rawData.splice(params.index, 1);
+  }
+  params.index = params.index - 9 > -1 ? params.index - 10 : 0;
+  return res.json(list(params));
+}
+function add(req: any, res: { json: (arg0: DataType) => void }) {
+  const body = req.body;
+  const params = req.params;
+  console.log(params,body)
+  if (body.categoryDescription)
+    rawData.splice(body.index, 0, [body.categoryIcon, body.category, body.categoryDescription]);
+  if (body.termDescription)
+    rawData[body.category][3].splice(body.index, 0, [
+      body.termIcon,
+      body.term,
+      body.termSummary,
+      body.termDescription,
+    ]);
+  params.index = body.index - 5 > -1 ? params.index - 5 : 0;
+  return res.json(list(params));
+}
+function getIndexPageTermCount(req: any, res: { json: (arg0: number) => void }) {
+  return res.json(rawData[req.query.category][3].length);
+}
+function getIndexPageCategoryCount(req: any, res: { json: (arg0:number) => void }) {
+  return res.json(rawData.length);
+}
+function getIndexPageCategories(req: any, res: { json: (arg0:Array<string>) => void }) {
+  return res.json(rawData.map(item=>item[1]));
+}
 export default {
-  'GET  /api/fake_list': getFakeList,
-  'POST  /api/fake_list': postFakeList,
+  'GET  /api/fake_list': index,
+  'POST  /api/fake_list': add,
+  'PUT /api/fake_list': update,
+  'DELETE /api/fake_list': remove,
+  '/backstage/static/index_page/term/count':getIndexPageTermCount,
+  '/backstage/static/index_page/category/count':getIndexPageCategoryCount,
+  '/backstage/static/index_page/categories':getIndexPageCategories,
 };
+*/
