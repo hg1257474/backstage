@@ -78,15 +78,15 @@ type GetFieldDecoratorOptions = {
   /** 是否一直保留子节点的信息 */
   preserve?: boolean;
 };
+type TargetType = 'indexPageCategory' | 'indexPageTerm';
 interface Props {
-  newTarget?: NewTargetType;
+  target: TargetType;
   indexPageCategories?: Array<string>;
   max: number;
-  visible: boolean | undefined;
   onDone: () => void;
   onCancel: () => void;
   onSubmit: (e: FormEvent<Element>) => void;
-  current: any;
+  inputTarget: any;
   done: Boolean;
   // getFieldDecorator: (...x: any[]) => (...x: any[]) => {};
   getFieldDecorator: <T extends Object = {}>(
@@ -96,14 +96,11 @@ interface Props {
 }
 interface State {
   max: number;
-  newTarget?: NewTargetType;
+  visible: boolean;
   indexPageCategories?: Array<string>;
-  current: {
+  inputTarget: {
     category?: String;
-    categoryDescription?: String;
-    categoryIcon?: String;
     term?: String;
-    termSummary?: String;
     termDescription?: String;
     termIcon?: String;
     index?: number;
@@ -112,197 +109,143 @@ interface State {
 export default class extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    console.log(props);
-    console.log('Dddddddddddddddddddddddddddddddddddd');
     this.state = {
-      max: props.max,
-      newTarget: props.newTarget,
-      current: props.current,
-      indexPageCategories: props.indexPageCategories,
+      visible: false,
+      max: 0,
+      inputTarget: props.inputTarget || {},
+      indexPageCategories: [],
     };
   }
+  async componentDidMount() {
+    const max = await this.getMax();
+    let indexPageCategories = [];
+    if (this.props.target === 'indexPageTerm') indexPageCategories = await getIndexPageCategories();
+    this.setState({ visible: true, max, indexPageCategories });
+  }
+  getMax = () =>
+    new Promise(async resolve => {
+      let max = 0;
+      if (this.props.target === 'indexPageCategory') max = await getIndexPageCategoryTotal();
+      else if (this.props.target === 'indexPageTerm')
+        max = await getIndexPageTermTotal(indexPageCategory);
+      resolve(max);
+    });
 
   formLayout = {
     labelCol: { span: 7 },
     wrapperCol: { span: 13 },
   };
-  onSelectNewTarget = async (e: any) => {
-    console.log(e);
-    let newState = {};
-    if (e === 'IndexPageCategory') {
-      const count = await getIndexPageCategoryTotal();
-      newState = {
-        max: count,
-        current: { category: '', categoryDescription: '', categoryIcon: '', index: count },
-      };
-    }
-    if (e === 'IndexPageTerm') {
-      const count = await getIndexPageTermTotal(0);
-      const indexPageCategories = await getIndexPageCategories();
-      console.log(count);
-      newState = {
-        max: count,
-        indexPageCategories,
-        current: {
-          termIcon: '',
-          category: indexPageCategories[0],
-          term: '',
-          termSummary: '',
-          termDescription: '',
-          index: count,
-        },
-      };
-    }
-    newState.newTarget = e;
-    console.log(newState);
-    this.setState(newState);
-  };
+
   render() {
     const { getFieldDecorator, done, onDone, onCancel, onSubmit } = this.props;
-    const { current, newTarget } = this.state;
+    const { inputTarget } = this.state;
     const modalFooter =
-      done || !current
+      done || !inputTarget
         ? { footer: null, onCancel: onDone }
         : { okText: '保存', onOk: onSubmit, onCancel: onCancel };
-    console.log(current);
     console.log(this.props);
+    console.log(this.state);
     return (
-      <Modal
-        title={done ? null : `任务${current ? '编辑' : '添加'}`}
-        className={styles.standardListForm}
-        width={640}
-        bodyStyle={done ? { padding: '72px 0' } : { padding: '28px 0 0' }}
-        destroyOnClose
-        visible={this.props.visible}
-        {...modalFooter}
-      >
-        {this.props.done && (
-          <Result
-            type="success"
-            title="操作成功"
-            description="一系列的信息描述，很短同样也可以带标点。"
-            actions={
-              <Button type="primary" onClick={onDone}>
-                知道了
-              </Button>
-            }
-            className={styles.formResult}
-          />
-        )}
+      this.state.visible && (
+        <Modal
+          title={done ? null : `任务${inputTarget ? '编辑' : '添加'}`}
+          className={styles.standardListForm}
+          width={640}
+          bodyStyle={done ? { padding: '72px 0' } : { padding: '28px 0 0' }}
+          destroyOnClose
+          visible={true}
+          {...modalFooter}
+        >
+          {this.props.done && (
+            <Result
+              type="success"
+              title="操作成功"
+              description="一系列的信息描述，很短同样也可以带标点。"
+              actions={
+                <Button type="primary" onClick={onDone}>
+                  知道了
+                </Button>
+              }
+              className={styles.formResult}
+            />
+          )}
 
-        {!this.props.done && (
-          <>
-            {this.state.newTarget && (
-              <FormItem label="请选择新加对象" {...this.formLayout}>
-                <Select defaultValue={this.state.newTarget} onChange={this.onSelectNewTarget}>
-                  <Option value="IndexPageCategory">首页分类</Option>
-                  <Option value="IndexPageTerm">首页子项</Option>
-                </Select>
-                ,
-              </FormItem>
-            )}
-            {(newTarget === 'IndexPageCategory' || current.categoryDescription !== undefined) && (
-              <>
-                <FormItem label="服务类名" {...this.formLayout}>
-                  {getFieldDecorator('category', {
-                    rules: [{ required: true, message: '请输入服务类名' }],
-                    initialValue: current.category,
-                  })(<Input placeholder="请输入" />)}
-                </FormItem>
-                <FormItem label="服务类别说明" {...this.formLayout}>
-                  {getFieldDecorator('categoryDescription', {
-                    rules: [{ required: true, message: '请输入服务类别说明' }],
-                    initialValue: current.categoryDescription||"-",
-                  })(<Input placeholder="请输入" />)}
-                </FormItem>
-                <FormItem label="服务图标" {...this.formLayout}>
-                  {getFieldDecorator('categoryIcon', {
-                    rules: [{ required: true, message: '请上传服务图标' }],
-                    initialValue: current.categoryIcon,
-                  })(<ImageUpload />)}
-                </FormItem>
-                <FormItem label="序号" {...this.formLayout}>
-                  {getFieldDecorator('index', {
-                    rules: [{ required: true, message: '请填写序号' }],
-                    initialValue: current.index + 1,
-                  })(
-                    <InputNumber
-                      placeholder="请输入"
-                      min={1}
-                      max={this.state.newTarget ? this.state.max + 1 : this.state.max}
-                    />,
-                  )}
-                </FormItem>
-              </>
-            )}
-            {(newTarget === 'IndexPageTerm' || current.termDescription !== undefined) && (
-              <>
-                <FormItem
-                  label="服务类别"
-                  {...this.formLayout}
-                  data-asd={this.state.indexPageCategories![current.category]}
-                >
-                  {getFieldDecorator('category', {
-                    rules: [{ required: true, message: '请输入任务名称' }],
-                    initialValue: current.category,
-                  })(
-                    <Select>
-                      {this.state.indexPageCategories!.map((item, index) => (
-                        <Option value={item} key={index}>
-                          {item}
-                        </Option>
-                      ))}
-                    </Select>,
-                  )}
-                </FormItem>
-                <FormItem label="服务名" {...this.formLayout}>
-                  {getFieldDecorator('term', {
-                    rules: [{ required: true, message: '请输入任务名称' }],
-                    initialValue: current.term,
-                  })(<Input placeholder="请输入" />)}
-                </FormItem>
-                <FormItem label="服务概要" {...this.formLayout}>
-                  {getFieldDecorator('termSummary', {
-                    rules: [{ required: true, message: '请输入任务名称' }],
-                    initialValue: current.termSummary,
-                  })(<Input placeholder="请输入" />)}
-                </FormItem>
-                <FormItem label="服务说明" {...this.formLayout}>
-                  {getFieldDecorator('termDescription', {
-                    rules: [{ required: true, message: '请输入任务名称' }],
-                    initialValue: current.termDescription||"-",
-                  })(<Input placeholder="请输入" />)}
-                </FormItem>
-                <FormItem label="服务图标" {...this.formLayout}>
-                  {getFieldDecorator('termIcon', {
-                    rules: [{ required: true, message: '请上传服务图标' }],
-                    initialValue: current.termIcon,
-                  })(<ImageUpload />)}
-                </FormItem>
-                <FormItem label="序号" {...this.formLayout}>
-                  {getFieldDecorator('index', {
-                    rules: [{ required: true, message: '请填写序号' }],
-                    initialValue: current.index! + 1,
-                  })(
-                    <InputNumber
-                      placeholder="请输入"
-                      min={1}
-                      max={this.state.newTarget ? this.state.max + 1 : this.state.max}
-                    />,
-                  )}
-                </FormItem>
-              </>
-            )}
-          </>
-        )}
-      </Modal>
+          {!this.props.done && (
+            <>
+              {this.props.target === 'indexPageCategory' && (
+                <>
+                  <FormItem label="服务类名" {...this.formLayout}>
+                    {getFieldDecorator('category', {
+                      rules: [{ required: true, message: '请输入服务类名' }],
+                      initialValue: inputTarget.category,
+                    })(<Input placeholder="请输入" />)}
+                  </FormItem>
+                  <FormItem label="序号" {...this.formLayout}>
+                    {getFieldDecorator('index', {
+                      rules: [{ required: true, message: '请填写序号' }],
+                      initialValue: parseInt(inputTarget.index! + 1),
+                    })(
+                      <InputNumber
+                        placeholder="请输入"
+                        min={1}
+                        max={this.props.inputTarget ? this.state.max : this.state.max + 1}
+                      />,
+                    )}
+                  </FormItem>
+                </>
+              )}
+              {this.props.target === 'indexPageTerm' && (
+                <>
+                  <FormItem label="服务类别" {...this.formLayout}>
+                    {getFieldDecorator('category', {
+                      rules: [{ required: true, message: '请输入任务名称' }],
+                      initialValue: inputTarget.category,
+                    })(
+                      <Select>
+                        {this.state.indexPageCategories!.map((item, index) => (
+                          <Option value={item} key={index}>
+                            {item}
+                          </Option>
+                        ))}
+                      </Select>,
+                    )}
+                  </FormItem>
+                  <FormItem label="服务名" {...this.formLayout}>
+                    {getFieldDecorator('term', {
+                      rules: [{ required: true, message: '请输入任务名称' }],
+                      initialValue: inputTarget.term,
+                    })(<Input placeholder="请输入" />)}
+                  </FormItem>
+                  <FormItem label="服务说明" {...this.formLayout}>
+                    {getFieldDecorator('termDescription', {
+                      rules: [{ required: true, message: '请输入任务名称' }],
+                      initialValue: inputTarget.termDescription || '-',
+                    })(<Input placeholder="请输入" />)}
+                  </FormItem>
+                  <FormItem label="服务图标" {...this.formLayout}>
+                    {getFieldDecorator('termIcon', {
+                      rules: [{ required: true, message: '请上传服务图标' }],
+                      initialValue: inputTarget.termIcon,
+                    })(<ImageUpload />)}
+                  </FormItem>
+                  <FormItem label="序号" {...this.formLayout}>
+                    {getFieldDecorator('index', {
+                      rules: [{ required: true, message: '请填写序号' }],
+                      initialValue: inputTarget.index! + 1,
+                    })(
+                      <InputNumber
+                        placeholder="请输入"
+                        min={1}
+                        max={this.props.inputTarget ? this.state.max : this.state.max + 1}
+                      />,
+                    )}
+                  </FormItem>
+                </>
+              )}
+            </>
+          )}
+        </Modal>
+      )
     );
   }
 }
-
-/*
- <Select style={{width:"30%"}}>
-                      <Option value="merger">融资并购</Option>
-                      <Option value="laborDispute">劳务纠纷</Option>
-                    </Select>,
-                    */

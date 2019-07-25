@@ -1,3 +1,4 @@
+/*
 import {
   IndexCategoryListItemDataType,
   IndexTermListItemDataType,
@@ -125,7 +126,7 @@ function getFakeList(req: { query: any }, res: { json: (arg0: BasicListItemDataT
   sourceData = result;
   return res.json(result);
 }
-*/
+
 function index(req: { query: any }, res: { json: (arg0: DataType) => void }) {
   const params = req.query;
   return res.json(list(params));
@@ -202,3 +203,4 @@ export default {
   '/backstage/static/index_page/category/count':getIndexPageCategoryCount,
   '/backstage/static/index_page/categories':getIndexPageCategories,
 };
+*/

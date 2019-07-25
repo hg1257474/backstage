@@ -8,7 +8,7 @@ interface Params {
   partSelected: {};
   current?: number;
 }
- const url = 'http://192.168.0.29:7001';
+const url = 'http://192.168.0.29:7001';
 // const url = 'https://www.huishenghuo.net';
 type ParamsType = IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType;
 export async function getList(params: Params) {
@@ -27,21 +27,20 @@ export async function deleteItem(params: Params) {
   });
 }
 
-export async function updateItem(data: any) {
-  console.log(data);
+export async function updateItem(arg: any) {
+  console.log(arg);
   return request(url + '/backstage/resource', {
     mode: 'cors',
     method: 'PUT',
-    data,
+    ...arg,
   });
 }
 
-export async function newItem(data: any) {
-  console.log(data);
+export async function newItem(arg: any) {
   return request(url + '/backstage/resource', {
     mode: 'cors',
     method: 'POST',
-    data,
+    ...arg,
   });
 }
 export async function getIndexPageTermTotal(category: number) {

@@ -15,8 +15,9 @@ export interface StateType {
   total: number;
   indexPageTermList?: {
     total: number;
-    data: IndexPageTermListItem[];
+    resources: IndexPageTermListItem[];
   };
+  timestamp:number;
 }
 
 export type Effect = (
@@ -28,12 +29,14 @@ export interface ModelType {
   namespace: string;
   state: StateType;
   effects: {
+    getIndexPageTermList: Effect;
     getResources: Effect;
     deleteItem: Effect;
     updateItem: Effect;
     newItem: Effect;
   };
   reducers: {
+    indexPageTermList: Reducer<StateType>;
     list: Reducer<StateType>;
   };
 }
@@ -44,6 +47,7 @@ const Model: ModelType = {
   state: {
     resources: [],
     total: 0,
+    timestamp: 0,
   },
 
   effects: {
@@ -54,6 +58,13 @@ const Model: ModelType = {
         payload: response, //Array.isArray(response) ? response : [],
       });
     },
+    *getIndexPageTermList({ payload }, { call, put }) {
+      const response = yield call(getList, payload);
+      yield put({
+        type: 'indexPageTermList',
+        payload: response,
+      });
+    },
     *deleteItem({ payload }, { call, put }) {
       const response = yield call(deleteItem, payload);
       yield put({
@@ -62,26 +73,31 @@ const Model: ModelType = {
       });
     },
     *updateItem({ payload }, { call, put }) {
+      const timestamp = payload.timestamp;
       console.log(payload);
-      const response = yield call(updateItem, payload.data);
+      delete payload.timestamp;
+      const response = yield call(updateItem, payload);
       yield put({
         type: 'list',
-        payload: { ...response, ...payload.payload }, //Array.isArray(response) ? response : [],
+        payload: { ...response, timestamp }, //Array.isArray(response) ? response : [],
       });
     },
     *newItem({ payload }, { call, put }) {
-      console.log(payload);
-      const nextPayload = payload.payload;
-      const response = yield call(newItem, payload.data);
+      const response = yield call(newItem, payload);
       yield put({
         type: 'list',
-        payload: { ...response, ...nextPayload }, //Array.isArray(response) ? response : [],
+        payload: response, //Array.isArray(response) ? response : [],
       });
     },
   },
 
   reducers: {
+    indexPageTermList(state, action) {
+      return { ...state, indexPageTermList: action.payload };
+    },
+
     list(state, action) {
+      console.log(action.payload);
       return { ...state, ...action.payload };
       /*
       const list = action.payload.list.map((item, index) => {

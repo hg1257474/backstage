@@ -5,7 +5,9 @@
 }
 .action-btn{
   margin:0 2em;
+  float:right;
 }
+
 .standardList {
   :global {
     .ant-card-head {
@@ -55,9 +57,12 @@
   }
   .listContent {
     font-size: 0;
+    flex-grow:1;
+    display:flex;
     .listContentItem {
       display: inline-block;
       margin-left: 40px;
+      flex-grow:1;
       color: @text-color-secondary;
       font-size: @font-size-base;
       vertical-align: middle;

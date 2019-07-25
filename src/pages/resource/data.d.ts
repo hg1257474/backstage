@@ -1,13 +1,13 @@
 export interface IndexCategoryListItemDataType {
   category: string;
+  index?:number;
 }
 export interface IndexTermListItemDataType {
   category?: string;
   term: string;
-  termSummary: string;
   termDescription: string;
   termIcon: string;
-  index:number
+  index?:number
 }
 export interface PriceListItemDataType {
   category: string;

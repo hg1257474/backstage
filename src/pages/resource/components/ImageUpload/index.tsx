@@ -5,10 +5,12 @@ interface Props {
   onChange?: ([x, y]: [string, string]) => void;
   value?: string;
 }
+const url = 'http://192.168.0.29:7001';
+// const url="https://www.huishenghuo.net"
 const getImage = x => {
   const y = x;
   if (y.includes('base64')) return y;
-  return `https://www.huishenghuo.net/resource_test/${x}`;
+  return `${url}/resource_test/${x}`;
 };
 export default class extends React.Component<Props, { image: string }> {
   constructor(props: Props) {
