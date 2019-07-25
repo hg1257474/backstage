@@ -1,25 +1,30 @@
 import { Button, Divider, Input, Popconfirm, Table, message } from 'antd';
 import React, { Fragment, PureComponent } from 'react';
-import Link from 'umi/link'
+import Link from 'umi/link';
 import { isEqual } from 'lodash';
 import styles from '../style.less';
 
 export interface TableFormDateType {
-  key: string;
-  workId?: string;
-  name?: string;
-  department?: string;
-  isNew?: boolean;
-  editable?: boolean;
+  account: string;
+  password: string;
+  name: string;
+  avatar: string;
+  total: number;
+  grade: number;
+  expert: any;
+  privilege: any;
+  id: string;
 }
 interface TableFormProps {
   loading?: boolean;
   value?: TableFormDateType[];
-  onChange?: (value: TableFormDateType[]) => void;
+  onChange: (value: TableFormDateType) => void;
+  onCancel: () => void;
 }
 
 interface TableFormState {
   loading?: boolean;
+  editing: number;
   value?: TableFormDateType[];
   data?: TableFormDateType[];
 }
@@ -43,96 +48,59 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
   columns = [
     {
       title: '账号',
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'account',
+      key: 'account',
       width: '20%',
       render: (text: string, record: TableFormDateType) => {
-        if (false) {
-          return (
-            <Input
-            
-              value={text}
-              autoFocus
-              onChange={e => this.handleFieldChange(e, 'name', record.key)}
-              onKeyPress={e => this.handleKeyPress(e, record.key)}
-              placeholder="成员姓名"
-            />
-          );
-        }
         return <Link to="/servicer/fdfsfsf">{text}</Link>;
       },
     },
     {
       title: '密码',
-      dataIndex: 'workId',
-      key: 'workId',
+      dataIndex: 'password',
+      key: 'password',
       width: '20%',
       render: (text: string, record: TableFormDateType) => {
-        if (false) {
-          return (
-            <Input
-              value={text}
-              onChange={e => this.handleFieldChange(e, 'workId', record.key)}
-              onKeyPress={e => this.handleKeyPress(e, record.key)}
-              placeholder="工号"
-            />
-          );
-        }
         return text;
       },
     },
     {
       title: '姓名',
-      dataIndex: 'department',
-      key: 'department',
+      dataIndex: 'name',
+      key: 'name',
       width: '40%',
       render: (text: string, record: TableFormDateType) => {
-        if (false) {
-          return (
-            <Input
-              value={text}
-              onChange={e => this.handleFieldChange(e, 'department', record.key)}
-              onKeyPress={e => this.handleKeyPress(e, record.key)}
-              placeholder="所属部门"
-            />
-          );
-        }
         return text;
       },
     },
     {
       title: '操作',
-      key: 'action',
-      render: (text: string, record: TableFormDateType) => {
-        const { loading } = this.state;
-        if (!!record.editable && loading) {
-          return null;
-        }
-        if (record.editable) {
-          if (record.isNew) {
-            return (
-              <span>
-                <a onClick={e => this.saveRow(e, record.key)}>添加</a>
-                <Divider type="vertical" />
-                <Popconfirm title="是否要删除此行？" onConfirm={() => this.remove(record.key)}>
-                  <a>删除</a>
-                </Popconfirm>
-              </span>
-            );
-          }
+      key: 'id',
+      dataIndex: 'id',
+      render: (text: string, record: TableFormDateType, index: number) => {
+        if (this.state.editing === index) {
           return (
             <span>
-              <a onClick={e => this.saveRow(e, record.key)}>保存</a>
+              <a
+                onClick={e => {
+                  this.props.onCancel();
+                  this.setState({ editing: -1 });
+                }}
+              >
+                取消
+              </a>
               <Divider type="vertical" />
-              <a onClick={e => this.cancel(e, record.key)}>取消</a>
+              <Popconfirm title="是否要删除此行？" onConfirm={() => this.remove(index)}>
+                <a>删除</a>
+              </Popconfirm>
             </span>
           );
         }
         return (
           <span>
-            <a onClick={e => this.toggleEditable(e, record.key)}>编辑</a>
+            <a onClick={e => this.toggleEditable(e, index)}>编辑</a>
             <Divider type="vertical" />
-            <Popconfirm title="是否要删除此行？" onConfirm={() => this.remove(record.key)}>
+            <Popconfirm title="是否要删除此行？" onConfirm={() => this.remove(index)}>
               <a>删除</a>
             </Popconfirm>
           </span>
@@ -144,35 +112,28 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
   constructor(props: TableFormProps) {
     super(props);
     this.state = {
+      editing: -1,
       data: props.value,
       loading: false,
       value: props.value,
     };
   }
 
-  getRowByKey(key: string, newData?: TableFormDateType[]) {
-    const { data = [] } = this.state;
-    return (newData || data).filter(item => item.key === key)[0];
-  }
-
-  toggleEditable = (e: React.MouseEvent | React.KeyboardEvent, key: string) => {
+  toggleEditable = (e: React.MouseEvent | React.KeyboardEvent, index: number) => {
     e.preventDefault();
     const { data = [] } = this.state;
     const newData = data.map(item => ({ ...item }));
-    const target = this.getRowByKey(key, newData);
-    console.log(target)
+    const target = this.state.data![index];
+    console.log(target);
     if (target) {
       // 进入编辑状态时保存原始数据
-      if (!target.editable) {
-        this.cacheOriginData[key] = { ...target };
-      }
-      target.editable = !target.editable;
-      this.props.onChange()
-      this.setState({ data: newData });
+      this.props.onChange(target);
+      this.setState({ editing: index });
     }
   };
 
   newMember = () => {
+    /*
     const { data = [] } = this.state;
     const newData = data.map(item => ({ ...item }));
     newData.push({
@@ -185,16 +146,14 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
     });
     this.index += 1;
     this.setState({ data: newData });
+    */
   };
 
-  remove(key: string) {
+  remove(index: number) {
     const { data = [] } = this.state;
-    const { onChange } = this.props;
-    const newData = data.filter(item => item.key !== key);
-    this.setState({ data: newData });
-    if (onChange) {
-      onChange(newData);
-    }
+    this.props.onCancel();
+    data.splice(index, 1);
+    this.setState({ editing: -1, data, value: data });
   }
 
   handleKeyPress(e: React.KeyboardEvent, key: string) {
@@ -203,17 +162,8 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
     }
   }
 
-  handleFieldChange(e: React.ChangeEvent<HTMLInputElement>, fieldName: string, key: string) {
-    const { data = [] } = this.state;
-    const newData = [...data];
-    const target = this.getRowByKey(key, newData);
-    if (target) {
-      target[fieldName] = e.target.value;
-      this.setState({ data: newData });
-    }
-  }
-
   saveRow(e: React.MouseEvent | React.KeyboardEvent, key: string) {
+    /*
     e.persist();
     this.setState({
       loading: true,
@@ -243,29 +193,7 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
         loading: false,
       });
     }, 500);
-  }
-
-  cancel(e: React.MouseEvent, key: string) {
-    this.clickedCancel = true;
-    e.preventDefault();
-    const { data = [] } = this.state;
-    const newData = [...data];
-    newData.map(item => {
-      if (item.key === key) {
-        if (this.cacheOriginData[key]) {
-          delete this.cacheOriginData[key];
-          return {
-            ...item,
-            ...this.cacheOriginData[key],
-            editable: false,
-          };
-        }
-      }
-      return item;
-    });
-
-    this.setState({ data: newData });
-    this.clickedCancel = false;
+    */
   }
 
   render() {
@@ -279,7 +207,7 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
           columns={this.columns}
           dataSource={data}
           pagination={{ total: 10 }}
-          rowClassName={record => (record.editable ? styles.editable : '')}
+          rowClassName={record => ''}
         />
         <Button
           style={{ width: '100%', marginTop: 16, marginBottom: 8 }}

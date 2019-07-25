@@ -20,9 +20,8 @@ import { connect } from 'dva';
 import TableForm from './components/TableForm';
 import FooterToolbar from './components/FooterToolbar';
 import styles from './style.less';
-
+import { img1, img2 } from './data';
 const { Option } = Select;
-const { RangePicker } = DatePicker;
 
 const fieldLabels = {
   account: '账号',
@@ -34,27 +33,6 @@ const fieldLabels = {
   expert: '擅长',
   privilege: '权限',
 };
-
-const tableData = [
-  {
-    key: '1',
-    workId: '00001',
-    name: 'John Brown',
-    department: 'New York No. 1 Lake Park',
-  },
-  {
-    key: '2',
-    workId: '00002',
-    name: 'Jim Green',
-    department: 'London No. 1 Lake Park',
-  },
-  {
-    key: '3',
-    workId: '00003',
-    name: 'Joe Black',
-    department: 'Sidney No. 1 Lake Park',
-  },
-];
 
 interface AdvancedFormProps extends FormComponentProps {
   dispatch: Dispatch<any>;
@@ -128,8 +106,28 @@ class AdvancedForm extends Component<AdvancedFormProps> {
     );
   };
   test: TableFormDateType[] = [
-    { key: '1', workId: '1', name: '1', department: '1', isNew: false, editable: true },
-    { key: '2', workId: '2', name: '2', department: '2', isNew: false, editable: true },
+    {
+      account: 'admin',
+      password: 'password',
+      name: '阿斯顿',
+      avatar: img1,
+      total: 10,
+      grade: 100,
+      expert: '擅长',
+      privilege: '权限',
+      id: '111111111111111',
+    },
+    {
+      account: '账号',
+      password: '密码',
+      name: '成员姓名',
+      avatar: img2,
+      total: 20,
+      grade: 200,
+      expert: '擅长',
+      privilege: '权限',
+      id: '22222222222222',
+    },
   ];
   resizeFooterToolbar = () => {
     requestAnimationFrame(() => {
@@ -253,9 +251,11 @@ class AdvancedForm extends Component<AdvancedFormProps> {
           <Card title="成员管理" bordered={false}>
             <TableForm
               value={this.test}
-              onChange={(...x) => {
+              onCancel={() => this.setState({ shouldInput: false, inputTarget: null })}
+              onChange={(x: TableFormDateType) => {
                 console.log(x);
-                this.setState({shouldInput:true})
+                console.log('dddddddddddddddddddddddddddd');
+                this.setState({ shouldInput: true, inputTarget: x });
               }}
             />
           </Card>
