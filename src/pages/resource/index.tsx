@@ -170,14 +170,20 @@ class BasicList extends Component<BasicListProps, BasicListState> {
           });
         } else if (this.state.editTarget === 'indexPageTerm') {
           fieldsValue.index! -= 1;
-          current = this.indexPageTermCurrent;
+          current = 1; //this.indexPageTermCurrent;
+          this.setState({
+            callback: {
+              newState: { current, done: true },
+              timestamp,
+            },
+          });
         }
         const payload = {
           timestamp,
           params: {
             current,
             target: this.state.editTarget,
-            indexPageCategorySelcted: this.state.indexPageCategorySelected,
+            indexPageCategorySelected: this.state.indexPageCategorySelected,
           },
           data: {
             ...fieldsValue,
@@ -198,6 +204,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       },
     );
   };
+  // %no%
   onChangeIndexPageTermListCurrent = current => {
     this.indexPageTermListCurrent = current;
     this.props.dispatch({
@@ -210,7 +217,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     });
   };
 
-  onDelete = (index: Number) => {
+  onDelete = (target: any, inputTarget: any, callback?: any) => {
     Modal.confirm({
       title: '删除条目', //_maps1[this.state.selectedPage],
       content: '您确定删除条目?', //_maps2[this.state.selectedPage],
@@ -221,10 +228,11 @@ class BasicList extends Component<BasicListProps, BasicListState> {
         dispatch({
           type: 'resourceList/deleteItem',
           payload: {
-            index,
-            page: this.state.page,
-            target: this.state.partSelected.part,
-            categorySelected: this.state.partSelected.categorySelected,
+            current: callback.current,
+            callback,
+            target,
+            indexPageCategorySelected: this.state.indexPageCategorySelected,
+            inputTarget: target.includes('indexPage') ? inputTarget.index : inputTarget,
           },
         });
       },
@@ -234,18 +242,22 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     const ActionBar = ({
       target,
       inputTarget,
-      callback,
+      editCb,
+      delCb,
     }: {
       target: any;
       inputTarget: any;
-      callback?: any;
+      editCb?: (...x: any) => {};
+      delCb?: (...x: any) => {};
     }) => (
       <>
         <a
           className={styles['action-btn']}
           onClick={e => {
+            console.log(11);
+            console.log(target, inputTarget);
             e.preventDefault();
-            if (callback) callback();
+            if (editCb) editCb();
             this.setState({ editTarget: target, inputTarget });
           }}
         >
@@ -256,8 +268,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
           key="remove"
           onClick={e => {
             e.preventDefault();
-            if (callback) callback();
-            this.onDelete(target, inputTarget);
+            this.onDelete(target, inputTarget, delCb && delCb());
           }}
         >
           删除
@@ -281,44 +292,58 @@ class BasicList extends Component<BasicListProps, BasicListState> {
         </RadioGroup>
       </div>
     );
-    const IndexCategoryListContent = ({ index, category }: IndexCategoryListItemDataType) => (
-      <div className={styles.listContent}>
-        <div className={styles.listContentItem}>
-          {category}
-          <ActionBar
-            inputTarget={{ index: index! + 10 * (this.state.current - 1), category }}
-            target="indexPageCategory"
-          />
-          <a
-            className={styles['action-btn']}
-            onClick={() => {
-              this.props.dispatch({
-                type: 'resourceList/getIndexPageTermList',
-                payload: {
-                  target: 'indexPageTerm',
-                  categorySelected: index! + (this.state.current - 1) * 10,
-                  current: 1,
-                },
-              });
-              this.setState(prevState => ({
-                indexPageCategorySelected:
-                  prevState.indexPageCategorySelected === index ? undefined : index,
-              }));
-            }}
-          >
-            {this.state.indexPageCategorySelected === index ? '隐藏' : '查看'}
-          </a>
-          {this.state.indexPageCategorySelected === index && (
-            <IndexPageTermList
-              loading={this.props.loading}
-              ActionBar={ActionBar}
-              onCurrentChange={this.onChangeIndexPageTermListCurrent}
-              {...this.props.resourceList.indexPageTermList}
+    const IndexCategoryListContent = ({ index, category }: IndexCategoryListItemDataType) => {
+      const rIndex = (this.state.current - 1) * 10 + index!;
+      return (
+        <div className={styles.listContent}>
+          <div className={styles.listContentItem}>
+            {category}
+            <ActionBar
+              inputTarget={{ index: rIndex, category }}
+              target="indexPageCategory"
+              delCb={() => {
+                const timestamp = new Date().getTime();
+                let current =
+                  (this.state.current - 1) * 10 === this.props.resourceList.total - 1
+                    ? this.state.current - 1
+                    : this.state.current;
+                if (!current) current = 1;
+                const callback = { newState: { current }, timestamp };
+                this.setState({ callback });
+                return { ...callback, current };
+              }}
             />
-          )}
+            <a
+              className={styles['action-btn']}
+              onClick={() => {
+                this.props.dispatch({
+                  type: 'resourceList/getIndexPageTermList',
+                  payload: {
+                    target: 'indexPageTerm',
+                    indexPageCategorySelected: rIndex,
+                    current: 1,
+                  },
+                });
+                this.setState(prevState => ({
+                  indexPageCategorySelected:
+                    prevState.indexPageCategorySelected === rIndex ? undefined : rIndex,
+                }));
+              }}
+            >
+              {this.state.indexPageCategorySelected === rIndex ? '隐藏' : '查看'}
+            </a>
+            {this.state.indexPageCategorySelected === rIndex && (
+              <IndexPageTermList
+                loading={this.props.loading}
+                ActionBar={ActionBar}
+                onCurrentChange={this.onChangeIndexPageTermListCurrent}
+                {...this.props.resourceList.indexPageTermList}
+              />
+            )}
+          </div>
         </div>
-      </div>
-    );
+      );
+    };
     const PriceListContent = ({
       data: { category, description, fee },
     }: {
@@ -383,15 +408,17 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                     total: this.props.resourceList.total,
                     current: this.state.current,
                     onChange(e) {
+                      const timestamp = new Date().getTime();
                       that.setState({
                         callback: {
-                          oldProps: that.props,
+                          timestamp,
                           newState: { current: e, indexPageCategorySelected: undefined },
                         },
                       });
                       that.props.dispatch({
                         type: 'resourceList/getResources',
                         payload: {
+                          timestamp,
                           current: e,
                           target: that.state.partSelected,
                         },
@@ -418,6 +445,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
           <FormModal
             target={this.state.editTarget}
             inputTarget={inputTarget}
+            indexPageCategorySelected={this.state.indexPageCategorySelected}
             onCancel={this.onCancel}
             onDone={this.onDone}
             done={done}

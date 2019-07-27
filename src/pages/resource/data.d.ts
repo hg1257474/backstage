@@ -6,6 +6,7 @@ export interface IndexTermListItemDataType {
   category?: string;
   term: string;
   termDescription: string;
+  termOther: any;
   termIcon: string;
   index?: number;
 }

@@ -81,8 +81,8 @@ type GetFieldDecoratorOptions = {
 type TargetType = 'indexPageCategory' | 'indexPageTerm';
 interface Props {
   target: TargetType;
-  indexPageCategories?: Array<string>;
   max: number;
+  indexPageCategorySelected?: number;
   onDone: () => void;
   onCancel: () => void;
   onSubmit: (e: FormEvent<Element>) => void;
@@ -97,6 +97,7 @@ interface Props {
 interface State {
   max: number;
   visible: boolean;
+  indexPageCategorySelected: number;
   indexPageCategories?: Array<string>;
   inputTarget: {
     category?: String;
@@ -114,6 +115,7 @@ export default class extends React.Component<Props, State> {
       max: 0,
       inputTarget: props.inputTarget || {},
       indexPageCategories: [],
+      indexPageCategorySelected: props.indexPageCategorySelected,
     };
   }
   async componentDidMount() {
@@ -122,14 +124,11 @@ export default class extends React.Component<Props, State> {
     if (this.props.target === 'indexPageTerm') indexPageCategories = await getIndexPageCategories();
     this.setState({ visible: true, max, indexPageCategories });
   }
-  getMax = () =>
-    new Promise(async resolve => {
-      let max = 0;
-      if (this.props.target === 'indexPageCategory') max = await getIndexPageCategoryTotal();
-      else if (this.props.target === 'indexPageTerm')
-        max = await getIndexPageTermTotal(indexPageCategory);
-      resolve(max);
-    });
+  getMax = () => {
+    if (this.props.target === 'indexPageCategory') return getIndexPageCategoryTotal();
+    if (this.props.target === 'indexPageTerm')
+      return getIndexPageTermTotal(this.state.indexPageCategorySelected);
+  };
 
   formLayout = {
     labelCol: { span: 7 },
@@ -143,6 +142,7 @@ export default class extends React.Component<Props, State> {
       done || !inputTarget
         ? { footer: null, onCancel: onDone }
         : { okText: '保存', onOk: onSubmit, onCancel: onCancel };
+    const that = this;
     console.log(this.props);
     console.log(this.state);
     return (
@@ -206,11 +206,22 @@ export default class extends React.Component<Props, State> {
                   <FormItem label="服务类别" {...this.formLayout}>
                     {getFieldDecorator('category', {
                       rules: [{ required: true, message: '请输入任务名称' }],
-                      initialValue: inputTarget.category,
+                      initialValue: inputTarget.category || this.props.indexPageCategorySelected,
+                      getValueFromEvent(res) {
+                        console.log(res);
+                        setTimeout(
+                          async () =>
+                            that.setState({
+                              max: await getIndexPageTermTotal(res),
+                            }),
+                          0,
+                        );
+                        return res;
+                      },
                     })(
                       <Select>
                         {this.state.indexPageCategories!.map((item, index) => (
-                          <Option value={item} key={index}>
+                          <Option value={index} key={index}>
                             {item}
                           </Option>
                         ))}
@@ -226,7 +237,13 @@ export default class extends React.Component<Props, State> {
                   <FormItem label="服务说明" {...this.formLayout}>
                     {getFieldDecorator('termDescription', {
                       rules: [{ required: true, message: '请输入任务名称' }],
-                      initialValue: inputTarget.termDescription || '-',
+                      initialValue: inputTarget.termDescription,
+                    })(<Input placeholder="请输入" />)}
+                  </FormItem>
+                  <FormItem label="其他参数" {...this.formLayout}>
+                    {getFieldDecorator('termOther', {
+                      rules: [{ required: true, message: '请输入其他参数' }],
+                      initialValue: inputTarget.termOther,
                     })(<Input placeholder="请输入" />)}
                   </FormItem>
                   <FormItem label="服务图标" {...this.formLayout}>

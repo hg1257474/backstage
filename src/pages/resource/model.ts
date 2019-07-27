@@ -52,10 +52,12 @@ const Model: ModelType = {
 
   effects: {
     *getResources({ payload }, { call, put }) {
+      const timestamp = payload.timestamp;
+      delete payload.timestamp;
       const response = yield call(getList, payload);
       yield put({
         type: 'list',
-        payload: response, //Array.isArray(response) ? response : [],
+        payload: { ...response, timestamp }, //Array.isArray(response) ? response : [],
       });
     },
     *getIndexPageTermList({ payload }, { call, put }) {
@@ -66,10 +68,13 @@ const Model: ModelType = {
       });
     },
     *deleteItem({ payload }, { call, put }) {
+      const { callback } = payload;
+      delete callback.current;
+      delete payload.callback;
       const response = yield call(deleteItem, payload);
       yield put({
         type: 'list',
-        payload: { ...response, ...payload }, //Array.isArray(response) ? response : [],
+        payload: { ...response, ...callback }, //Array.isArray(response) ? response : [],
       });
     },
     *updateItem({ payload }, { call, put }) {
@@ -77,10 +82,21 @@ const Model: ModelType = {
       console.log(payload);
       delete payload.timestamp;
       const response = yield call(updateItem, payload);
-      yield put({
-        type: 'list',
-        payload: { ...response, timestamp }, //Array.isArray(response) ? response : [],
-      });
+      if (payload.params.target !== 'indexPageTerm')
+        yield put({
+          type: 'list',
+          payload: { ...response, timestamp }, //Array.isArray(response) ? response : [],
+        });
+      else {
+        yield put({
+          type: 'list',
+          payload: { timestamp },
+        });
+        yield put({
+          type: 'indexPageTermList',
+          payload: { ...response, timestamp },
+        });
+      }
     },
     *newItem({ payload }, { call, put }) {
       const timestamp = payload.timestamp;

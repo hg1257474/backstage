@@ -2,7 +2,7 @@ import { List, Avatar, Button } from 'antd';
 import React from 'react';
 import _ from 'lodash';
 import styles from '../style.less';
-export type Item = [string, string, string];
+export type Item = [string, string, string, string?];
 export interface Props {
   loading?: boolean;
   resources: Item[];
@@ -17,10 +17,11 @@ interface State {
     oldProps: Props;
   };
 }
+const url = 'http://192.168.0.29:7001';
 const getImage = x => {
   const y = x;
-  if (y.includes('base64')) return y;
-  return `${url}/resource_test/${x}`;
+  if (y.length > 2) return y;
+  return `${url}/resource/indexPage/${x[1]}/${x[0]}`;
 };
 export default class extends React.Component<Props, State> {
   state = { current: 1 };
@@ -67,7 +68,17 @@ export default class extends React.Component<Props, State> {
               avatar={<Avatar src={getImage(item[0])} shape="square" size="large" />}
             />
             <div>{item[2]}</div>
-            <ActionBar />
+            <div>{item[3]}</div>
+            <ActionBar
+              target="indexPageTerm"
+              inputTarget={{
+                termIcon: item[0],
+                term: item[1],
+                termDescription: item[2],
+                termOther: item[3],
+                index: (this.state.current - 1) * 10 + index,
+              }}
+            />
           </List.Item>
         )}
       />

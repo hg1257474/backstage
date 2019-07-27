@@ -8,9 +8,14 @@ interface Params {
   partSelected: {};
   current?: number;
 }
-// const url = 'http://192.168.0.29:7001';
-const url = 'http://192.168.99.157:7001';
+const url = 'http://192.168.0.29:7001';
+// const url = 'http://192.168.99.157:7001';
 // const url = 'https://www.huishenghuo.net';
+const leach = params => {
+  Object.keys(params).forEach(item => {
+    if (params[item] === false || params[item] === undefined) delete params[item];
+  });
+};
 type ParamsType = IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType;
 export async function getList(params: Params) {
   return request(url + '/backstage/resource', {
@@ -20,6 +25,7 @@ export async function getList(params: Params) {
 }
 
 export async function deleteItem(params: Params) {
+  leach(params);
   console.log(params);
   return request(url + '/backstage/resource', {
     mode: 'cors',
