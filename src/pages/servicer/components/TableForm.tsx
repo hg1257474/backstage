@@ -3,7 +3,6 @@ import React, { Fragment, PureComponent } from 'react';
 import Link from 'umi/link';
 import { isEqual } from 'lodash';
 import { ServicerTableItemDataType } from '../data';
-import { TableCondition } from '../index';
 import styles from '../style.less';
 const privilegeMap = {
   canAssignService: '分配服务',
@@ -13,7 +12,14 @@ const privilegeMap = {
 interface TableFormProps {
   loading?: boolean;
   value?: ServicerTableItemDataType[];
-  tableCondition: TableCondition;
+  sortOrder: 'ascend' | 'descend' | false;
+  pagination: {
+    total: number;
+    current: number;
+  };
+  isNameFiltered: boolean;
+  isUsernameFiltered: boolean;
+  privilegeFilter: [];
   onChange: (x: any) => void;
   onChoose: (id: string | null, type?: 'new' | 'delete') => void;
 }
@@ -50,10 +56,12 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
       title: '用户名',
       dataIndex: 'username',
       key: 'username',
+      filtered: this.props.isUsernameFiltered,
       width: '20%',
     },
     {
       title: '姓名',
+      filtered: this.props.isNameFiltered,
       dataIndex: 'name',
       key: 'name',
       width: '20%',
@@ -63,7 +71,8 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
       dataIndex: 'privilege',
       key: 'privilege',
       width: '30%',
-      filteredValue: this.props.tableCondition.filteredValue,
+      filtered: this.props.privilegeFilter.length,
+      filteredValue: this.props.privilegeFilter,
       filters: [
         {
           text: privilegeMap['canManageServicer'],
@@ -90,7 +99,7 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
       key: 'servicesTotal',
       sorter: true,
       width: '15%',
-      sortOrder: this.props.tableCondition.sortOrder,
+      sortOrder: this.props.sortOrder,
       render(text: number, record: ServicerTableItemDataType) {
         return <Link to={`/servicer/${record.id}/service`}>{text}</Link>;
       },
@@ -174,7 +183,7 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
           rowKey="id"
           rowClassName={record => ''}
           onChange={this.props.onChange}
-          pagination={this.props.tableCondition.pagination}
+          pagination={this.props.pagination}
         />
         <Button
           style={{ width: '100%', marginTop: 16, marginBottom: 8 }}

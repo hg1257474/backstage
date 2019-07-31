@@ -7,6 +7,7 @@ import { number } from 'prop-types';
 export interface StateType {
   servicers: Array<ServicerTableItemDataType>;
   total: number;
+  timestamp: number;
 }
 
 export type Effect = (
@@ -30,25 +31,31 @@ const Model: ModelType = {
   namespace: 'servicerTable',
 
   state: {
+    timestamp: 0,
     servicers: [],
     total: 0,
   },
 
   effects: {
     *getServicers({ payload }, { call, put }) {
+      const { timestamp } = payload;
+      delete payload.timestamp;
       const res = yield call(getServicers, payload);
       yield put({
         type: 'servicers',
-        payload: res,
+        payload: { ...res, timestamp },
       });
     },
 
     *updateServicers({ payload }, { call, put }) {
+      const { timestamp } = payload;
+      delete payload.timestamp;
+      console.log(payload)
       const res = yield call(updateServicers, payload);
       message.success('提交成功');
       yield put({
         type: 'servicers',
-        payload: res,
+        payload: { ...res, timestamp },
       });
     },
   },

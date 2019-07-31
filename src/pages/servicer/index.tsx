@@ -40,36 +40,36 @@ const fieldLabels = {
   expert: '擅长',
   privilege: '权限',
 };
-
-let oldSearchValue: string = '';
-export interface TableCondition {
-  pagination: { total: number; current: number };
-  filteredValue: [];
-  sortOrder: 'ascend' | 'descend' | false;
-}
 interface Props extends FormComponentProps {
   dispatch: Dispatch<any>;
   submitting: boolean;
   servicerTable: StateType;
 }
 interface State {
+  callback?: {
+    timestamp: number;
+    newState: {
+      current?: number;
+      isNameFiltered?: boolean;
+      privilegeFilter?: [];
+      isUsernameFiltered?: boolean;
+      sortOrder?: 'ascend' | 'descend' | false;
+      inputTarget?: any;
+    };
+  };
+  sortOrder?: 'ascend' | 'descend' | false;
+  isNameFiltered: boolean;
+  isUsernameFiltered: boolean;
+  privilegeFilter: [];
   width: string;
-  inputTarget: any;
-  tableCondition: TableCondition;
+  inputTarget?: any;
+  current: number;
 }
 /*
 @connect(({ loading }: { loading: { effects: { [key: string]: boolean } } }) => ({
   submitting: loading.effects['formAdvancedForm/submitAdvancedForm'],
 }))
 */
-function getPrevilegeSelectValue(value) {
-  if (value) return value;
-}
-const initialTableCondition: TableCondition = {
-  pagination: { total: 0, current: 1 },
-  filteredValue: [],
-  sortOrder: false,
-};
 @connect(x => {
   return {
     submitting: x.loading.effects['formAdvancedForm/submitAdvancedForm'],
@@ -80,13 +80,12 @@ class AdvancedForm extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      tableCondition: {
-        pagination: { total: props.servicerTable.total, current: 1 },
-        filteredValue: [],
-        sortOrder: false,
-      },
+      sortOrder: false,
+      isUsernameFiltered: false,
+      isNameFiltered: false,
+      privilegeFilter: [],
       width: '100%',
-      inputTarget: null,
+      current: 1,
     };
   }
 
@@ -96,9 +95,7 @@ class AdvancedForm extends Component<Props, State> {
     console.log(this.props);
     this.props.dispatch({
       type: 'servicerTable/getServicers',
-      payload: {
-        pagination: { current: 1 },
-      },
+      payload: { current: 1 },
     });
     window.addEventListener('resize', this.resizeFooterToolbar, { passive: true });
   }
@@ -106,77 +103,57 @@ class AdvancedForm extends Component<Props, State> {
   componentWillUnmount() {
     window.removeEventListener('resize', this.resizeFooterToolbar);
   }
+  onChange = (pagination, filter, sorter) => {
+    const { current } = pagination;
+    //const {};
 
-  onSearch = (value: string) => {
-    if (value.trim() !== oldSearchValue) {
-      oldSearchValue = value.trim();
-      this.props.dispatch({
-        type: 'servicerTable/getServicers',
-        payload: {
-          pagination: { current: 1 },
-          allName: oldSearchValue,
-        },
-      });
+    const { field, order } = sorter;
+    console.log(pagination);
+    console.log(filter);
+    console.log(sorter);
+    const newState = {
+      current: field ? 1 : current,
 
-      this.setState({
-        tableCondition: initialTableCondition,
-        inputTarget: null,
-      });
-    }
+      updatedAtSort: field === 'updatedAt' && order,
+      isNameFiltered: filter.name && filter.name[0] ? filter.name[0] : false,
+      isStatusFiltered: filter.status && filter.status[0] ? filter.status : false,
+      isUpdatedAtFiltered: filter.updatedAt && filter.updatedAt ? filter.updatedAt : false,
+    };
   };
 
   onChoose = async (id: string | null, type?: 'new' | 'delete') => {
     if (type === 'delete') {
       const { total } = this.props.servicerTable;
-      const { current } = this.state.tableCondition.pagination;
-      const currentPage = total - 1 > (current - 1) * 10 ? current : current - 1;
-      const tableCondition = {
-        ...initialTableCondition,
-        pagination: { total: total - 1, current: currentPage },
-      };
-      this.setState({ tableCondition });
-      this.searchRef.current.input.input.value = '';
+      let { current } = this.state;
+      const timestamp = new Date().getTime();
+      current = (total - 1 === 10 * (current - 1) ? current - 1 : current) || 1;
+      this.setState({
+        callback: {
+          timestamp,
+          newState: { current },
+        },
+      });
       this.props.dispatch({
         type: 'servicerTable/updateServicers',
         payload: {
-          params: { pagination: { current: currentPage } },
-          data: { method: 'DELETE', id },
+          params: {
+            current,
+            isNameFiltered: this.state.isNameFiltered,
+            isUsernameFiltered: this.state.isUsernameFiltered,
+            privilegeFilter: this.state.privilegeFilter,
+            sortOrder: this.state.sortOrder,
+          },
+          data: {
+            id,
+          },
+          timestamp,
+          method: 'DELETE',
         },
       });
-      return;
     }
     let inputTarget = type === 'new' ? {} : null;
     if (id !== null) inputTarget = await getServicer(id);
     this.setState({ inputTarget });
-  };
-
-  onChangeTableCondition = (pagination, filtersArg, sorter) => {
-    console.log((this.searchRef.current.input.input.value = ''));
-    console.log(pagination);
-    console.log(sorter);
-    console.log(filtersArg);
-
-    const newTableCondition: TableCondition = {
-      pagination: { total: this.props.servicerTable.total, current: pagination.current },
-      filteredValue: filtersArg.privilege,
-      sortOrder: sorter.order,
-    };
-    console.log(newTableCondition);
-    console.log(this.state.tableCondition);
-    if (!_.isEqual(newTableCondition, this.state.tableCondition)) {
-      this.setState({
-        tableCondition: newTableCondition,
-        inputTarget: null,
-      });
-
-      this.props.dispatch({
-        type: 'servicerTable/getServicers',
-        payload: {
-          allName: oldSearchValue,
-          ...newTableCondition,
-        },
-      });
-    }
   };
 
   getErrorInfo = () => {
@@ -242,8 +219,10 @@ class AdvancedForm extends Component<Props, State> {
   };
 
   static getDerivedStateFromProps(props: Props, state: State) {
-    if (props.servicerTable.total !== state.tableCondition.pagination.total)
-      state.tableCondition.pagination.total = props.servicerTable.total;
+    if (state.callback && state.callback.timestamp === props.servicerTable.timestamp) {
+      state = { ...state, ...state.callback.newState };
+      delete state.callback;
+    }
     return state;
   }
   validate = () => {
@@ -252,33 +231,59 @@ class AdvancedForm extends Component<Props, State> {
       dispatch,
     } = this.props;
     validateFieldsAndScroll((error, values) => {
+      console.log(error);
+      console.log(values);
       if (!error) {
-        // submit the values
+        values.id = this.state.inputTarget._id;
+        const timestamp = new Date().getTime();
+        let method;
+        let params;
         console.log(values);
-        const data = values;
-        data.method = data.id ? 'PUT' : 'POST';
-        const { total } = this.props.servicerTable;
-        const { current } = this.state.tableCondition.pagination;
-        let params = undefined;
-        let currentPage = undefined;
-        if (values.method === 'PUT') currentPage = current;
-        else {
-          currentPage = Math.ceil((total + 1) / 10);
+        if (values.id) {
+          method = 'PUT';
+          params = {
+            current: this.state.current,
+            isNameFiltered: this.state.isNameFiltered,
+            isUsernameFiltered: this.state.isUsernameFiltered,
+            privilegeFilter: this.state.privilegeFilter,
+            sortOrder: this.state.sortOrder,
+          };
+          this.setState({ inputTarget: undefined });
+        } else {
+          let { current } = this.state;
+          const { total } = this.props.servicerTable;
+          method = 'POST';
+          current = total + 1 > current * 10 ? current + 1 : current;
+          this.setState({
+            callback: {
+              timestamp,
+              newState: {
+                inputTarget: undefined,
+                current,
+                isNameFiltered: false,
+                isUsernameFiltered: false,
+                privilegeFilter: [],
+                sortOrder: false,
+              },
+            },
+          });
+          params = {
+            current: this.state.current,
+            isNameFiltered: this.state.isNameFiltered,
+            isUsernameFiltered: this.state.isUsernameFiltered,
+            privilegeFilter: this.state.privilegeFilter,
+            sortOrder: this.state.sortOrder,
+          };
         }
-        params = { pagination: { current: currentPage, total: total + 1 } };
         dispatch({
           type: 'servicerTable/updateServicers',
           payload: {
-            data,
+            method,
+            timestamp,
+            data: values,
             params,
           },
         });
-        const tableCondition = {
-          ...initialTableCondition,
-          ...params,
-        };
-        this.setState({ tableCondition, inputTarget: null });
-        this.searchRef.current.input.input.value = '';
       }
     });
   };
@@ -328,7 +333,7 @@ class AdvancedForm extends Component<Props, State> {
                       {getFieldDecorator('avatar', {
                         initialValue: this.state.inputTarget.avatar,
                         rules: [],
-                      })(<ImageUpload />)}
+                      })(<ImageUpload target="lawyer_avatar" />)}
                     </Form.Item>
                   </Col>
                   <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>
@@ -377,22 +382,15 @@ class AdvancedForm extends Component<Props, State> {
               </Form>
             </Card>
           )}
-          <Card
-            title="成员管理"
-            bordered={false}
-            extra={
-              <Search
-                placeholder="输入用户名或姓名搜索"
-                ref={this.searchRef}
-                onSearch={this.onSearch}
-              />
-            }
-          >
+          <Card title="成员管理" bordered={false}>
             <TableForm
-              tableCondition={this.state.tableCondition}
-              onChange={this.onChangeTableCondition}
+              onChange={this.onChange}
               value={this.props.servicerTable.servicers}
               onChoose={this.onChoose}
+              privilegeFilter={this.state.privilegeFilter}
+              isNameFiltered={this.state.isNameFiltered}
+              isUsernameFiltered={this.state.isUsernameFiltered}
+              pagination={{ total: this.props.servicerTable.total, current: this.state.current }}
             />
           </Card>
         </PageHeaderWrapper>

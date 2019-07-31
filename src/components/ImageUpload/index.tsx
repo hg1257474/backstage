@@ -2,36 +2,41 @@ import React from 'react';
 import styles from './index.less';
 import { Button } from 'antd';
 interface Props {
-  onChange?: (x: string) => void;
+  target: string;
+  onChange?: ([x, y, z]: [string, string, string]) => void;
   value?: string;
 }
-// const url="https://www.huishenghuo.net/resource_test/${x}"
 const url = 'http://192.168.0.29:7001';
-const getImage = x => {
-  const y = x;
-  if (y.includes('base64')) return y;
-  return `${url}/resource_test/${x}`;
-};
+// const url="https://www.huishenghuo.net"
 export default class extends React.Component<Props, { image: string }> {
   constructor(props: Props) {
     super(props);
     this.state = { image: props.value || '' };
   }
+  getImage = () => {
+    const { image } = this.state;
+    if (image.length > 4) return image;
+    return `${url}/resource/${this.props.target}/${image[1]}/${image[0]}`;
+  };
   state = { image: '' };
   onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const reader = new FileReader();
+    const fileName = e.target.files![0].name;
+    const fileSize = e.target.files![0].size;
     reader.onload = () => {
-      console.log(reader.result);
+      console.log('321312093u45u34');
+      console.log(fileName);
       this.setState({ image: reader.result as string });
-      this.props.onChange!(reader.result as string);
+      this.props.onChange!([fileName, reader.result as string, fileSize]);
     };
     reader.readAsDataURL(e.target.files![0]);
   };
   render() {
     console.log(this.props);
+    console.log(this.getImage())
     return (
       <div>
-        <img src={this.state.image && getImage(this.state.image)} className={styles.img} />
+        <img src={this.getImage()} className={styles.img} />
         <Button className={styles.button}>
           {this.state.image ? '修改' : '上传'}
           <input className={styles.input} onChange={this.onChange} type="file" accept="image/*" />
