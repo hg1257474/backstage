@@ -127,6 +127,7 @@ class AdvancedForm extends Component<Props, State> {
       let { current } = this.state;
       const timestamp = new Date().getTime();
       current = (total - 1 === 10 * (current - 1) ? current - 1 : current) || 1;
+      console.log(11323232)
       this.setState({
         callback: {
           timestamp,
@@ -150,6 +151,7 @@ class AdvancedForm extends Component<Props, State> {
           method: 'DELETE',
         },
       });
+      return 1
     }
     let inputTarget = type === 'new' ? {} : null;
     if (id !== null) inputTarget = await getServicer(id);
@@ -230,6 +232,7 @@ class AdvancedForm extends Component<Props, State> {
       form: { validateFieldsAndScroll },
       dispatch,
     } = this.props;
+    if (this.state.inputTarget === undefined) return 1;
     validateFieldsAndScroll((error, values) => {
       console.log(error);
       console.log(values);

@@ -108,55 +108,22 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
       title: '操作',
 
       dataIndex: 'id',
-      render: (id: string, record: ServicerTableItemDataType, index: number) => {
-        /*
-        const { loading } = this.state;
-        if (!!record.editable && loading) {
-          return null;
-        }
-        */
-        if (index === this.state.editing) {
-          return (
-            <span>
-              <a
-                onClick={e => {
-                  this.setState({ editing: -1 });
-                  this.props.onChoose(null);
-                }}
-              >
-                取消
-              </a>
-
-              <Divider type="vertical" />
-              <Popconfirm
-                title="是否要删除此行？"
-                onConfirm={() => this.props.onChoose(id, 'delete')}
-              >
-                <a>删除</a>
-              </Popconfirm>
-            </span>
-          );
-        }
-        return (
-          <span>
-            <a
-              onClick={e => {
-                this.setState({ editing: index });
-                this.props.onChoose(id);
-              }}
-            >
-              编辑
-            </a>
-            <Divider type="vertical" />
-            <Popconfirm
-              title="是否要删除此行？"
-              onConfirm={() => this.props.onChoose(id, 'delete')}
-            >
-              <a>删除</a>
-            </Popconfirm>
-          </span>
-        );
-      },
+      render: (id: string, record: ServicerTableItemDataType, index: number) => (
+        <span>
+          <a
+            onClick={e => {
+              this.setState({ editing: index });
+              this.props.onChoose(id);
+            }}
+          >
+            编辑
+          </a>
+          <Divider type="vertical" />
+          <Popconfirm title="是否要删除此行？" onConfirm={() => this.props.onChoose(id, 'delete')}>
+            <a>删除</a>
+          </Popconfirm>
+        </span>
+      ),
     },
   ];
 

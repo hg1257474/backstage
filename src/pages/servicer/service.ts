@@ -9,6 +9,8 @@ export async function updateServicers({
   data: any;
   method: string;
 }) {
+  console.log(111);
+  console.log(params, data, method);
   Object.keys(params).forEach(item => {
     if (
       params[item] === undefined ||
@@ -18,10 +20,15 @@ export async function updateServicers({
     )
       delete params[item];
   });
-  Object.values(data.privilege).forEach((item, index) => {
-    if (!index) data.privilege = {};
-    data.privilege[item] = true;
-  });
+  console.log('fuck');
+
+  if (data.privilege)
+    Object.values(data.privilege).forEach((item, index) => {
+      if (!index) data.privilege = {};
+      data.privilege[item] = true;
+    });
+
+  console.log('fuck');
   console.log(data);
   return request(url + `/backstage/servicer/${data.id || 'new'}`, {
     mode: 'cors',
