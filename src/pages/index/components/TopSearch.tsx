@@ -69,7 +69,7 @@ const TopSearch = ({
     }}
   >
     <Row gutter={68} type="flex">
-      <Col sm={12} xs={24} style={{ marginBottom: 24 }}>
+      <Col sm={24} xs={24} style={{ marginBottom: 24 }}>
         <NumberInfo
           subTitle={
             <span>
@@ -90,30 +90,6 @@ const TopSearch = ({
           total={numeral(12321).format('0,0')}
           status="up"
           subTotal={17.1}
-        />
-        <MiniArea line height={45} data={visitData2} />
-      </Col>
-      <Col sm={12} xs={24} style={{ marginBottom: 24 }}>
-        <NumberInfo
-          subTitle={
-            <span>
-              <FormattedMessage
-                id="dashboard-analysis.analysis.per-capita-search"
-                defaultMessage="Per Capita Search"
-              />
-              <Tooltip
-                title={
-                  <FormattedMessage id="dashboard-analysis.analysis.introduce" defaultMessage="introduce" />
-                }
-              >
-                <Icon style={{ marginLeft: 8 }} type="info-circle-o" />
-              </Tooltip>
-            </span>
-          }
-          total={2.7}
-          status="down"
-          subTotal={26.2}
-          gap={8}
         />
         <MiniArea line height={45} data={visitData2} />
       </Col>

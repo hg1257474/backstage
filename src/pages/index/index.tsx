@@ -10,7 +10,7 @@ import PageLoading from './components/PageLoading';
 import { getTimeDistance } from './utils/utils';
 import { AnalysisData } from './data.d';
 import styles from './style.less';
-
+import { getData } from './service';
 const IntroduceRow = React.lazy(() => import('./components/IntroduceRow'));
 const SalesCard = React.lazy(() => import('./components/SalesCard'));
 const TopSearch = React.lazy(() => import('./components/TopSearch'));
@@ -53,9 +53,13 @@ class Analysis extends Component<dashboardAnalysisProps, dashboardAnalysisState>
   reqRef: number = 0;
 
   timeoutId: number = 0;
-
+  getData = async () => {
+    const test = await getData();
+    this.setState({ test });
+  };
   componentDidMount() {
     const { dispatch } = this.props;
+    this.getData();
     this.reqRef = requestAnimationFrame(() => {
       dispatch({
         type: 'dashboardAnalysis/fetch',
@@ -163,7 +167,7 @@ class Analysis extends Component<dashboardAnalysisProps, dashboardAnalysisState>
       <GridContent>
         <React.Fragment>
           <Suspense fallback={<PageLoading />}>
-            <IntroduceRow loading={loading} visitData={visitData} />
+            <IntroduceRow loading={loading} visitData={visitData} test={this.state.test} />
           </Suspense>
           <Suspense fallback={null}>
             <SalesCard
