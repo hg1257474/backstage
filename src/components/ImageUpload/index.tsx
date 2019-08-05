@@ -6,18 +6,21 @@ interface Props {
   onChange?: ([x, y, z]: [string, string, string]) => void;
   value?: string;
 }
-const url = 'http://192.168.0.29:7001';
+const url = 'https://www.cyfwg.com';
+// const url = 'http://192.168.0.29:7001';
 // const url="https://www.huishenghuo.net"
-export default class extends React.Component<Props, { image: string }> {
+export default class extends React.Component<Props, { image: string; oldValue: string }> {
   constructor(props: Props) {
     super(props);
-    this.state = { image: props.value || '' };
+    console.log('image constructor');
+    this.state = { image: props.value || '', oldValue: props.value};
   }
   getImage = () => {
     const { image } = this.state;
     if (image.length > 4) return image;
     return `${url}/resource/${this.props.target}/${image[1]}/${image[0]}`;
   };
+
   state = { image: '' };
   onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const reader = new FileReader();
@@ -33,7 +36,7 @@ export default class extends React.Component<Props, { image: string }> {
   };
   render() {
     console.log(this.props);
-    console.log(this.getImage())
+    console.log(this.getImage());
     return (
       <div>
         <img src={this.getImage()} className={styles.img} />

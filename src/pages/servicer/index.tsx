@@ -127,7 +127,7 @@ class AdvancedForm extends Component<Props, State> {
       let { current } = this.state;
       const timestamp = new Date().getTime();
       current = (total - 1 === 10 * (current - 1) ? current - 1 : current) || 1;
-      console.log(11323232)
+      console.log(11323232);
       this.setState({
         callback: {
           timestamp,
@@ -151,10 +151,12 @@ class AdvancedForm extends Component<Props, State> {
           method: 'DELETE',
         },
       });
-      return 1
+      return 1;
     }
+    console.log(type);
     let inputTarget = type === 'new' ? {} : null;
     if (id !== null) inputTarget = await getServicer(id);
+    console.log(inputTarget);
     this.setState({ inputTarget });
   };
 
@@ -222,8 +224,10 @@ class AdvancedForm extends Component<Props, State> {
 
   static getDerivedStateFromProps(props: Props, state: State) {
     if (state.callback && state.callback.timestamp === props.servicerTable.timestamp) {
+      console.log('again getDer');
       state = { ...state, ...state.callback.newState };
-      delete state.callback;
+      state.callback = undefined;
+      console.log(state);
     }
     return state;
   }
