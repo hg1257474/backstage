@@ -173,6 +173,7 @@ class Analysis extends Component<dashboardAnalysisProps, dashboardAnalysisState>
             <SalesCard
               rangePickerValue={rangePickerValue}
               salesData={salesData}
+              test={this.state.test}
               isActive={this.isActive}
               handleRangePickerChange={this.handleRangePickerChange}
               loading={loading}
@@ -189,6 +190,7 @@ class Analysis extends Component<dashboardAnalysisProps, dashboardAnalysisState>
             <Col xl={12} lg={24} md={24} sm={24} xs={24}>
               <Suspense fallback={null}>
                 <TopSearch
+                  test={this.state.test}
                   loading={loading}
                   visitData2={visitData2}
                   searchData={searchData}

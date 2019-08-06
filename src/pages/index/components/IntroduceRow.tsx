@@ -33,8 +33,40 @@ const IntroduceRow = ({
         y: item.total,
       }))
     : [];
+  const getTrend = (current, previous) => {
+    let ratio;
+    let trend;
+    if (previous > current) {
+      trend = 'down';
+      ratio = (previous - current) / current;
+    } else if (previous < current) {
+      trend = 'up';
+      ratio = (current - previous) / previous;
+    } else {
+      trend = '';
+      ratio = 0;
+    }
+    return [trend, `${ratio.toFixed(4) * 100}%`];
+  };
   console.log(test);
   console.log(_test);
+  const daySalesTrend = getTrend(
+    test ? test.daySalesTrend[test.daySalesTrend.length - 1].sales : 0,
+    test
+      ? test.daySalesTrend[test.daySalesTrend.length - 2]
+        ? test.daySalesTrend[test.daySalesTrend.length - 2].sales
+        : 0
+      : 0,
+  );
+  const weekSalesTrend = getTrend(
+    test ? test.weekSalesTrend[test.weekSalesTrend.length - 1].sales : 0,
+    test
+      ? test.weekSalesTrend[test.weekSalesTrend.length - 2]
+        ? test.weekSalesTrend[test.weekSalesTrend.length - 2].sales
+        : 0
+      : 0,
+  );
+  console.log(daySalesTrend);
   return (
     <Row gutter={24} type="flex">
       <Col {...topColResponsiveProps}>
@@ -42,7 +74,7 @@ const IntroduceRow = ({
           bordered={false}
           title={
             <FormattedMessage
-              id="dashboard-analysis.analysis.total-sales"
+              id="dashboard-analysis.analysis.month-total-sales"
               defaultMessage="Total Sales"
             />
           }
@@ -59,7 +91,11 @@ const IntroduceRow = ({
             </Tooltip>
           }
           loading={loading}
-          total={() => <Yuan>126560</Yuan>}
+          total={() => (
+            <Yuan>
+              {test ? test.weekSalesTrend.reduce((prev, now) => prev + now.sales, 0) : 0}
+            </Yuan>
+          )}
           footer={
             <Field
               label={
@@ -68,21 +104,23 @@ const IntroduceRow = ({
                   defaultMessage="Daily Sales"
                 />
               }
-              value={`￥${numeral(12423).format('0,0')}`}
+              value={`￥${numeral(
+                test ? test.daySalesTrend[test.daySalesTrend.length - 1].sales : 0,
+              ).format('0,0')}`}
             />
           }
           contentHeight={46}
         >
-          <Trend flag="up" style={{ marginRight: 16 }}>
+          <Trend flag={weekSalesTrend[0]} style={{ marginRight: 16 }}>
             <FormattedMessage
               id="dashboard-analysis.analysis.week"
               defaultMessage="Weekly Changes"
             />
-            <span className={styles.trendText}>12%</span>
+            <span className={styles.trendText}>{weekSalesTrend[1]}</span>
           </Trend>
-          <Trend flag="down">
+          <Trend flag={daySalesTrend[0]}>
             <FormattedMessage id="dashboard-analysis.analysis.day" defaultMessage="Daily Changes" />
-            <span className={styles.trendText}>11%</span>
+            <span className={styles.trendText}>{daySalesTrend[1]}</span>
           </Trend>
         </ChartCard>
       </Col>

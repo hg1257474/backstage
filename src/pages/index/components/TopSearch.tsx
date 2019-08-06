@@ -9,6 +9,8 @@ import NumberInfo from './NumberInfo';
 import Trend from './Trend';
 import styles from '../style.less';
 
+const getRatio=(previous,current)=>!!previous?
+(current-previous)/previous:current
 const columns = [
   {
     title: <FormattedMessage id="dashboard-analysis.table.rank" defaultMessage="Rank" />,
@@ -17,7 +19,10 @@ const columns = [
   },
   {
     title: (
-      <FormattedMessage id="dashboard-analysis.table.search-keyword" defaultMessage="Search keyword" />
+      <FormattedMessage
+        id="dashboard-analysis.table.search-keyword"
+        defaultMessage="Search keyword"
+      />
     ),
     dataIndex: 'keyword',
     key: 'keyword',
@@ -31,7 +36,9 @@ const columns = [
     className: styles.alignRight,
   },
   {
-    title: <FormattedMessage id="dashboard-analysis.table.weekly-range" defaultMessage="Weekly Range" />,
+    title: (
+      <FormattedMessage id="dashboard-analysis.table.weekly-range" defaultMessage="Weekly Range" />
+    ),
     dataIndex: 'range',
     key: 'range',
     sorter: (a: { range: number }, b: { range: number }) => a.range - b.range,
@@ -48,63 +55,73 @@ const TopSearch = ({
   visitData2,
   searchData,
   dropdownGroup,
+  test,
 }: {
+  test: any;
   loading: boolean;
   visitData2: VisitDataType[];
   dropdownGroup: React.ReactNode;
   searchData: SearchDataType[];
-}) => (
-  <Card
-    loading={loading}
-    bordered={false}
-    title={
-      <FormattedMessage
-        id="dashboard-analysis.analysis.online-top-search"
-        defaultMessage="Online Top Search"
-      />
-    }
-    extra={dropdownGroup}
-    style={{
-      height: '100%',
-    }}
-  >
-    <Row gutter={68} type="flex">
-      <Col sm={24} xs={24} style={{ marginBottom: 24 }}>
-        <NumberInfo
-          subTitle={
-            <span>
-              <FormattedMessage
-                id="dashboard-analysis.analysis.search-users"
-                defaultMessage="search users"
-              />
-              <Tooltip
-                title={
-                  <FormattedMessage id="dashboard-analysis.analysis.introduce" defaultMessage="introduce" />
-                }
-              >
-                <Icon style={{ marginLeft: 8 }} type="info-circle-o" />
-              </Tooltip>
-            </span>
-          }
-          gap={8}
-          total={numeral(12321).format('0,0')}
-          status="up"
-          subTotal={17.1}
+}) => {
+  const weekNSTrend=test?test.weekNStrend.length
+  return (
+    <Card
+      loading={loading}
+      bordered={false}
+      title={
+        <FormattedMessage
+          id="dashboard-analysis.analysis.new-service-submit"
+          defaultMessage="Online Top Search"
         />
-        <MiniArea line height={45} data={visitData2} />
-      </Col>
-    </Row>
-    <Table<any>
-      rowKey={record => record.index}
-      size="small"
-      columns={columns}
-      dataSource={searchData}
-      pagination={{
-        style: { marginBottom: 0 },
-        pageSize: 5,
+      }
+      extra={dropdownGroup}
+      style={{
+        height: '100%',
       }}
-    />
-  </Card>
-);
+    >
+      <Row gutter={68} type="flex">
+        <Col sm={24} xs={24} style={{ marginBottom: 24 }}>
+          <NumberInfo
+            subTitle={
+              <span>
+                <FormattedMessage
+                  id="dashboard-analysis.analysis.new-services-total"
+                  defaultMessage="search users"
+                />
+                <Tooltip
+                  title={
+                    <FormattedMessage
+                      id="dashboard-analysis.analysis.introduce"
+                      defaultMessage="introduce"
+                    />
+                  }
+                >
+                  <Icon style={{ marginLeft: 8 }} type="info-circle-o" />
+                </Tooltip>
+              </span>
+            }
+            gap={8}
+            total={numeral(test ? test.weekNSTrend[test.weekNSTrend.length - 1].total : 0).format(
+              '0,0',
+            )}
+            status={test?test.weekNSTrend["
+            subTotal={17.1}
+          />
+          <MiniArea line height={45} data={visitData2} />
+        </Col>
+      </Row>
+      <Table<any>
+        rowKey={record => record.index}
+        size="small"
+        columns={columns}
+        dataSource={searchData}
+        pagination={{
+          style: { marginBottom: 0 },
+          pageSize: 5,
+        }}
+      />
+    </Card>
+  );
+};
 
 export default TopSearch;
