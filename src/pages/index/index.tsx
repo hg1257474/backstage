@@ -203,6 +203,7 @@ class Analysis extends Component<dashboardAnalysisProps, dashboardAnalysisState>
                 <ProportionSales
                   dropdownGroup={dropdownGroup}
                   salesType={salesType}
+                  test={this.state.test}
                   loading={loading}
                   salesPieData={salesPieData}
                   handleChangeSalesType={this.handleChangeSalesType}
