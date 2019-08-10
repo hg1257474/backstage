@@ -367,6 +367,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     );
     const that = this;
     console.log(this.props);
+    console.log(this.state)
     console.log(this.state);
     // console.log(this.props.listBasicList);
     // console.log(this.props.listBasicList.list);
