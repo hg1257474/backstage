@@ -51,8 +51,8 @@ const IntroduceRow = ({
   console.log(test);
   console.log(_test);
   const daySalesTrend = getTrend(
-    test ? test.daySalesTrend[test.daySalesTrend.length - 1].sales : 0,
-    test
+    test && test.length > 0 ? test.daySalesTrend[test.daySalesTrend.length - 1].sales : 0,
+    test && test.length > 0
       ? test.daySalesTrend[test.daySalesTrend.length - 2]
         ? test.daySalesTrend[test.daySalesTrend.length - 2].sales
         : 0
@@ -92,9 +92,7 @@ const IntroduceRow = ({
           }
           loading={loading}
           total={() => (
-            <Yuan>
-              {test ? test.weekSalesTrend.reduce((prev, now) => prev + now.sales, 0) : 0}
-            </Yuan>
+            <Yuan>{test ? test.weekSalesTrend.reduce((prev, now) => prev + now.sales, 0) : 0}</Yuan>
           )}
           footer={
             <Field
@@ -105,7 +103,7 @@ const IntroduceRow = ({
                 />
               }
               value={`￥${numeral(
-                test ? test.daySalesTrend[test.daySalesTrend.length - 1].sales : 0,
+                test && test.length ? test.daySalesTrend[test.daySalesTrend.length - 1].sales : 0,
               ).format('0,0')}`}
             />
           }
