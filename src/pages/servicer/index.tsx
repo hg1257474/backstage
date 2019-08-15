@@ -13,7 +13,7 @@ import {
 } from 'antd';
 import _ from 'lodash';
 import React, { Component } from 'react';
-import { TableFormDateType } from './components/TableForm';
+import { TableFormDateType, OnChange } from './components/TableForm';
 import { Dispatch } from 'redux';
 import { FormComponentProps } from 'antd/es/form';
 import { PageHeaderWrapper } from '@ant-design/pro-layout';
@@ -27,7 +27,6 @@ import ImageUpload from '../../components/ImageUpload';
 import { StateType } from './model';
 import { threadId } from 'worker_threads';
 import { getServicer } from './service';
-
 const { Option } = Select;
 const { Search } = Input;
 const fieldLabels = {
@@ -45,26 +44,29 @@ interface Props extends FormComponentProps {
   submitting: boolean;
   servicerTable: StateType;
 }
-interface State {
-  callback?: {
-    timestamp: number;
-    newState: {
-      current?: number;
-      isNameFiltered?: boolean;
-      privilegeFilter?: [];
-      isUsernameFiltered?: boolean;
-      sortOrder?: 'ascend' | 'descend' | false;
-      inputTarget?: any;
-    };
-  };
-  sortOrder?: 'ascend' | 'descend' | false;
-  isNameFiltered: boolean;
-  isUsernameFiltered: boolean;
-  privilegeFilter: [];
-  width: string;
-  inputTarget?: any;
+export interface TableState {
+  servicesTotalSortOrder?: 'ascend' | 'descend' | false;
+  isNameFiltered: boolean | string;
+  isUsernameFiltered: boolean | string;
+  privilegeFilter: string[];
   current: number;
 }
+type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
+interface State extends TableState {
+  callback?: {
+    timestamp: number;
+    newState: Omit<State, 'width'>;
+  };
+  width: string;
+  inputTarget?: any;
+}
+const initialTableState: NonNullable<State['callback']>['newState'] = {
+  current: 1,
+  isNameFiltered: false,
+  isUsernameFiltered: false,
+  privilegeFilter: [],
+  servicesTotalSortOrder: false,
+};
 /*
 @connect(({ loading }: { loading: { effects: { [key: string]: boolean } } }) => ({
   submitting: loading.effects['formAdvancedForm/submitAdvancedForm'],
@@ -76,16 +78,12 @@ interface State {
     servicerTable: x.servicerTable,
   };
 })
-class AdvancedForm extends Component<Props, State> {
+class ServicerForm extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      sortOrder: false,
-      isUsernameFiltered: false,
-      isNameFiltered: false,
-      privilegeFilter: [],
+      ...initialTableState,
       width: '100%',
-      current: 1,
     };
   }
 
@@ -103,22 +101,16 @@ class AdvancedForm extends Component<Props, State> {
   componentWillUnmount() {
     window.removeEventListener('resize', this.resizeFooterToolbar);
   }
-  onChange = (pagination, filter, sorter) => {
-    const { current } = pagination;
-    //const {};
-
-    const { field, order } = sorter;
-    console.log(pagination);
-    console.log(filter);
-    console.log(sorter);
-    const newState = {
-      current: field ? 1 : current,
-
-      updatedAtSort: field === 'updatedAt' && order,
-      isNameFiltered: filter.name && filter.name[0] ? filter.name[0] : false,
-      isStatusFiltered: filter.status && filter.status[0] ? filter.status : false,
-      isUpdatedAtFiltered: filter.updatedAt && filter.updatedAt ? filter.updatedAt : false,
+  onChange: OnChange = ({ current }, filter, { field, order }) => {
+    const newState: NonNullable<State['callback']>['newState'] = {
+      current: current!,
+      isNameFiltered: filter.name && filter.name.length ? filter.name[0] : false,
+      isUsernameFiltered: filter.username && filter.username.length ? filter.username[0] : false,
+      privilegeFilter: filter.privilege,
+      servicesTotalSortOrder: field === 'servicesTotal' && order,
     };
+    this.setState(newState);
+    return 1;
   };
 
   onChoose = async (id: string | null, type?: 'new' | 'delete') => {
@@ -127,7 +119,6 @@ class AdvancedForm extends Component<Props, State> {
       let { current } = this.state;
       const timestamp = new Date().getTime();
       current = (total - 1 === 10 * (current - 1) ? current - 1 : current) || 1;
-      console.log(11323232);
       this.setState({
         callback: {
           timestamp,
@@ -158,6 +149,7 @@ class AdvancedForm extends Component<Props, State> {
     if (id !== null) inputTarget = await getServicer(id);
     console.log(inputTarget);
     this.setState({ inputTarget });
+    return 1;
   };
 
   getErrorInfo = () => {
@@ -393,11 +385,13 @@ class AdvancedForm extends Component<Props, State> {
             <TableForm
               onChange={this.onChange}
               value={this.props.servicerTable.servicers}
+              current={this.state.current}
+              total={this.props.servicerTable.total}
               onChoose={this.onChoose}
+              servicesTotalSortOrder={this.state.servicesTotalSortOrder}
               privilegeFilter={this.state.privilegeFilter}
               isNameFiltered={this.state.isNameFiltered}
               isUsernameFiltered={this.state.isUsernameFiltered}
-              pagination={{ total: this.props.servicerTable.total, current: this.state.current }}
             />
           </Card>
         </PageHeaderWrapper>
@@ -412,4 +406,4 @@ class AdvancedForm extends Component<Props, State> {
   }
 }
 
-export default Form.create<AdvancedFormProps>()(AdvancedForm);
+export default Form.create()(ServicerForm);

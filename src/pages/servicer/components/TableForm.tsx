@@ -1,26 +1,22 @@
-import { Button, Divider, Input, Popconfirm, Table, message } from 'antd';
+import { Button, Divider, Input, Popconfirm, Table, message, Icon } from 'antd';
 import React, { Fragment, PureComponent } from 'react';
 import Link from 'umi/link';
 import { isEqual } from 'lodash';
 import { ServicerTableItemDataType } from '../data';
+import { TableProps } from 'antd/lib/table/interface';
 import styles from '../style.less';
+import { TableState } from '../index';
+export type OnChange = TableProps<ServicerTableItemDataType>['onChange'];
 const privilegeMap = {
   canAssignService: '分配服务',
   canProcessingService: '处理服务',
   canManageServicer: '管理成员',
 };
-interface TableFormProps {
+interface TableFormProps extends TableState {
   loading?: boolean;
   value?: ServicerTableItemDataType[];
-  sortOrder: 'ascend' | 'descend' | false;
-  pagination: {
-    total: number;
-    current: number;
-  };
-  isNameFiltered: boolean;
-  isUsernameFiltered: boolean;
-  privilegeFilter: [];
-  onChange: (x: any) => void;
+  total: number;
+  onChange: OnChange;
   onChoose: (id: string | null, type?: 'new' | 'delete') => void;
 }
 
@@ -30,6 +26,7 @@ interface TableFormState {
   data?: ServicerTableItemDataType[];
   editing: number;
 }
+
 class TableForm extends PureComponent<TableFormProps, TableFormState> {
   static getDerivedStateFromProps(nextProps: TableFormProps, preState: TableFormState) {
     if (isEqual(nextProps.value, preState.value)) {
@@ -51,17 +48,67 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
     const newData = data.filter((value, key) => key !== index);
     this.setState({ data: newData, value: newData });
   };
+  filterIcon = target => filtered => (
+    <Icon type="search" style={{ color: target ? '#1890ff' : undefined }} />
+  );
+  usernameSearchInput: Input | null = null;
+  nameSearchInput: Input | null = null;
+  filterDropdown = (target: 'usernameSearchInput' | 'nameSearchInput') => ({
+    setSelectedKeys,
+    selectedKeys,
+    confirm,
+    clearFilters,
+  }) => {
+    const that = this;
+    return (
+      <div style={{ padding: 8 }}>
+        <Input
+          ref={node => {
+            that[target] = node;
+          }}
+          placeholder={`Search`}
+          value={selectedKeys[0]}
+          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={confirm}
+          style={{ width: 188, marginBottom: 8, display: 'block' }}
+        />
+        <Button
+          type="primary"
+          onClick={confirm}
+          icon="search"
+          size="small"
+          style={{ width: 90, marginRight: 8 }}
+        >
+          Search
+        </Button>
+        <Button onClick={clearFilters} size="small" style={{ width: 90 }}>
+          Reset
+        </Button>
+      </div>
+    );
+  };
+  onFilterDropdownVisibleChange = (target: 'usernameSearchInput' | 'nameSearchInput') => (
+    visible: boolean,
+  ) => {
+    if (visible) {
+      setTimeout(() => this.nameSearchInput!.select());
+    }
+  };
   getColumns = () => [
     {
       title: '用户名',
       dataIndex: 'username',
       key: 'username',
-      filtered: this.props.isUsernameFiltered,
+      filterIcon: this.filterIcon(this.props.isUsernameFiltered),
+      onFilterDropdownVisibleChange: this.onFilterDropdownVisibleChange('usernameSearchInput'),
+      filterDropdown: this.filterDropdown('usernameSearchInput'),
       width: '20%',
     },
     {
       title: '姓名',
-      filtered: this.props.isNameFiltered,
+      filterIcon: this.filterIcon(this.props.isNameFiltered),
+      onFilterDropdownVisibleChange: this.onFilterDropdownVisibleChange('nameSearchInput'),
+      filterDropdown: this.filterDropdown('nameSearchInput'),
       dataIndex: 'name',
       key: 'name',
       width: '20%',
@@ -99,7 +146,7 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
       key: 'servicesTotal',
       sorter: true,
       width: '15%',
-      sortOrder: this.props.sortOrder,
+      sortOrder: this.props.servicesTotalSortOrder,
       render(text: number, record: ServicerTableItemDataType) {
         return <Link to={`/servicer/${record.id}/service`}>{text}</Link>;
       },
@@ -150,7 +197,7 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
           rowKey="id"
           rowClassName={record => ''}
           onChange={this.props.onChange}
-          pagination={this.props.pagination}
+          pagination={{ current: this.props.current, total: this.props.total }}
         />
         <Button
           style={{ width: '100%', marginTop: 16, marginBottom: 8 }}
