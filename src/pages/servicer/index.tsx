@@ -21,7 +21,7 @@ import { connect } from 'dva';
 import TableForm from './components/TableForm';
 import FooterToolbar from './components/FooterToolbar';
 import styles from './style.less';
-
+import Callback from '../../components/Callback';
 import { image } from './images';
 import ImageUpload from '../../components/ImageUpload';
 import { StateType } from './model';
@@ -78,7 +78,7 @@ const initialTableState: NonNullable<State['callback']>['newState'] = {
     servicerTable: x.servicerTable,
   };
 })
-class ServicerForm extends Component<Props, State> {
+class ServicerForm extends Callback<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -102,6 +102,7 @@ class ServicerForm extends Component<Props, State> {
     window.removeEventListener('resize', this.resizeFooterToolbar);
   }
   onChange: OnChange = ({ current }, filter, { field, order }) => {
+    console.log(current, filter, field, order);
     const newState: NonNullable<State['callback']>['newState'] = {
       current: current!,
       isNameFiltered: filter.name && filter.name.length ? filter.name[0] : false,
@@ -109,6 +110,7 @@ class ServicerForm extends Component<Props, State> {
       privilegeFilter: filter.privilege,
       servicesTotalSortOrder: field === 'servicesTotal' && order,
     };
+
     this.setState(newState);
     return 1;
   };
@@ -122,11 +124,12 @@ class ServicerForm extends Component<Props, State> {
       this.setState({
         callback: {
           timestamp,
-          newState: { current },
+          newState: { ...this.state, current },
         },
       });
+
       this.props.dispatch({
-        type: 'servicerTable/updateServicers',
+        type: 'servicerTable/deleteServicer',
         payload: {
           params: {
             current,
@@ -214,15 +217,6 @@ class ServicerForm extends Component<Props, State> {
     });
   };
 
-  static getDerivedStateFromProps(props: Props, state: State) {
-    if (state.callback && state.callback.timestamp === props.servicerTable.timestamp) {
-      console.log('again getDer');
-      state = { ...state, ...state.callback.newState };
-      state.callback = undefined;
-      console.log(state);
-    }
-    return state;
-  }
   validate = () => {
     const {
       form: { validateFieldsAndScroll },
@@ -233,59 +227,49 @@ class ServicerForm extends Component<Props, State> {
       console.log(error);
       console.log(values);
       if (!error) {
-        values.id = this.state.inputTarget._id;
         const timestamp = new Date().getTime();
-        let method;
-        let params;
+        let action: any = {};
+        let newState = {};
+        values.id = this.state.inputTarget._id;
         console.log(values);
         if (values.id) {
-          method = 'PUT';
-          params = {
-            current: this.state.current,
-            isNameFiltered: this.state.isNameFiltered,
-            isUsernameFiltered: this.state.isUsernameFiltered,
-            privilegeFilter: this.state.privilegeFilter,
-            sortOrder: this.state.sortOrder,
+          action = {
+            type: 'ServicerForm/updateServicer',
+            payload: {
+              data: values,
+            },
           };
-          this.setState({ inputTarget: undefined });
         } else {
           let { current } = this.state;
           const { total } = this.props.servicerTable;
-          method = 'POST';
           current = total + 1 > current * 10 ? current + 1 : current;
-          this.setState({
-            callback: {
-              timestamp,
-              newState: {
-                inputTarget: undefined,
-                current,
-                isNameFiltered: false,
-                isUsernameFiltered: false,
-                privilegeFilter: [],
-                sortOrder: false,
-              },
+          newState = {
+            current,
+            isNameFiltered: false,
+            isUsernameFiltered: false,
+            privilegeFilter: [],
+            servicesTotalSortOrder: false,
+          };
+          action = {
+            type: 'servicerForm/addServicer',
+            payload: {
+              params: { current },
+              data: values,
             },
-          });
-          params = {
-            current: this.state.current,
-            isNameFiltered: this.state.isNameFiltered,
-            isUsernameFiltered: this.state.isUsernameFiltered,
-            privilegeFilter: this.state.privilegeFilter,
-            sortOrder: this.state.sortOrder,
           };
         }
-        dispatch({
-          type: 'servicerTable/updateServicers',
-          payload: {
-            method,
+        this.setState({
+          callback: {
             timestamp,
-            data: values,
-            params,
+            newState: { ...this.state, ...newState, inputTarget: undefined },
           },
         });
+        action.payload.callback.timestamp = timestamp;
+        dispatch(action);
       }
     });
   };
+
   render() {
     console.log(this);
     const that = this;

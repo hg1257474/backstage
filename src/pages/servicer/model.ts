@@ -35,7 +35,7 @@ const Model: ModelType = {
     servicers: [],
     total: 0,
   },
-
+  
   effects: {
     *getServicers({ payload }, { call, put }) {
       const { timestamp } = payload;
