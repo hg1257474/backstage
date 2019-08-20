@@ -1,7 +1,7 @@
 import { AnyAction, Reducer } from 'redux';
 import { EffectsCommandMap } from 'dva';
 import { message } from 'antd';
-import { updateServicers, getServicers } from './service';
+import { addServicer, deleteServicer, updateServicer, getServicers } from './service';
 import { ServicerTableItemDataType } from './data';
 import { number } from 'prop-types';
 export interface StateType {
@@ -20,7 +20,9 @@ export interface ModelType {
   state: StateType;
   effects: {
     getServicers: Effect;
-    updateServicers: Effect;
+    deleteServicer: Effect;
+    addServicer: Effect;
+    updateServicer: Effect;
   };
   reducers: {
     servicers: Reducer<StateType>;
@@ -28,35 +30,50 @@ export interface ModelType {
 }
 
 const Model: ModelType = {
-  namespace: 'servicerTable',
+  namespace: 'servicerForm',
 
   state: {
     timestamp: 0,
     servicers: [],
     total: 0,
   },
-  
+
   effects: {
     *getServicers({ payload }, { call, put }) {
       const { timestamp } = payload;
       delete payload.timestamp;
-      const res = yield call(getServicers, payload);
+      const res = yield call(getServicers, payload.params);
+      console.log(res);
       yield put({
         type: 'servicers',
         payload: { ...res, timestamp },
       });
     },
+    *addServicer({ payload }, { call, put }) {
+      const res = yield call(addServicer, payload.data);
+      if (res)
+        yield put({
+          type: 'getServicers',
+          payload,
+        });
+    },
+    *deleteServicer({ payload }, { call, put }) {
+      const res = yield call(deleteServicer, { id: payload.id });
+      if (res)
+        yield put({
+          type: 'getServicers',
+          payload,
+        });
+    },
 
-    *updateServicers({ payload }, { call, put }) {
-      const { timestamp } = payload;
-      delete payload.timestamp;
-      console.log(payload)
-      const res = yield call(updateServicers, payload);
+    *updateServicer({ payload }, { call, put }) {
+      const res = yield call(updateServicer, payload.data);
       message.success('提交成功');
-      yield put({
-        type: 'servicers',
-        payload: { ...res, timestamp },
-      });
+      if (res)
+        yield put({
+          type: 'getServicers',
+          payload,
+        });
     },
   },
   reducers: {

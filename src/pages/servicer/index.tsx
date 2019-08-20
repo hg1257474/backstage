@@ -42,7 +42,8 @@ const fieldLabels = {
 interface Props extends FormComponentProps {
   dispatch: Dispatch<any>;
   submitting: boolean;
-  servicerTable: StateType;
+  servicerForm: StateType;
+  timestamp: number;
 }
 export interface TableState {
   servicesTotalSortOrder?: 'ascend' | 'descend' | false;
@@ -75,7 +76,8 @@ const initialTableState: NonNullable<State['callback']>['newState'] = {
 @connect(x => {
   return {
     submitting: x.loading.effects['formAdvancedForm/submitAdvancedForm'],
-    servicerTable: x.servicerTable,
+    servicerForm: x.servicerForm,
+    timestamp: x.servicerForm.timestamp,
   };
 })
 class ServicerForm extends Callback<Props, State> {
@@ -92,8 +94,10 @@ class ServicerForm extends Callback<Props, State> {
   componentDidMount() {
     console.log(this.props);
     this.props.dispatch({
-      type: 'servicerTable/getServicers',
-      payload: { current: 1 },
+      type: 'servicerForm/getServicers',
+      payload: {
+        params: { current: 1 },
+      },
     });
     window.addEventListener('resize', this.resizeFooterToolbar, { passive: true });
   }
@@ -101,6 +105,7 @@ class ServicerForm extends Callback<Props, State> {
   componentWillUnmount() {
     window.removeEventListener('resize', this.resizeFooterToolbar);
   }
+
   onChange: OnChange = ({ current }, filter, { field, order }) => {
     console.log(current, filter, field, order);
     const newState: NonNullable<State['callback']>['newState'] = {
@@ -110,14 +115,26 @@ class ServicerForm extends Callback<Props, State> {
       privilegeFilter: filter.privilege,
       servicesTotalSortOrder: field === 'servicesTotal' && order,
     };
-
-    this.setState(newState);
+    const timestamp = new Date().getTime();
+    this.setState({
+      callback: {
+        timestamp,
+        newState,
+      },
+    });
+    this.props.dispatch({
+      type: 'servicerForm/getServicers',
+      payload: {
+        params: newState,
+        timestamp,
+      },
+    });
     return 1;
   };
 
   onChoose = async (id: string | null, type?: 'new' | 'delete') => {
     if (type === 'delete') {
-      const { total } = this.props.servicerTable;
+      const { total } = this.props.servicerForm;
       let { current } = this.state;
       const timestamp = new Date().getTime();
       current = (total - 1 === 10 * (current - 1) ? current - 1 : current) || 1;
@@ -129,20 +146,17 @@ class ServicerForm extends Callback<Props, State> {
       });
 
       this.props.dispatch({
-        type: 'servicerTable/deleteServicer',
+        type: 'servicerForm/deleteServicer',
         payload: {
+          id,
           params: {
             current,
             isNameFiltered: this.state.isNameFiltered,
             isUsernameFiltered: this.state.isUsernameFiltered,
             privilegeFilter: this.state.privilegeFilter,
-            sortOrder: this.state.sortOrder,
-          },
-          data: {
-            id,
+            servicesTotalSortOrder: this.state.servicesTotalSortOrder,
           },
           timestamp,
-          method: 'DELETE',
         },
       });
       return 1;
@@ -241,7 +255,7 @@ class ServicerForm extends Callback<Props, State> {
           };
         } else {
           let { current } = this.state;
-          const { total } = this.props.servicerTable;
+          const { total } = this.props.servicerForm;
           current = total + 1 > current * 10 ? current + 1 : current;
           newState = {
             current,
@@ -368,9 +382,9 @@ class ServicerForm extends Callback<Props, State> {
           <Card title="成员管理" bordered={false}>
             <TableForm
               onChange={this.onChange}
-              value={this.props.servicerTable.servicers}
+              value={this.props.servicerForm.servicers}
               current={this.state.current}
-              total={this.props.servicerTable.total}
+              total={this.props.servicerForm.total}
               onChoose={this.onChoose}
               servicesTotalSortOrder={this.state.servicesTotalSortOrder}
               privilegeFilter={this.state.privilegeFilter}
