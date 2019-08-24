@@ -18,21 +18,11 @@ const topColResponsiveProps = {
   style: { marginBottom: 24 },
 };
 const year = moment().year();
-const IntroduceRow = ({
-  loading,
-  visitData,
-  test,
-}: {
-  loading: boolean;
-  visitData: VisitDataType[];
-  test: any;
-}) => {
-  const _test = test
-    ? test.monthNCTrend.map(item => ({
-        x: `${year}.${item._id.month}`,
-        y: item.total,
-      }))
-    : [];
+const IntroduceRow = ({ loading, test }: { loading: boolean; test: any }) => {
+  const _test = test.monthNCTrend.map(item => ({
+    x: `${year}.${item._id.month}`,
+    y: item.total,
+  }));
   const getTrend = (current, previous) => {
     let ratio;
     let trend;
@@ -48,25 +38,42 @@ const IntroduceRow = ({
     }
     return [trend, `${ratio.toFixed(4) * 100}%`];
   };
-  console.log(test);
-  console.log(_test);
   const daySalesTrend = getTrend(
-    test && test.length > 0 ? test.daySalesTrend[test.daySalesTrend.length - 1].sales : 0,
-    test && test.length > 0
+    test.daySalesTrend.length ? test.daySalesTrend[test.daySalesTrend.length - 1].sales : 0,
+    test.daySalesTrend.length > 0
       ? test.daySalesTrend[test.daySalesTrend.length - 2]
         ? test.daySalesTrend[test.daySalesTrend.length - 2].sales
         : 0
       : 0,
   );
   const weekSalesTrend = getTrend(
-    test ? test.weekSalesTrend[test.weekSalesTrend.length - 1].sales : 0,
-    test
+    test.weekSalesTrend.length ? test.weekSalesTrend[test.weekSalesTrend.length - 1].sales : 0,
+    test.weekSalesTrend.length
       ? test.weekSalesTrend[test.weekSalesTrend.length - 2]
         ? test.weekSalesTrend[test.weekSalesTrend.length - 2].sales
         : 0
       : 0,
   );
-  console.log(daySalesTrend);
+  console.log(test)
+  console.log(weekSalesTrend);
+  // const daySalesTrend = getTrend(
+  //   test && test.length > 0 ? test.daySalesTrend[test.daySalesTrend.length - 1].sales : 0,
+  //   test && test.length > 0
+  //     ? test.daySalesTrend[test.daySalesTrend.length - 2]
+  //       ? test.daySalesTrend[test.daySalesTrend.length - 2].sales
+  //       : 0
+  //     : 0,
+  // );
+  // test = undefined;
+  // const weekSalesTrend = getTrend(
+  //   test ? test.weekSalesTrend[test.weekSalesTrend.length - 1].sales : 0,
+  //   test
+  //     ? test.weekSalesTrend[test.weekSalesTrend.length - 2]
+  //       ? test.weekSalesTrend[test.weekSalesTrend.length - 2].sales
+  //       : 0
+  //     : 0,
+  // );
+  // console.log(weekSalesTrend);
   return (
     <Row gutter={24} type="flex">
       <Col {...topColResponsiveProps}>
@@ -103,7 +110,9 @@ const IntroduceRow = ({
                 />
               }
               value={`￥${numeral(
-                test && test.length ? test.daySalesTrend[test.daySalesTrend.length - 1].sales : 0,
+                test.daySalesTrend.length
+                  ? test.daySalesTrend[test.daySalesTrend.length - 1].sales
+                  : 0,
               ).format('0,0')}`}
             />
           }

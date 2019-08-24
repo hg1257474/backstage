@@ -29,6 +29,14 @@ export interface RadarData {
 }
 
 export interface AnalysisData {
+  dayNCTrend: any[];
+  daySalesTrend: any[];
+  monthNCTrend: any[];
+  monthSalesPie: any[];
+  monthSalesTrend: any[];
+  weekNCTrend: any[];
+  weekNSTrend: any[];
+  weekSalesTrend: any[];
   visitData: VisitDataType[];
   visitData2: VisitDataType[];
   salesData: VisitDataType[];

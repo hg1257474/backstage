@@ -8,7 +8,6 @@ import moment from 'moment';
 import { VisitDataType } from '../data.d';
 import { Bar } from './Charts';
 import styles from '../style.less';
-import moment = require('moment');
 
 const { RangePicker } = DatePicker;
 const { TabPane } = Tabs;
@@ -25,7 +24,6 @@ const SalesCard = ({
   rangePickerValue,
   salesData,
   isActive,
-  handleRangePickerChange,
   loading,
   test,
   selectDate,
@@ -35,13 +33,8 @@ const SalesCard = ({
   isActive: (key: 'today' | 'week' | 'month' | 'year') => string;
   salesData: VisitDataType[];
   loading: boolean;
-  handleRangePickerChange: (dates: RangePickerValue, dateStrings: [string, string]) => void;
   selectDate: (key: 'today' | 'week' | 'month' | 'year') => void;
 }) => {
-  console.log('11', isActive('week'), '22', isActive('month'), '33', isActive('year'));
-  console.log(rangePickerValue);
-  console.log(salesData);
-  if (test) console.log(test.monthSalesTrend);
   const getTrend = (category, target) => {
     const units = {
       month: '月',
@@ -55,6 +48,7 @@ const SalesCard = ({
       : isActive('week')
       ? 'day'
       : 'month';
+    console.log(dateRange, category);
     return test
       ? test[`${dateRange}${category}`].map(item => {
           return {
@@ -126,7 +120,10 @@ const SalesCard = ({
           </TabPane>
           <TabPane
             tab={
-              <FormattedMessage id="dashboard-analysis.analysis.new-customers" defaultMessage="Visits" />
+              <FormattedMessage
+                id="dashboard-analysis.analysis.new-customers"
+                defaultMessage="Visits"
+              />
             }
             key="views"
           >

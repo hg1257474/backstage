@@ -17,6 +17,7 @@ import {
   message,
 } from 'antd';
 import Link from 'umi/link';
+import Callback from '../../components/Callback';
 
 import { ConclusionTableItem } from './data.d';
 import React, { Component, Fragment } from 'react';
@@ -26,7 +27,10 @@ import { FormComponentProps } from 'antd/es/form';
 import { PageHeaderWrapper } from '@ant-design/pro-layout';
 import { connect } from 'dva';
 import * as moment from 'moment';
+import { TableProps } from 'antd/lib/table/interface';
 import { StateType } from './model';
+type OnChange = TableProps<ConclusionTableItem>['onChange'];
+
 const maps = {
   contract: '合同',
   review: '审核',
@@ -45,11 +49,14 @@ interface TableListProps extends FormComponentProps {
   loading: boolean;
   conclusionTable: StateType;
 }
-type SortType = boolean | 'ascend' | 'descend';
 interface TableListState {
+  callback?: {
+    timestamp: number;
+    newState: TableListState;
+  };
   current: number;
-  isServiceNameFiltered: boolean;
-  isProcessorFiltered: boolean;
+  isServiceNameFiltered: boolean | string;
+  isProcessorFiltered: boolean | string;
 }
 /* eslint react/no-multi-comp:0 */
 @connect(
@@ -69,7 +76,7 @@ interface TableListState {
   }),
 )
 // interface momentType extends typeof moment={}
-class ConclusionTable extends Component<TableListProps, TableListState> {
+class ConclusionTable extends Callback<TableListProps, TableListState> {
   state: TableListState = {
     current: 1,
     isServiceNameFiltered: false,
@@ -81,6 +88,30 @@ class ConclusionTable extends Component<TableListProps, TableListState> {
 
   serviceNameSearchInput: Input | null = null;
   processorSearchInput: Input | null = null;
+  onChange: OnChange = ({ current }, filter, { field, order }) => {
+    console.log(current, filter, field, order);
+    const newState: NonNullable<TableListState['callback']>['newState'] = {
+      current: field ? 1 : current!,
+      isServiceNameFiltered:
+        filter.serviceName && filter.serviceName[0] ? filter.serviceName[0] : false,
+      isProcessorFiltered: filter.processor && filter.processor[0] ? filter.processor[0] : false,
+    };
+    const timestamp = new Date().getTime();
+    this.setState({
+      callback: {
+        timestamp,
+        newState,
+      },
+    });
+    this.props.dispatch({
+      type: 'conclusionTable/getConclusions',
+      payload: {
+        ...newState,
+        timestamp,
+      },
+    });
+    return 1;
+  };
 
   onServiceNameFilterDropdownVisibleChange = visible => {
     if (visible) {
@@ -192,27 +223,6 @@ class ConclusionTable extends Component<TableListProps, TableListState> {
       payload: { current: 1 },
     });
   }
-  onChange = (pagination, filter, sorter) => {
-    const { current } = pagination;
-    //const {};
-
-    const { field, order } = sorter;
-    console.log(pagination);
-    console.log(filter);
-    console.log(sorter);
-    const newState = {
-      current: field ? 1 : current,
-      isServiceNameFiltered: filter.name && filter.name[0] ? filter.name[0] : false,
-      isProcessorFiltered: filter.status && filter.status[0] ? filter.status : false,
-    };
-
-    console.log(newState);
-    this.setState(newState);
-    this.props.dispatch({
-      type: 'conclusionTable/getConclusions',
-      payload: { ...newState },
-    });
-  };
   render() {
     console.log(this.props);
     const { loading } = this.props;

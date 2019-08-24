@@ -2,7 +2,7 @@ import { AnyAction, Reducer } from 'redux';
 
 import { EffectsCommandMap } from 'dva';
 import { AnalysisData } from './data.d';
-import { fakeChartData } from './service';
+import { getData } from './service';
 
 export type Effect = (
   action: AnyAction,
@@ -13,69 +13,53 @@ export interface ModelType {
   namespace: string;
   state: AnalysisData;
   effects: {
-    fetch: Effect;
-    fetchSalesData: Effect;
+    getData: Effect;
   };
   reducers: {
-    save: Reducer<AnalysisData>;
-    clear: Reducer<AnalysisData>;
+    data: Reducer<AnalysisData>;
   };
 }
 
 const Model: ModelType = {
-  namespace: 'dashboardAnalysis',
-
+  namespace: 'analysis',
   state: {
-    visitData: [],
-    visitData2: [],
-    salesData: [],
-    searchData: [],
-    offlineData: [],
-    offlineChartData: [],
-    salesTypeData: [],
-    salesTypeDataOnline: [],
-    salesTypeDataOffline: [],
-    radarData: [],
+    dayNCTrend: [],
+    daySalesTrend: [],
+    monthNCTrend: [],
+    monthSalesPie: [],
+    monthSalesTrend: [],
+    weekNCTrend: [],
+    weekNSTrend: [
+      {
+        "_id": 0,
+        "total": 0,
+        "services": []
+      },
+      {
+        "_id": 0,
+        "total": 0,
+        "services": []
+      }
+    ],
+    weekSalesTrend: [],
   },
 
   effects: {
-    *fetch(_, { call, put }) {
-      const response = yield call(fakeChartData);
+    *getData({ payload }, { call, put }) {
+      const response = yield call(getData);
+      console.log(response);
       yield put({
-        type: 'save',
+        type: 'data',
         payload: response,
-      });
-    },
-    *fetchSalesData(_, { call, put }) {
-      const response = yield call(fakeChartData);
-      yield put({
-        type: 'save',
-        payload: {
-          salesData: response.salesData,
-        },
       });
     },
   },
 
   reducers: {
-    save(state, { payload }) {
+    data(state, action) {
       return {
         ...state,
-        ...payload,
-      };
-    },
-    clear() {
-      return {
-        visitData: [],
-        visitData2: [],
-        salesData: [],
-        searchData: [],
-        offlineData: [],
-        offlineChartData: [],
-        salesTypeData: [],
-        salesTypeDataOnline: [],
-        salesTypeDataOffline: [],
-        radarData: [],
+        ...action.payload,
       };
     },
   },

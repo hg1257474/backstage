@@ -211,7 +211,7 @@ class OrderTable extends Component<TableListProps, TableListState> {
       dataIndex: 'totalFee',
       sortOrder: this.state.totalFeeSort,
       render(data: number) {
-        return data / 100;
+        return data;
       },
     },
     {
@@ -229,8 +229,8 @@ class OrderTable extends Component<TableListProps, TableListState> {
     },
     {
       title: '客户ID',
-      dataIndex: 'customerId',
-      render: (text: string) => <Link to={`customer/${text}`}>{text}</Link>,
+      dataIndex: '_id',
+      render: (text: string) => <Link to={`order/${text}`}>查看</Link>,
     },
   ];
 

@@ -44,13 +44,6 @@ interface PartSelectedType<T extends 'indexPage' | 'payPage'> {
 //type bb<T>=T extends "qwe"
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
-const url = 'http://192.168.0.29:7001';
-//const url = 'http://www.huishenghuo.net';
-const getImage = x => {
-  const y = x;
-  if (y.includes('base64')) return y;
-  return `${url}/resource_test/${x}`;
-};
 interface BasicListProps extends FormComponentProps {
   resourceList: StateType;
   dispatch: Dispatch<any>;

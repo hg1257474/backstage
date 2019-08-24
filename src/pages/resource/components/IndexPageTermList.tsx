@@ -2,6 +2,7 @@ import { List, Avatar, Button } from 'antd';
 import React from 'react';
 import _ from 'lodash';
 import styles from '../style.less';
+import { URL as url } from '../../../config';
 export type Item = [string, string, string, string?];
 export interface Props {
   loading?: boolean;
@@ -17,12 +18,6 @@ interface State {
     oldProps: Props;
   };
 }
-const url = 'http://192.168.0.29:7001';
-const getImage = x => {
-  const y = x;
-  if (y.length > 2) return y;
-  return `${url}/resource/indexPage/${x[1]}/${x[0]}`;
-};
 export default class extends React.Component<Props, State> {
   state = { current: 1 };
   static getDerivedStateFromProps(props: Props, state: State) {
@@ -63,9 +58,15 @@ export default class extends React.Component<Props, State> {
         renderItem={(item, index) => (
           <List.Item className={styles.test123456789}>
             <List.Item.Meta
-              style={{ 'text-align': 'left' }}
+              style={{ textAlign: 'left' }}
               title={item[1]}
-              avatar={<Avatar src={getImage(item[0])} shape="square" size="large" />}
+              avatar={
+                <Avatar
+                  src={`${url}/resource/indexPage/${item[0][1]}/${item[0][0]}`}
+                  shape="square"
+                  size="large"
+                />
+              }
             />
             <div>{item[2]}</div>
             <div>{item[3]}</div>

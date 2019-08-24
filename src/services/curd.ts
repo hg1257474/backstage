@@ -1,7 +1,7 @@
 import { extend } from 'umi-request';
+import { URL } from '../config';
 // const url = 'http://192.168.0.29:7001';
 import { message } from 'antd';
-const URL = 'http://192.168.0.29:7001'; //'https://www.cyfwg.com';
 const BACKSTAGE_URL = `${URL}/backstage`;
 const request = extend({
   errorHandler: e => {
@@ -10,7 +10,15 @@ const request = extend({
   },
 });
 export default function(
-  target: 'resource' | 'servicer' | 'servicer' | 'customer' | 'conclusion' | 'order',
+  target:
+    | 'resource'
+    | 'servicer'
+    | 'servicer'
+    | 'customer'
+    | 'conclusion'
+    | 'order'
+    | 'service'
+    | 'analysis',
 ) {
   const url = `${BACKSTAGE_URL}/${target}`;
   return [
@@ -21,8 +29,8 @@ export default function(
         method: 'post',
         data,
       }),
-    (id: string, data: any) =>
-      request(`${url}/${id}`, {
+    (data: any) =>
+      request(`${url}/${data.id}`, {
         mode: 'cors',
         method: 'put',
         data,

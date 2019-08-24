@@ -7,6 +7,7 @@ import { ConclusionTableItem } from './data.d';
 export interface StateType {
   conclusions: ConclusionTableItem[];
   total: number;
+  timestamp: number;
 }
 
 export type Effect = (
@@ -29,16 +30,19 @@ const Model: ModelType = {
   namespace: 'conclusionTable',
 
   state: {
+    timestamp: 0,
     conclusions: [],
     total: 0,
   },
 
   effects: {
     *getConclusions({ payload }, { call, put }) {
-      const response = yield call(getConclusions, payload);
+      const { timestamp } = payload;
+      delete payload.timestamp;
+      const res = yield call(getConclusions, payload);
       yield put({
         type: 'conclusions',
-        payload: response,
+        payload: { ...res, timestamp },
       });
     },
   },

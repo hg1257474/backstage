@@ -8,9 +8,7 @@ interface Params {
   partSelected: {};
   current?: number;
 }
-const url = 'http://192.168.0.29:7001';
-// const url = 'http://192.168.99.157:7001';
-// const url = 'https://www.huishenghuo.net';
+import {URL as url} from '../../config'
 const leach = params => {
   Object.keys(params).forEach(item => {
     if (params[item] === false || params[item] === undefined) delete params[item];

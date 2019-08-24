@@ -92,7 +92,7 @@ class ServicerForm extends Callback<Props, State> {
   searchRef = React.createRef();
 
   componentDidMount() {
-    console.log(this.props);
+    /* console.log(this.props); */
     this.props.dispatch({
       type: 'servicerForm/getServicers',
       payload: {
@@ -107,7 +107,7 @@ class ServicerForm extends Callback<Props, State> {
   }
 
   onChange: OnChange = ({ current }, filter, { field, order }) => {
-    console.log(current, filter, field, order);
+    /* console.log(current, filter, field, order); */
     const newState: NonNullable<State['callback']>['newState'] = {
       current: current!,
       isNameFiltered: filter.name && filter.name.length ? filter.name[0] : false,
@@ -134,6 +134,7 @@ class ServicerForm extends Callback<Props, State> {
 
   onChoose = async (id: string | null, type?: 'new' | 'delete') => {
     if (type === 'delete') {
+      console.log(id);
       const { total } = this.props.servicerForm;
       let { current } = this.state;
       const timestamp = new Date().getTime();
@@ -161,10 +162,10 @@ class ServicerForm extends Callback<Props, State> {
       });
       return 1;
     }
-    console.log(type);
+    /* console.log(type); */
     let inputTarget = type === 'new' ? {} : null;
     if (id !== null) inputTarget = await getServicer(id);
-    console.log(inputTarget);
+    /* console.log(inputTarget); */
     this.setState({ inputTarget });
     return 1;
   };
@@ -238,25 +239,31 @@ class ServicerForm extends Callback<Props, State> {
     } = this.props;
     if (this.state.inputTarget === undefined) return 1;
     validateFieldsAndScroll((error, values) => {
-      console.log(error);
-      console.log(values);
+      /* console.log(error); */
+      /* console.log(values); */
       if (!error) {
         const timestamp = new Date().getTime();
         let action: any = {};
         let newState = {};
         values.id = this.state.inputTarget._id;
-        console.log(values);
+        Object.values(values.privilege).forEach((item, index) => {
+          if (!index) values.privilege = {};
+          values.privilege[item as string] = true;
+        });
+        if (values.avatar && !values.avatar.length) delete values.avatar;
+        /* console.log(values); */
         if (values.id) {
           action = {
-            type: 'ServicerForm/updateServicer',
+            type: 'servicerForm/updateServicer',
             payload: {
+              params:this.state,
               data: values,
             },
           };
         } else {
           let { current } = this.state;
           const { total } = this.props.servicerForm;
-          current = total + 1 > current * 10 ? current + 1 : current;
+          current = 1;
           newState = {
             current,
             isNameFiltered: false,
@@ -272,20 +279,24 @@ class ServicerForm extends Callback<Props, State> {
             },
           };
         }
+        console.log(action);
+
+        action.payload.timestamp = timestamp;
+        console.log(action);
+        dispatch(action);
+        console.log(action);
         this.setState({
           callback: {
             timestamp,
             newState: { ...this.state, ...newState, inputTarget: undefined },
           },
         });
-        action.payload.callback.timestamp = timestamp;
-        dispatch(action);
       }
     });
   };
 
   render() {
-    console.log(this);
+    /* console.log(this); */
     const that = this;
     const {
       form: { getFieldDecorator },

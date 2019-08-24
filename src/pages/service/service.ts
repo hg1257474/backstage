@@ -1,4 +1,6 @@
+/*
 import request from 'umi-request';
+import {URL} from '../../config'
 const url = 'http://192.168.0.29:7001';
 export async function getServices(params: any) {
   console.log(params);
@@ -28,3 +30,6 @@ export async function getServices(params: any) {
     params,
   });
 }
+*/
+import getCURD from '../../services/curd';
+export const getServices = getCURD('service')[3];

@@ -42,6 +42,7 @@ const Model: ModelType = {
     *getServicers({ payload }, { call, put }) {
       const { timestamp } = payload;
       delete payload.timestamp;
+      console.log(payload)
       const res = yield call(getServicers, payload.params);
       console.log(res);
       yield put({
@@ -50,6 +51,7 @@ const Model: ModelType = {
       });
     },
     *addServicer({ payload }, { call, put }) {
+      console.log(payload)
       const res = yield call(addServicer, payload.data);
       if (res)
         yield put({
@@ -58,7 +60,7 @@ const Model: ModelType = {
         });
     },
     *deleteServicer({ payload }, { call, put }) {
-      const res = yield call(deleteServicer, { id: payload.id });
+      const res = yield call(deleteServicer,  payload.id );
       if (res)
         yield put({
           type: 'getServicers',
@@ -82,5 +84,6 @@ const Model: ModelType = {
     },
   },
 };
+
 
 export default Model;

@@ -20,9 +20,7 @@ const getTableTrend = (weekNSTrend, name, total) => {
     );
     previous = target ? target.total : 0;
   }
-  console.log(previous, '@', name, '@', total);
   const ratio = getRatio(previous, total);
-  console.log(ratio);
   return { status: ratio.includes('-') ? 'down' : 'up', range: ratio.replace(/-/g, '') };
 };
 const columns = [
@@ -62,35 +60,23 @@ const columns = [
 
 const TopSearch = ({
   loading,
-  visitData2,
-  searchData,
   dropdownGroup,
   test,
 }: {
   test: any;
   loading: boolean;
-  visitData2: VisitDataType[];
   dropdownGroup: React.ReactNode;
-  searchData: SearchDataType[];
 }) => {
   const initialData = new Array(2).fill({ _id: 0, total: 0, services: [] });
-  const weekNSTrend = test
-    ? test.weekNSTrend.length < 2
+  const weekNSTrend =
+    test.weekNSTrend.length < 2
       ? initialData.splice(
           2 - test.weekNSTrend.length,
           test.weekNSTrend.length,
           ...test.weekNSTrend,
         )
-      : test.weekNSTrend
-    : initialData;
-  console.log(12334534534);
+      : test.weekNSTrend;
   console.log(weekNSTrend);
-  console.log(visitData2);
-  console.log(searchData);
-  console.log(
-    getRatio(weekNSTrend[weekNSTrend.length - 2].total, weekNSTrend[weekNSTrend.length - 1].total),
-  );
-  // const weekNSTrend=test?test.weekNStrend.length
   return (
     <Card
       loading={loading}

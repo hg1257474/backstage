@@ -36,6 +36,7 @@ const Model: ModelType = {
   effects: {
     *getOrders({ payload }, { call, put }) {
       const response = yield call(getOrders, payload);
+      console.log(payload)
       yield put({
         type: 'orders',
         payload: response,

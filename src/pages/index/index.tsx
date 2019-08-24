@@ -10,15 +10,13 @@ import PageLoading from './components/PageLoading';
 import { getTimeDistance } from './utils/utils';
 import { AnalysisData } from './data.d';
 import styles from './style.less';
-import { getData } from './service';
 const IntroduceRow = React.lazy(() => import('./components/IntroduceRow'));
 const SalesCard = React.lazy(() => import('./components/SalesCard'));
 const TopSearch = React.lazy(() => import('./components/TopSearch'));
 const ProportionSales = React.lazy(() => import('./components/ProportionSales'));
-const OfflineData = React.lazy(() => import('./components/OfflineData'));
 
 interface dashboardAnalysisProps {
-  dashboardAnalysis: AnalysisData;
+  analysis: AnalysisData;
   dispatch: Dispatch<any>;
   loading: boolean;
 }
@@ -31,15 +29,15 @@ interface dashboardAnalysisState {
 
 @connect(
   ({
-    dashboardAnalysis,
+    analysis,
     loading,
   }: {
-    dashboardAnalysis: any;
+    analysis: any;
     loading: {
       effects: { [key: string]: boolean };
     };
   }) => ({
-    dashboardAnalysis,
+    analysis,
     loading: loading.effects['dashboardAnalysis/fetch'],
   }),
 )
@@ -53,28 +51,26 @@ class Analysis extends Component<dashboardAnalysisProps, dashboardAnalysisState>
   reqRef: number = 0;
 
   timeoutId: number = 0;
-  getData = async () => {
-    const test = await getData();
-    this.setState({ test });
-  };
   componentDidMount() {
     const { dispatch } = this.props;
-    this.getData();
-    this.reqRef = requestAnimationFrame(() => {
-      dispatch({
-        type: 'dashboardAnalysis/fetch',
-      });
+    dispatch({
+      type: 'analysis/getData',
     });
+    // this.reqRef = requestAnimationFrame(() => {
+    //   dispatch({
+    //     type: 'analysis/getData',
+    //   });
+    // });
   }
 
-  componentWillUnmount() {
-    const { dispatch } = this.props;
-    dispatch({
-      type: 'dashboardAnalysis/clear',
-    });
-    cancelAnimationFrame(this.reqRef);
-    clearTimeout(this.timeoutId);
-  }
+  // componentWillUnmount() {
+  //   const { dispatch } = this.props;
+  //   dispatch({
+  //     type: 'dashboardAnalysis/clear',
+  //   });
+  //   cancelAnimationFrame(this.reqRef);
+  //   clearTimeout(this.timeoutId);
+  // }
 
   handleChangeSalesType = (e: RadioChangeEvent) => {
     this.setState({
@@ -127,26 +123,15 @@ class Analysis extends Component<dashboardAnalysisProps, dashboardAnalysisState>
 
   render() {
     const { rangePickerValue, salesType, currentTabKey } = this.state;
-    const { dashboardAnalysis, loading } = this.props;
-    const {
-      visitData,
-      visitData2,
-      salesData,
-      searchData,
-      offlineData,
-      offlineChartData,
-      salesTypeData,
-      salesTypeDataOnline,
-      salesTypeDataOffline,
-    } = dashboardAnalysis;
-    console.log(visitData);
+    const { analysis, loading } = this.props;
 
     let salesPieData;
-    if (salesType === 'all') {
-      salesPieData = salesTypeData;
-    } else {
-      salesPieData = salesType === 'online' ? salesTypeDataOnline : salesTypeDataOffline;
-    }
+    console.log(analysis);
+    // if (salesType === 'all') {
+    // salesPieData = salesTypeData;
+    // } else {
+    //   salesPieData = salesType === 'online' ? salesTypeDataOnline : salesTypeDataOffline;
+    // }
     const menu = (
       <Menu>
         <Menu.Item>操作一</Menu.Item>
@@ -162,18 +147,17 @@ class Analysis extends Component<dashboardAnalysisProps, dashboardAnalysisState>
       </span>
     );
 
-    const activeKey = currentTabKey || (offlineData[0] && offlineData[0].name);
+    // const activeKey = currentTabKey || (offlineData[0] && offlineData[0].name);
     return (
       <GridContent>
         <React.Fragment>
           <Suspense fallback={<PageLoading />}>
-            <IntroduceRow loading={loading} visitData={visitData} test={this.state.test} />
+            <IntroduceRow loading={loading} test={analysis} />
           </Suspense>
           <Suspense fallback={null}>
             <SalesCard
               rangePickerValue={rangePickerValue}
-              salesData={salesData}
-              test={this.state.test}
+              test={analysis}
               isActive={this.isActive}
               handleRangePickerChange={this.handleRangePickerChange}
               loading={loading}
@@ -189,13 +173,7 @@ class Analysis extends Component<dashboardAnalysisProps, dashboardAnalysisState>
           >
             <Col xl={12} lg={24} md={24} sm={24} xs={24}>
               <Suspense fallback={null}>
-                <TopSearch
-                  test={this.state.test}
-                  loading={loading}
-                  visitData2={visitData2}
-                  searchData={searchData}
-                  dropdownGroup={dropdownGroup}
-                />
+                <TopSearch test={analysis} loading={loading} dropdownGroup={dropdownGroup} />
               </Suspense>
             </Col>
             <Col xl={12} lg={24} md={24} sm={24} xs={24}>
@@ -203,9 +181,8 @@ class Analysis extends Component<dashboardAnalysisProps, dashboardAnalysisState>
                 <ProportionSales
                   dropdownGroup={dropdownGroup}
                   salesType={salesType}
-                  test={this.state.test}
+                  test={analysis}
                   loading={loading}
-                  salesPieData={salesPieData}
                   handleChangeSalesType={this.handleChangeSalesType}
                 />
               </Suspense>
