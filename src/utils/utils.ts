@@ -21,4 +21,18 @@ const isAntDesignProOrDev = (): boolean => {
   return isAntDesignPro();
 };
 
+const wordbook = {
+  contract: '合同',
+  review: '审核',
+  draft: '起草',
+  communication: '咨询',
+  submitted: '已提交',
+  wait_quote: '待报价',
+  wait_assign: '待分配',
+  wait_pay: '待支付',
+  processing: '服务中',
+  end: '已完结',
+};
+
+const get
 export { isAntDesignProOrDev, isAntDesignPro, isUrl };

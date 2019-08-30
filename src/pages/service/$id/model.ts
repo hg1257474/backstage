@@ -1,22 +1,23 @@
 import { AnyAction, Reducer } from 'redux';
 
 import { EffectsCommandMap } from 'dva';
-import { OrderDetail } from './data.d';
+import { ServiceDetail } from './data.d';
 import { getDetail } from './service';
+import { string } from 'prop-types';
 
 export type Effect = (
   action: AnyAction,
-  effects: EffectsCommandMap & { select: <T>(func: (state: OrderDetail) => T) => T },
+  effects: EffectsCommandMap & { select: <T>(func: (state: ServiceDetail) => T) => T },
 ) => void;
 
 export interface ModelType {
   namespace: string;
-  state: OrderDetail;
+  state: ServiceDetail;
   effects: {
     getDetail: Effect;
   };
   reducers: {
-    detail: Reducer<OrderDetail>;
+    detail: Reducer<ServiceDetail>;
   };
 }
 
@@ -24,19 +25,27 @@ const Model: ModelType = {
   namespace: 'serviceDetail',
 
   state: {
-    name: '',
+    contact: {
+      name: '',
+      phone: 0,
+      method: 'weChat',
+      content: '',
+    },
+    comment: [],
+    processorId: '',
+    processorName: '',
+    name: [],
+    description: '',
+    status: '',
     totalFee: 0,
     customerName: '',
     customerId: '',
-    updatedAt: '',
-    description:{}
+    createdAt: '',
   },
 
   effects: {
-    *getDetail({payload}, { call, put }) {
-      const response = yield call(getDetail,payload);
-      console.log("@@@@@@@@@@@")
-      console.log(response)
+    *getDetail({ payload }, { call, put }) {
+      const response = yield call(getDetail, payload);
       yield put({
         type: 'detail',
         payload: response,

@@ -1,48 +1,49 @@
 import { AnyAction, Reducer } from 'redux';
 
 import { EffectsCommandMap } from 'dva';
-import { BasicGood } from './data.d';
-import { queryBasicProfile } from './service';
-
-export interface StateType {
-  basicGoods: BasicGood[];
-}
+import { ConclusionDetail } from './data.d';
+import { getDetail } from './service';
+import { string } from 'prop-types';
 
 export type Effect = (
   action: AnyAction,
-  effects: EffectsCommandMap & { select: <T>(func: (state: StateType) => T) => T },
+  effects: EffectsCommandMap & { select: <T>(func: (state: ConclusionDetail) => T) => T },
 ) => void;
 
 export interface ModelType {
   namespace: string;
-  state: StateType;
+  state: ConclusionDetail;
   effects: {
-    fetchBasic: Effect;
+    getDetail: Effect;
   };
   reducers: {
-    show: Reducer<StateType>;
+    detail: Reducer<ConclusionDetail>;
   };
 }
 
 const Model: ModelType = {
-  namespace: 'profileBasic',
+  namespace: 'conclusionDetail',
 
   state: {
-    basicGoods: [],
+    conclusion: ['', []],
+    processorName: '',
+    name: [],
+    description: '',
+    createdAt: '',
   },
 
   effects: {
-    *fetchBasic(_, { call, put }) {
-      const response = yield call(queryBasicProfile);
+    *getDetail({ payload }, { call, put }) {
+      const response = yield call(getDetail, payload);
       yield put({
-        type: 'show',
+        type: 'detail',
         payload: response,
       });
     },
   },
 
   reducers: {
-    show(state, { payload }) {
+    detail(state, { payload }) {
       return {
         ...state,
         ...payload,

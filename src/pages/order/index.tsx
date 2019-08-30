@@ -51,6 +51,7 @@ interface TableListState {
   isUpdatedAtFiltered: boolean;
   isRangePickerOpen: boolean;
 }
+let customerId: string;
 /* eslint react/no-multi-comp:0 */
 /*
 @connect(
@@ -124,6 +125,7 @@ class OrderTable extends Component<TableListProps, TableListState> {
       type: 'orderTable/getOrders',
       payload: {
         current: 1,
+        customerId,
         name: this.nameSearchInput!.input.value,
       },
     });
@@ -204,15 +206,32 @@ class OrderTable extends Component<TableListProps, TableListState> {
       filterDropdown: this.nameFilterDropdown,
       filtered: this.state.isNameFiltered,
       onFilterDropdownVisibleChange: this.onNameFilterDropdownVisibleChange,
+      render: (
+        name: string,
+        { description: { serviceId } }: { description: { serviceId: string } },
+      ) => (serviceId ? <Link to={`service/${serviceId}`}>{name}</Link> : name),
     },
     {
       title: '金额',
       sorter: true,
       dataIndex: 'totalFee',
       sortOrder: this.state.totalFeeSort,
-      render(data: number) {
-        return data;
-      },
+      render: (
+        totalFee: number,
+        { description: { pointDeduction } }: { description: { pointDeduction: number } },
+      ) => (
+        <span>
+          <span style={{ display: 'inline-block', width: '2em', marginRight: '1em' }}>
+            {totalFee}
+          </span>
+          {pointDeduction && (
+            <span>
+              ( 积分抵扣{' '}
+              <span style={{ display: 'inline-block', width: '2em' }}>{pointDeduction}</span> )
+            </span>
+          )}
+        </span>
+      ),
     },
     {
       title: '交易时间',
@@ -228,9 +247,11 @@ class OrderTable extends Component<TableListProps, TableListState> {
       },
     },
     {
-      title: '客户ID',
-      dataIndex: '_id',
-      render: (text: string) => <Link to={`order/${text}`}>查看</Link>,
+      title: '客户',
+      dataIndex: 'customerId',
+      render: (customerId: string, { customerName }: { customerName: string }) => (
+        <Link to={`customer/${customerId}`}>{customerName || customerId.slice(0, 10)}</Link>
+      ),
     },
   ];
 
@@ -254,15 +275,16 @@ class OrderTable extends Component<TableListProps, TableListState> {
     this.setState(newState);
     this.props.dispatch({
       type: 'orderTable/getOrders',
-      payload: { ...newState },
+      payload: { ...newState, customerId },
     });
   };
 
   componentDidMount() {
     const { dispatch } = this.props;
+    ({ customerId } = this.props.location.query);
     dispatch({
       type: 'orderTable/getOrders',
-      payload: { current: 1 },
+      payload: { current: 1, customerId },
     });
   }
 

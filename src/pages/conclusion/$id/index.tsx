@@ -1,51 +1,30 @@
-import { Badge, Card, Descriptions, Divider, Table } from 'antd';
+import { Badge, Card, Descriptions, List, Divider, Table, Button, Icon } from 'antd';
 import React, { Component } from 'react';
 import Link from 'umi/link';
 import { Dispatch } from 'redux';
 import { PageHeaderWrapper } from '@ant-design/pro-layout';
 import { connect } from 'dva';
-import { BasicProfileDataType } from './data.d';
+import { FormattedMessage } from 'umi-plugin-react/locale';
+import { ConclusionDetail } from './data.d';
+import ServiceName from '../../../components/ServiceName';
 import styles from './style.less';
-
-const progressColumns = [
-  {
-    title: '时间',
-    dataIndex: 'time',
-    key: 'time',
-  },
-  {
-    title: '当前进度',
-    dataIndex: 'rate',
-    key: 'rate',
-  },
-  {
-    title: '状态',
-    dataIndex: 'status',
-    key: 'status',
-    render: (text: string) => {
-      if (text === 'success') {
-        return <Badge status="success" text="成功" />;
-      }
-      return <Badge status="processing" text="进行中" />;
-    },
-  },
-
-  {
-    title: '操作员ID',
-    dataIndex: 'operator',
-    key: 'operator',
-  },
-  {
-    title: '耗时',
-    dataIndex: 'cost',
-    key: 'cost',
-  },
-];
-
+import service from '..';
+const maps = {
+  contract: '合同',
+  review: '审核',
+  draft: '起草',
+  communication: '咨询',
+  submitted: '已提交',
+  wait_quote: '待报价',
+  wait_assign: '待分配',
+  wait_pay: '待支付',
+  processing: '服务中',
+  end: '已完结',
+};
 interface BasicProps {
   loading: boolean;
   dispatch: Dispatch<any>;
-  profileBasic: BasicProfileDataType;
+  conclusionDetail: ConclusionDetail;
 }
 interface BasicState {
   visible: boolean;
@@ -53,121 +32,88 @@ interface BasicState {
 
 @connect(
   ({
-    profileBasic,
+    conclusionDetail,
     loading,
   }: {
-    profileBasic: BasicProfileDataType;
+    conclusionDetail: ConclusionDetail;
     loading: {
       effects: { [key: string]: boolean };
     };
   }) => ({
-    profileBasic,
+    conclusionDetail,
     loading: loading.effects['profileBasic/fetchBasic'],
   }),
 )
 class Basic extends Component<BasicProps, BasicState> {
   componentDidMount() {
     const { dispatch } = this.props;
+    console.log(this.props);
     dispatch({
-      type: 'profileBasic/fetchBasic',
+      type: 'conclusionDetail/getDetail',
+      payload: this.props.match.params.id,
     });
   }
 
   render() {
-    const { profileBasic, loading } = this.props;
-    const { basicGoods, basicProgress } = profileBasic;
-    let goodsData: typeof basicGoods = [];
-    if (basicGoods.length) {
-      let num = 0;
-      let amount = 0;
-      basicGoods.forEach(item => {
-        num += Number(item.num);
-        amount += Number(item.amount);
-      });
-      goodsData = basicGoods.concat({
-        id: '总计',
-        num,
-        amount,
-      });
-    }
-    const renderContent = (value: any, row: any, index: any) => {
-      const obj: {
-        children: any;
-        props: { colSpan?: number };
-      } = {
-        children: value,
-        props: {},
-      };
-      if (index === basicGoods.length) {
-        obj.props.colSpan = 0;
-      }
-      return obj;
-    };
-    const goodsColumns = [
-      {
-        title: '类型',
-        dataIndex: 'num',
-        key: 'num',
-        align: 'center' as 'left' | 'right' | 'center',
-        render: (text: React.ReactNode, row: any, index: number) => {
-          if (index < basicGoods.length) {
-            return text;
-          }
-          return <span style={{ fontWeight: 600 }}>{text}</span>;
-        },
-      },
-      {
-        title: '金额',
-        dataIndex: 'amount',
-        key: 'amount',
-        align: 'center' as 'left' | 'right' | 'center',
-        render: (text: React.ReactNode, row: any, index: number) => {
-          if (index < basicGoods.length) {
-            return text;
-          }
-          return <span style={{ fontWeight: 600 }}>{text}</span>;
-        },
-      },
-      {
-        title: '时间',
-        dataIndex: 'amount',
-        key: 'amount',
-        align: 'center' as 'left' | 'right' | 'center',
-        render: (text: React.ReactNode, row: any, index: number) => {
-          if (index < basicGoods.length) {
-            return text;
-          }
-          return <span style={{ fontWeight: 600 }}>{text}</span>;
-        },
-      },
-      {
-        title: '查看',
-        dataIndex: 'id',
-        key: 'id',
-        align: 'center' as 'left' | 'right' | 'center',
-        render: (text: React.ReactNode, row: any, index: number) => {
-          if (index < basicGoods.length) {
-            return <Link to={`/service/${row}`}>{text}</Link>;
-          }
-        },
-      },
-    ];
+    const { conclusionDetail, loading } = this.props;
+    const { description, conclusion } = conclusionDetail;
     return (
       <PageHeaderWrapper>
-        <Card bordered={false}>
-          <Descriptions title="用户信息" style={{ marginBottom: 32 }}>
-            <Descriptions.Item label="企业全名">付小小</Descriptions.Item>
-            <Descriptions.Item label="门店数量">18100000000</Descriptions.Item>
-            <Descriptions.Item label="加盟模式">菜鸟仓储</Descriptions.Item>
-            <Descriptions.Item label="联系人">浙江省杭州市西湖区万塘路18号</Descriptions.Item>
-            <Descriptions.Item label="电话">无</Descriptions.Item>
-            <Descriptions.Item label="微信">无</Descriptions.Item>
-            <Descriptions.Item label="钉钉">无</Descriptions.Item>
-            <Descriptions.Item label="会员">无</Descriptions.Item>
-            <Descriptions.Item label="到期时间">无</Descriptions.Item>
-            <Descriptions.Item label="历史消费金额">无</Descriptions.Item>
-            <Descriptions.Item label="积分">无</Descriptions.Item>
-            <Descriptions.Item label="积分">无</Descriptions.Item>
+        <Card bordered={false} loading={loading} className="service-detail">
+          <Descriptions
+            title="服务详情"
+            layout="vertical"
+            colon={false}
+            column={3}
+            style={{ marginBottom: 32 }}
+          >
+            <Descriptions.Item label="服务名称">
+              <ServiceName serviceName={conclusionDetail.name} />
+            </Descriptions.Item>
+            <Descriptions.Item label="对接律师">{conclusionDetail.processorName}</Descriptions.Item>
+            <Descriptions.Item label="提交时间">
+              {new Date(conclusionDetail.createdAt).toLocaleString()}
+            </Descriptions.Item>
+
+            <Descriptions.Item label="需求描述" span={3}>
+              {typeof description === 'string'
+                ? description
+                : description.map((file, index) => (
+                    <a
+                      key={index}
+                      href={`http://www.cyfwg.com/resource/description/${file[2]}/${file[0]}`}
+                      download={file[0]}
+                      style={{
+                        padding: '0.8em 1em',
+                        color: '#262626',
+                        background: '#e8e8e8',
+                        borderRadius: '0.4em',
+                      }}
+                    >
+                      {file[0]}
+                      <Icon type="download" style={{ fontSize: '1.5em', marginLeft: '0.5em' }} />
+                    </a>
+                  ))}
+            </Descriptions.Item>
+            <Descriptions.Item label="律师解答" span={3}>
+              <div style={{ marginBottom: '1em' }}>{conclusion[0]}</div>
+              {conclusion[1].map((file, index) => (
+                <a
+                  key={index}
+                  href={`http://www.cyfwg.com/resource/conclusion/${file[2]}/${file[0]}`}
+                  download={file[0]}
+                  style={{
+                    padding: '0.8em 1em',
+                    color: '#262626',
+                    background: '#e8e8e8',
+                    borderRadius: '0.4em',
+                  }}
+                >
+                  {file[0]}
+                  <Icon type="download" style={{ fontSize: '1.5em', marginLeft: '0.5em' }} />
+                </a>
+              ))}
+            </Descriptions.Item>
           </Descriptions>
         </Card>
       </PageHeaderWrapper>

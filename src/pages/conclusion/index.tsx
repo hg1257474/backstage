@@ -212,7 +212,7 @@ class ConclusionTable extends Callback<TableListProps, TableListState> {
     {
       title: '操作',
       dataIndex: '_id',
-      render: (text: string) => <Link to={`customer/${text}`}>查看</Link>,
+      render: (text: string) => <Link to={`conclusion/${text}`}>查看</Link>,
     },
   ];
 

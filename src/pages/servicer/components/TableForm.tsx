@@ -148,7 +148,7 @@ class TableForm extends PureComponent<TableFormProps, TableFormState> {
       width: '15%',
       sortOrder: this.props.servicesTotalSortOrder,
       render(text: number, record: ServicerTableItemDataType) {
-        return <Link to={`/servicer/${record.id}/service`}>{text}</Link>;
+        return <Link to={`/service?processorId=${record.id}`}>{text}</Link>;
       },
     },
     {

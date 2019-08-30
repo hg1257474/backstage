@@ -57,6 +57,8 @@ interface TableListState {
   isStatusFiltered: boolean;
   isUpdatedAtFiltered: boolean;
 }
+let processorId: string;
+let customerId: string;
 /* eslint react/no-multi-comp:0 */
 @connect(
   ({
@@ -215,15 +217,17 @@ class TableList extends Component<TableListProps, TableListState> {
     {
       title: '操作',
       dataIndex: '_id',
-      render: (text: string) => <Link to={`customer/${text}`}>查看</Link>,
+      render: (text: string) => <Link to={`service/${text}`}>查看</Link>,
     },
   ];
 
   componentDidMount() {
     const { dispatch } = this.props;
+    ({ processorId, customerId } = this.props.location.query);
+    console.log(processorId);
     dispatch({
       type: 'serviceTable/getServices',
-      payload: { current: 1 },
+      payload: { current: 1, processorId, customerId },
     });
   }
   onChange = (pagination, filter, sorter) => {
@@ -247,7 +251,7 @@ class TableList extends Component<TableListProps, TableListState> {
     this.setState(newState);
     this.props.dispatch({
       type: 'serviceTable/getServices',
-      payload: { ...newState },
+      payload: { ...newState, processorId, customerId },
     });
   };
   render() {

@@ -6,6 +6,7 @@ import {
   DatePicker,
   Divider,
   Dropdown,
+  Modal,
   Table,
   Form,
   Icon,
@@ -15,8 +16,10 @@ import {
   Row,
   Select,
   message,
+  Descriptions,
 } from 'antd';
 import Link from 'umi/link';
+import { FormattedMessage } from 'umi-plugin-react/locale';
 
 import { CustomerTableItem } from './data.d';
 import React, { Component, Fragment } from 'react';
@@ -27,8 +30,10 @@ import { PageHeaderWrapper } from '@ant-design/pro-layout';
 import { connect } from 'dva';
 import * as moment from 'moment';
 import { StateType } from './model';
-
+import { getInfo } from './service';
 import styles from './style.less';
+import ConclusionTable from '../conclusion';
+import { getFileInfo } from 'prettier';
 interface TableListProps extends FormComponentProps {
   dispatch: Dispatch<any>;
   loading: boolean;
@@ -46,6 +51,7 @@ interface TableListState {
   consumptionSort: SortType;
   current: number;
   isCompanyFiltered: boolean;
+  infoModalData: [string, any][];
 }
 /* eslint react/no-multi-comp:0 */
 @connect(
@@ -77,6 +83,7 @@ class TableList extends Component<TableListProps, TableListState> {
     pointsTotalSort: false,
     current: 1,
     isCompanyFiltered: false,
+    infoModalData: [],
   };
   companyFilterIcon = filtered => (
     <Icon type="search" style={{ color: filtered ? '#1890ff' : undefined }} />
@@ -142,17 +149,40 @@ class TableList extends Component<TableListProps, TableListState> {
       sorter: true,
       sortOrder: this.state.serviceTotalSort,
       dataIndex: 'serviceTotal',
+      render: (text: number, record: any) => (
+        <Link to={`service?customerId=${record._id}`}>{text}</Link>
+      ),
     },
     {
       title: '订单数',
       sorter: true,
       sortOrder: this.state.orderTotalSort,
       dataIndex: 'orderTotal',
+      render: (text: number, record: any) => (
+        <Link to={`order?customerId=${record._id}`}>{text}</Link>
+      ),
     },
     {
-      title: '操作',
+      title: '身份信息',
       dataIndex: '_id',
-      render: (text: string) => <Link to={`customer/${text}`}>查看</Link>,
+      render: (id: string) => (
+        <Button
+          type="primary"
+          size="small"
+          onClick={async () => {
+            let res = await getInfo(id);
+            console.log(res);
+            if (res) {
+              res = Object.entries(res).filter(item => !!item[1]);
+              console.log(res);
+              if (!res.length) res = [null];
+              this.setState({ infoModalData: res });
+            }
+          }}
+        >
+          查看
+        </Button>
+      ),
     },
   ];
 
@@ -187,6 +217,7 @@ class TableList extends Component<TableListProps, TableListState> {
       payload: { ...newState },
     });
   };
+
   render() {
     console.log(this.props);
     const { loading } = this.props;
@@ -205,6 +236,28 @@ class TableList extends Component<TableListProps, TableListState> {
                 current: this.state.current,
               }}
             />
+            <Modal
+              title="身份信息"
+              footer={null}
+              visible={!!this.state.infoModalData.length}
+              onCancel={() => this.setState({ infoModalData: [] })}
+            >
+              {this.state.infoModalData![0] === null ? (
+                <div style={{ textAlign: 'center' }}>无数据</div>
+              ) : (
+                <Descriptions>
+                  {this.state.infoModalData!.map((item: [string, any], index: number) => (
+                    <Descriptions.Item
+                      key={index}
+                      label={<FormattedMessage id={item[0]} />}
+                      span={3}
+                    >
+                      {item[1]}
+                    </Descriptions.Item>
+                  ))}
+                </Descriptions>
+              )}
+            </Modal>
           </div>
         </Card>
       </PageHeaderWrapper>

@@ -2,8 +2,8 @@ import { extend } from 'umi-request';
 import { URL } from '../config';
 // const url = 'http://192.168.0.29:7001';
 import { message } from 'antd';
-const BACKSTAGE_URL = `${URL}/backstage`;
-const request = extend({
+export const BACKSTAGE_URL = `${URL}/backstage`;
+export const request = extend({
   errorHandler: e => {
     console.log(e);
     message.warn('网络连接不畅');

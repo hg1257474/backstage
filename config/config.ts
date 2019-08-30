@@ -171,13 +171,7 @@ export default {
               component: './order',
               hideInMenu: true,
               path: '/order',
-            },
-            {
-              name: 'detail',
-              hideInMenu: true,
-              path: '/order/:id',
-              component: './order/$id',
-            },
+            }
           ],
         },
         {
