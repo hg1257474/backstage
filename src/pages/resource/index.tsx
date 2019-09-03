@@ -279,9 +279,11 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     const { done, inputTarget = {}, partSelected } = this.state;
     const extraContent = (
       <div className={styles.extraContent}>
-        <RadioGroup defaultValue={partSelected}>
+        <RadioGroup
+          defaultValue={partSelected}
+          onChange={e => this.setState({ partSelected: e.target.value })}
+        >
           <RadioButton value="indexPageCategory">首页类目</RadioButton>
-          <RadioButton value="payPage">咨询价格</RadioButton>
         </RadioGroup>
       </div>
     );
@@ -360,8 +362,9 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     );
     const that = this;
     console.log(this.props);
-    console.log(this.state)
     console.log(this.state);
+    console.log(this.state);
+
     // console.log(this.props.listBasicList);
     // console.log(this.props.listBasicList.list);
     // console.log('DDDDDDDDDDDDD232323232');
@@ -395,6 +398,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                 | PriceListItemDataType
               >
                 size="large"
+                style={partSelected === 'indexPageCategory' ? {} : { display: 'none' }}
                 rowKey="index"
                 loading={loading}
                 pagination={
@@ -453,3 +457,8 @@ class BasicList extends Component<BasicListProps, BasicListState> {
   }
 }
 export default Form.create<BasicListProps>()(BasicList);
+{
+  /* <RadioButton value="indexPageBanner">首页头图</RadioButton>
+<RadioButton value="discountRatio">积分折扣比例</RadioButton>
+<RadioButton value="memberPrice">会员价格</RadioButton> */
+}

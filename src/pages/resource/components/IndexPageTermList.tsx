@@ -37,22 +37,23 @@ export default class extends React.Component<Props, State> {
         footer={
           <Button
             type="dashed"
-            style={{ width: '100%', marginBottom: 8 }}
+            style={{ width: '100%', marginBottom: 8, background: '#d6e4ff' }}
             icon="plus"
             ref={component => {}}
           >
-            添加
+            添加子选项
           </Button>
         }
         className={styles['index-page-term-list']}
-        pagination={{
-          total: this.props.total,
-          current: this.state.current,
-          onChange(e) {
-            that.props.onCurrentChange(e);
-            that.setState({ current: e });
-          },
-        }}
+        pagination={
+          // total: this.props.total,
+          // current: this.state.current,
+          // onChange(e) {
+          //   that.props.onCurrentChange(e);
+          //   that.setState({ current: e });
+          // },
+          false
+        }
         loading={this.props.loading}
         dataSource={this.props.resources}
         renderItem={(item, index) => (

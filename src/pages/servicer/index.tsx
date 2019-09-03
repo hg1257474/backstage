@@ -10,6 +10,7 @@ import {
   Row,
   Select,
   TimePicker,
+  InputNumber,
 } from 'antd';
 import _ from 'lodash';
 import React, { Component } from 'react';
@@ -37,6 +38,7 @@ const fieldLabels = {
   total: '服务客户数量',
   grade: '总体评分',
   expert: '擅长',
+  lawyerExhibitionOrder: '小程序律师页面展示次序',
   privilege: '权限',
 };
 interface Props extends FormComponentProps {
@@ -95,6 +97,12 @@ class ServicerForm extends Callback<Props, State> {
     /* console.log(this.props); */
     this.props.dispatch({
       type: 'servicerForm/getServicers',
+      payload: {
+        params: { current: 1 },
+      },
+    });
+    this.props.dispatch({
+      type: 'servicerForm/getLawyerExhibition',
       payload: {
         params: { current: 1 },
       },
@@ -198,6 +206,7 @@ class ServicerForm extends Callback<Props, State> {
         </li>
       );
     });
+    console.log(this.props);
     return (
       <span className={styles.errorIcon}>
         <Popover
@@ -256,7 +265,7 @@ class ServicerForm extends Callback<Props, State> {
           action = {
             type: 'servicerForm/updateServicer',
             payload: {
-              params:this.state,
+              params: this.state,
               data: values,
             },
           };
@@ -301,90 +310,115 @@ class ServicerForm extends Callback<Props, State> {
     const {
       form: { getFieldDecorator },
       submitting,
+      servicerForm: { lawyerExhibition },
     } = this.props;
     const { width } = this.state;
+    console.log(lawyerExhibition);
+    console.log(lawyerExhibition.length + 1);
     return (
       <>
         <PageHeaderWrapper content="在此页面管理律师和管理员">
           {this.state.inputTarget && (
             <Card title="详细信息" className={styles.card} bordered={false}>
               <Form layout="vertical" hideRequiredMark>
-                <Row gutter={16}>
-                  <Col lg={6} md={12} sm={24}>
-                    <Form.Item label={fieldLabels.account}>
-                      {getFieldDecorator('username', {
-                        initialValue: this.state.inputTarget.username,
-                        rules: [{ required: true, message: '请输入' }],
-                      })(<Input placeholder="请输入" />)}
-                    </Form.Item>
-                  </Col>
-                  <Col xl={{ span: 6, offset: 2 }} lg={{ span: 8 }} md={{ span: 12 }} sm={24}>
-                    <Form.Item label={fieldLabels.password}>
-                      {getFieldDecorator('password', {
-                        initialValue: this.state.inputTarget.password,
-                        rules: [{ required: true, message: '请选择' }],
-                      })(<Input placeholder="请输入" />)}
-                    </Form.Item>
-                  </Col>
-                  <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>
-                    <Form.Item label={fieldLabels.name}>
-                      {getFieldDecorator('name', {
-                        initialValue: this.state.inputTarget.name,
-                        rules: [],
-                      })(<Input placeholder="请输入" />)}
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row gutter={16}>
-                  <Col xl={{ span: 6, offset: 2 }} lg={{ span: 8 }} md={{ span: 12 }} sm={24}>
+                <Row gutter={24}>
+                  <Col span={4}>
                     <Form.Item label={fieldLabels.avatar}>
                       {getFieldDecorator('avatar', {
                         initialValue: this.state.inputTarget.avatar,
                         rules: [],
-                      })(<ImageUpload target="lawyer_avatar" />)}
+                      })(<ImageUpload target="lawyer_avatar" style={{ maxWidth: '100%' }} />)}
                     </Form.Item>
                   </Col>
-                  <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>
-                    <Form.Item label={fieldLabels.total}>
-                      {getFieldDecorator('serviceTotal', {
-                        initialValue: this.state.inputTarget.total,
-                        rules: [],
-                      })(<Input placeholder="请输入" />)}
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row gutter={16}>
-                  <Col lg={6} md={12} sm={24}>
-                    <Form.Item label={fieldLabels.grade}>
-                      {getFieldDecorator('grade', {
-                        initialValue: this.state.inputTarget.grade,
-                        rules: [],
-                      })(<Input placeholder="请输入" />)}
-                    </Form.Item>
-                  </Col>
-                  <Col xl={{ span: 6, offset: 2 }} lg={{ span: 8 }} md={{ span: 12 }} sm={24}>
-                    <Form.Item label={fieldLabels.expert}>
-                      {getFieldDecorator('expert', {
-                        initialValue: this.state.inputTarget.expert,
-                        rules: [],
-                      })(<Input placeholder="请输入" />)}
-                    </Form.Item>
-                  </Col>
-                  <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>
-                    <Form.Item label={fieldLabels.privilege}>
-                      {getFieldDecorator('privilege', {
-                        initialValue:
-                          this.state.inputTarget.privilege &&
-                          Object.keys(this.state.inputTarget.privilege),
-                        rules: [{ required: true, message: '请选择律师权限' }],
-                      })(
-                        <Select mode="multiple" style={{ width: '100%' }} placeholder="请选择">
-                          <Option value="canAssignService">分配服务</Option>
-                          <Option value="canManageServicer">管理成员</Option>
-                          <Option value="canProcessingService">处理服务</Option>
-                        </Select>,
-                      )}
-                    </Form.Item>
+                  <Col span={20}>
+                    <Row gutter={16}>
+                      <Col lg={6} md={12} sm={24}>
+                        <Form.Item label={fieldLabels.account}>
+                          {getFieldDecorator('username', {
+                            initialValue: this.state.inputTarget.username,
+                            rules: [{ required: true, message: '请输入' }],
+                          })(<Input placeholder="请输入" />)}
+                        </Form.Item>
+                      </Col>
+                      <Col xl={{ span: 6, offset: 2 }} lg={{ span: 8 }} md={{ span: 12 }} sm={24}>
+                        <Form.Item label={fieldLabels.password}>
+                          {getFieldDecorator('password', {
+                            initialValue: this.state.inputTarget.password,
+                            rules: [{ required: true, message: '请选择' }],
+                          })(<Input placeholder="请输入" />)}
+                        </Form.Item>
+                      </Col>
+                      <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>
+                        <Form.Item label={fieldLabels.name}>
+                          {getFieldDecorator('name', {
+                            initialValue: this.state.inputTarget.name,
+                            rules: [],
+                          })(<Input placeholder="请输入" />)}
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                    <Row gutter={16}>
+                      <Col lg={6} md={12} sm={24}>
+                        <Form.Item label={fieldLabels.grade}>
+                          {getFieldDecorator('grade', {
+                            initialValue: this.state.inputTarget.grade,
+                            rules: [],
+                          })(<Input placeholder="请输入" />)}
+                        </Form.Item>
+                      </Col>
+                      <Col xl={{ span: 6, offset: 2 }} lg={{ span: 8 }} md={{ span: 12 }} sm={24}>
+                        <Form.Item label={fieldLabels.expert}>
+                          {getFieldDecorator('expert', {
+                            initialValue: this.state.inputTarget.expert,
+                            rules: [],
+                          })(<Input placeholder="请输入" />)}
+                        </Form.Item>
+                      </Col>
+                      <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>
+                        <Form.Item label={fieldLabels.total}>
+                          {getFieldDecorator('serviceTotal', {
+                            initialValue: this.state.inputTarget.total,
+                            rules: [],
+                          })(<Input placeholder="请输入" />)}
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                    <Row gutter={16}>
+                      <Col lg={6} md={12} sm={24}>
+                        <Form.Item label={fieldLabels.lawyerExhibitionOrder}>
+                          {getFieldDecorator('lawyerExhibitionOrder', {
+                            initialValue: lawyerExhibition.indexOf(this.state.inputTarget._id) + 1,
+                          })(
+                            <InputNumber
+                              className={this.state.inputTarget.id}
+                              min={0}
+                              max={
+                                lawyerExhibition.indexOf(this.state.inputTarget._id) === -1
+                                  ? lawyerExhibition.length + 1
+                                  : lawyerExhibition.length
+                              }
+                              formatter={value => (value! < 1 ? '不显示' : (value as string))}
+                            />,
+                          )}
+                        </Form.Item>
+                      </Col>
+                      <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>
+                        <Form.Item label={fieldLabels.privilege}>
+                          {getFieldDecorator('privilege', {
+                            initialValue:
+                              this.state.inputTarget.privilege &&
+                              Object.keys(this.state.inputTarget.privilege),
+                            rules: [{ required: true, message: '请选择律师权限' }],
+                          })(
+                            <Select mode="multiple" style={{ width: '100%' }} placeholder="请选择">
+                              <Option value="canAssignService">分配服务</Option>
+                              <Option value="canManageServicer">管理成员</Option>
+                              <Option value="canProcessingService">处理服务</Option>
+                            </Select>,
+                          )}
+                        </Form.Item>
+                      </Col>
+                    </Row>
                   </Col>
                 </Row>
               </Form>
