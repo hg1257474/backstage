@@ -52,7 +52,6 @@ const Model: ModelType = {
     *getLawyerExhibition({}, { call, put }) {
       const res = yield call(getLawyerExhibition);
       console.log(res);
-      res.reverse();
       yield put({
         type: 'lawyerExhibition',
         payload: { lawyerExhibition: res },
