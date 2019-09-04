@@ -110,7 +110,7 @@ export default {
         },
         {
           name: 'service',
-          icon: 'book',
+          // icon: 'book',
           path: '/service',
           routes: [
             {
@@ -128,7 +128,7 @@ export default {
         },
         {
           name: 'servicer',
-          icon: 'book',
+          // icon: 'book',
           path: '/servicer',
           routes: [
             {
@@ -146,7 +146,7 @@ export default {
         },
         {
           name: 'conclusion',
-          icon: 'book',
+          // icon: 'book',
           path: '/conclusion',
           routes: [
             {
@@ -164,7 +164,7 @@ export default {
         },
         {
           name: 'order',
-          icon: 'book',
+          // icon: 'book',
           path: '/order',
           routes: [
             {
@@ -176,7 +176,7 @@ export default {
         },
         {
           name: 'customer',
-          icon: 'book',
+          // icon: 'book',
           path: '/customer',
           routes: [
             {
@@ -194,7 +194,7 @@ export default {
         },
         {
           name: 'resource',
-          icon: 'book',
+          // icon: 'book',
           path: '/resource',
           component: './resource',
         },
