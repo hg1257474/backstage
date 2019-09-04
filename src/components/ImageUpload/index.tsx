@@ -29,7 +29,7 @@ export default class extends React.Component<Props, State> {
     }
     console.log(this.props.value, this.state.image, this.state.oldValue);
     console.log(image);
-    if (image instanceof Array)
+    if (image instanceof Array && !image[1].includes('base64'))
       return `${URL}/resource/${this.props.target}/${image[1]}/${image[0]}`;
     return image;
   };
