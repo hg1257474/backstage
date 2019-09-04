@@ -16,6 +16,7 @@ import {
   Row,
   Select,
 } from 'antd';
+import ImageUpload from '../../components/ImageUpload';
 import _ from 'lodash';
 const { Option } = Select;
 import React, { Component } from 'react';
@@ -55,7 +56,7 @@ interface BasicListState {
   editTarget?: 'indexPageCategory' | 'indexPageTerm';
   done: boolean;
   current: number;
-  partSelected: 'indexPageCategory';
+  partSelected: 'indexPageCategory' | 'indexPageBanner';
   callback?: {
     timestamp: number;
     newState: BasicListState;
@@ -67,6 +68,10 @@ interface BasicListState {
     IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType
   >;
 }
+const CARD_TITLES = {
+  indexPageCategory: '首页分级类目',
+  indexPageBanner: '首页头图',
+};
 /*
 @connect((x: { resourceList: StateType; loading: { models: { [key: string]: boolean } } }) => {
   return { resourceList: x.resourceList, loading: x.loading.models.listBasicList, x };
@@ -98,6 +103,9 @@ class BasicList extends Component<BasicListProps, BasicListState> {
         current: this.state.current,
         target: 'indexPageCategory',
       },
+    });
+    dispatch({
+      type: 'resourceList/getIndexPageBanner',
     });
   }
   static getDerivedStateFromProps(props: BasicListProps, state: BasicListState) {
@@ -218,10 +226,11 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       cancelText: '取消',
       onOk: () => {
         const { dispatch } = this.props;
+        console.log("fuckkkk")
         dispatch({
           type: 'resourceList/deleteItem',
           payload: {
-            current: callback.current,
+            current: callback && callback.current,
             callback,
             target,
             indexPageCategorySelected: this.state.indexPageCategorySelected,
@@ -260,6 +269,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
           className={styles['action-btn']}
           key="remove"
           onClick={e => {
+            console.log(target, inputTarget, editCb, delCb);
             e.preventDefault();
             this.onDelete(target, inputTarget, delCb && delCb());
           }}
@@ -284,6 +294,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
           onChange={e => this.setState({ partSelected: e.target.value })}
         >
           <RadioButton value="indexPageCategory">首页类目</RadioButton>
+          <RadioButton value="indexPageBanner">首页头图</RadioButton>
         </RadioGroup>
       </div>
     );
@@ -332,6 +343,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                 loading={this.props.loading}
                 ActionBar={ActionBar}
                 onCurrentChange={this.onChangeIndexPageTermListCurrent}
+                onAddItem={this.newItem('indexPageTerm')}
                 {...this.props.resourceList.indexPageTermList}
               />
             )}
@@ -375,14 +387,18 @@ class BasicList extends Component<BasicListProps, BasicListState> {
             <Card
               className={styles.listCard}
               bordered={false}
-              title="基本列表"
+              title={CARD_TITLES[partSelected]}
               style={{ marginTop: 24 }}
               bodyStyle={{ padding: '0 32px 40px 32px' }}
               extra={extraContent}
             >
               <Button
                 type="dashed"
-                style={{ width: '100%', marginBottom: 8 }}
+                style={{
+                  width: '100%',
+                  marginBottom: 8,
+                  display: partSelected === 'indexPageCategory' ? '' : 'none',
+                }}
                 icon="plus"
                 onClick={this.newItem(this.state.partSelected)}
                 ref={component => {
@@ -436,6 +452,18 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                   </List.Item>
                 )}
               />
+              <ImageUpload
+                target="indexPage"
+                visible={partSelected === 'indexPageBanner'}
+                value={this.props.resourceList.indexPageBanner}
+                onChange={value => {
+                  console.log(value);
+                  this.props.dispatch({
+                    type: 'resourceList/updateIndexPageBanner',
+                    payload: value,
+                  });
+                }}
+              />
             </Card>
           </div>
         </PageHeaderWrapper>
@@ -458,7 +486,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
 }
 export default Form.create<BasicListProps>()(BasicList);
 {
-  /* <RadioButton value="indexPageBanner">首页头图</RadioButton>
+  /*
 <RadioButton value="discountRatio">积分折扣比例</RadioButton>
 <RadioButton value="memberPrice">会员价格</RadioButton> */
 }

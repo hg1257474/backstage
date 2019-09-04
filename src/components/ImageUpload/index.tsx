@@ -1,13 +1,14 @@
 import React from 'react';
 import styles from './index.less';
 import { Button } from 'antd';
-// import { URL } from '../../config';
-const URL = 'http://www.cyfwg.com';
+import { URL } from '../../config';
+// const URL = 'http://www.cyfwg.com'; 
 interface Props {
   style?: { [x: string]: string };
   target: string;
   onChange?: ([x, y, z]: [string, string, number]) => void;
   value?: string;
+  visible?: boolean;
 }
 interface State {
   image: string;
@@ -20,6 +21,7 @@ export default class extends React.Component<Props, State> {
     this.state = { image: props.value || '', oldValue: props.value };
   }
   getImage = () => {
+    
     let { image } = this.state;
     if (this.props.value !== this.state.oldValue) {
       this.setState({ image: this.props.value || '', oldValue: this.props.value });
@@ -45,7 +47,7 @@ export default class extends React.Component<Props, State> {
     console.log(this.props);
     console.log(this.getImage());
     return (
-      <div>
+      <div style={this.props.visible ? {} : { display: 'none' }}>
         <img src={this.getImage()} className={styles.img} style={this.props.style} />
         <Button className={styles.button}>
           {this.state.image ? '修改' : '上传'}

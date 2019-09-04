@@ -9,6 +9,7 @@ export interface Props {
   resources: Item[];
   total: number;
   ActionBar: React.Component;
+  onAddItem: () => void;
   onCurrentChange: (e: number) => void;
 }
 interface State {
@@ -38,6 +39,10 @@ export default class extends React.Component<Props, State> {
           <Button
             type="dashed"
             style={{ width: '100%', marginBottom: 8, background: '#d6e4ff' }}
+            onClick={() => {
+              console.log('dsdsa');
+              this.props.onAddItem();
+            }}
             icon="plus"
             ref={component => {}}
           >

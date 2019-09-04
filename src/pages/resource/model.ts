@@ -1,6 +1,13 @@
 import { AnyAction, Reducer } from 'redux';
 import { EffectsCommandMap } from 'dva';
-import { getList, deleteItem, updateItem, newItem } from './service';
+import {
+  getList,
+  deleteItem,
+  updateItem,
+  newItem,
+  getIndexPageBanner,
+  updateIndexPageBanner,
+} from './service';
 import { Item as IndexPageTermListItem } from './components/IndexPageTermList';
 import {
   IndexCategoryListItemDataType,
@@ -9,6 +16,7 @@ import {
 } from './data.d';
 
 export interface StateType {
+  indexPageBanner: any[] | null;
   resources: Array<
     IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType
   >;
@@ -29,6 +37,8 @@ export interface ModelType {
   namespace: string;
   state: StateType;
   effects: {
+    getIndexPageBanner: Effect;
+    updateIndexPageBanner: Effect;
     getIndexPageTermList: Effect;
     getResources: Effect;
     deleteItem: Effect;
@@ -36,6 +46,7 @@ export interface ModelType {
     newItem: Effect;
   };
   reducers: {
+    indexPageBanner: Reducer<StateType>;
     indexPageTermList: Reducer<StateType>;
     list: Reducer<StateType>;
   };
@@ -45,12 +56,28 @@ const Model: ModelType = {
   namespace: 'resourceList',
 
   state: {
+    indexPageBanner: null,
     resources: [],
     total: 0,
     timestamp: 0,
   },
 
   effects: {
+    *getIndexPageBanner({}, { call, put }) {
+      const res = yield call(getIndexPageBanner);
+      yield put({
+        type: 'indexPageBanner',
+        payload: { indexPageBanner: res },
+      });
+    },
+    *updateIndexPageBanner({ payload }, { call, put }) {
+      const res = yield call(updateIndexPageBanner, payload);
+      console.log(res);
+      yield put({
+        type: 'indexPageBanner',
+        payload: { indexPageBanner: res },
+      });
+    },
     *getResources({ payload }, { call, put }) {
       const timestamp = payload.timestamp;
       delete payload.timestamp;
@@ -61,21 +88,30 @@ const Model: ModelType = {
       });
     },
     *getIndexPageTermList({ payload }, { call, put }) {
+      console.log(payload);
       const response = yield call(getList, payload);
       yield put({
         type: 'indexPageTermList',
-        payload: response,
+        payload: { indexPageTermList: response },
       });
     },
     *deleteItem({ payload }, { call, put }) {
-      const { callback } = payload;
+      console.log(payload);
+      let callback = payload.callback || {};
       delete callback.current;
       delete payload.callback;
+      payload.current = payload.current || 1;
       const response = yield call(deleteItem, payload);
-      yield put({
-        type: 'list',
-        payload: { ...response, ...callback }, //Array.isArray(response) ? response : [],
-      });
+      if (payload.target === 'indexPageTerm') {
+        yield put({
+          type: 'indexPageTermList',
+          payload: { indexPageTermList: response },
+        });
+      } else
+        yield put({
+          type: 'list',
+          payload: { ...response, ...callback }, //Array.isArray(response) ? response : [],
+        });
     },
     *updateItem({ payload }, { call, put }) {
       const timestamp = payload.timestamp;
@@ -94,24 +130,35 @@ const Model: ModelType = {
         });
         yield put({
           type: 'indexPageTermList',
-          payload: { ...response, timestamp },
+          payload: { indexPageTermList: response, timestamp },
         });
       }
     },
     *newItem({ payload }, { call, put }) {
+      console.log(payload);
       const timestamp = payload.timestamp;
       delete payload.timestamp;
       const response = yield call(newItem, payload);
-      yield put({
-        type: 'list',
-        payload: { ...response, timestamp }, //Array.isArray(response) ? response : [],
-      });
+      if (payload.params.target === 'indexPageTerm')
+        yield put({
+          type: 'indexPageTermList',
+          payload: { indexPageTermList: response, timestamp },
+        });
+      else
+        yield put({
+          type: 'list',
+          payload: { ...response, timestamp }, //Array.isArray(response) ? response : [],
+        });
     },
   },
 
   reducers: {
-    indexPageTermList(state, action) {
-      return { ...state, indexPageTermList: action.payload };
+    indexPageBanner(state, action) {
+      return { ...state, ...action.payload };
+    },
+
+    indexPageTermList(state, { payload }) {
+      return { ...state, ...payload };
     },
 
     list(state, action) {

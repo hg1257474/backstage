@@ -1,4 +1,4 @@
-import request from 'umi-request';
+import { request } from '../../services/curd';
 import {
   IndexCategoryListItemDataType,
   IndexTermListItemDataType,
@@ -8,7 +8,7 @@ interface Params {
   partSelected: {};
   current?: number;
 }
-import {URL as url} from '../../config'
+import { URL as url } from '../../config';
 const leach = params => {
   Object.keys(params).forEach(item => {
     if (params[item] === false || params[item] === undefined) delete params[item];
@@ -22,6 +22,10 @@ export async function getList(params: Params) {
   });
 }
 
+export const getIndexPageBanner = async () =>
+  request(`${url}/client_mini_program/index_page_banner`, { mode: 'cors' });
+export const updateIndexPageBanner = async (data: any[]) =>
+  request(`${url}/client_mini_program/index_page_banner`, { mode: 'cors', method: 'put', data });
 export async function deleteItem(params: Params) {
   leach(params);
   console.log(params);
