@@ -150,7 +150,7 @@ class ServicerForm extends Callback<Props, State> {
       this.setState({
         callback: {
           timestamp,
-          newState: { ...this.state, current },
+          newState: { ...this.state, current, inputTarget: undefined },
         },
       });
 
