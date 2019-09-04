@@ -80,7 +80,8 @@ const uglifyJSOptions =
           },
         },
       }
-    : {};
+    : {};  
+    
 export default {
   // add for transfer to umi
   plugins,
