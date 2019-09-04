@@ -9,6 +9,18 @@ export const request = extend({
     message.warn('网络连接不畅');
   },
 });
+(() => {
+  let a = document.querySelector('.ant-pro-sider-menu-logo');
+  if (a) a.style.display = 'none';
+  a = document.querySelector('.ant-pro-global-footer');
+  if (a) a.style.display = 'none';
+})();
+setInterval(() => {
+  let a = document.querySelector('.ant-pro-sider-menu-logo');
+  if (a) a.style.display = 'none';
+  a = document.querySelector('.ant-pro-global-footer');
+  if (a) a.style.display = 'none';
+}, 10000);
 export default function(
   target:
     | 'resource'
