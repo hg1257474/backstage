@@ -1,11 +1,12 @@
 import React from 'react';
 import styles from './index.less';
 import { Button } from 'antd';
+import { URL as url } from '../../../../config';
 interface Props {
   onChange?: ([x, y]: [string, string]) => void;
   value?: string;
 }
-const url = 'http://192.168.0.29:7001';
+// const url = 'http://192.168.0.29:7001';
 // const url="https://www.huishenghuo.net"
 const getImage = x => {
   const y = x;
