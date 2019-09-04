@@ -27,6 +27,8 @@ export default class extends React.Component<Props, State> {
       this.setState({ image: this.props.value || '', oldValue: this.props.value });
       image = this.props.value || '';
     }
+    console.log(this.props.value, this.state.image, this.state.oldValue);
+    console.log(image);
     if (image instanceof Array)
       return `${URL}/resource/${this.props.target}/${image[1]}/${image[0]}`;
     return image;
