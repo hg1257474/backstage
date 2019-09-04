@@ -2,17 +2,18 @@ import React from 'react';
 import styles from './index.less';
 import { Button } from 'antd';
 import { URL } from '../../config';
+import { instanceOf } from 'prop-types';
 // const URL = 'http://www.cyfwg.com';
 interface Props {
   style?: { [x: string]: string };
   target: string;
   onChange?: ([x, y, z]: [string, string, number]) => void;
-  value?: string;
+  value: string | string[];
   visible?: boolean;
 }
 interface State {
-  image: string;
-  oldValue?: string;
+  image: string | string[];
+  oldValue: string | string[];
 }
 export default class extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -26,8 +27,9 @@ export default class extends React.Component<Props, State> {
       this.setState({ image: this.props.value || '', oldValue: this.props.value });
       image = this.props.value || '';
     }
-    if (image.length > 4) return image;
-    return `${URL}/resource/${this.props.target}/${image[1]}/${image[0]}`;
+    if (image instanceof Array)
+      return `${URL}/resource/${this.props.target}/${image[1]}/${image[0]}`;
+    return image;
   };
 
   onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
