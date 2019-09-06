@@ -3,7 +3,6 @@ import { AnyAction, Reducer } from 'redux';
 import { EffectsCommandMap } from 'dva';
 import { ServiceDetail } from './data.d';
 import { getDetail } from './service';
-import { string } from 'prop-types';
 
 export type Effect = (
   action: AnyAction,
@@ -35,6 +34,7 @@ const Model: ModelType = {
     processorId: '',
     processorName: '',
     name: [],
+    duration: 0,
     description: '',
     status: '',
     totalFee: 0,

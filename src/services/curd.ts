@@ -21,6 +21,12 @@ setInterval(() => {
   a = document.querySelector('.ant-pro-global-footer');
   if (a) a.style.display = 'none';
 }, 10000);
+let style1 = document.createElement('style');
+let style1Text = document.createTextNode(
+  '.ant-descriptions-item-content{color:#8c8c8c} .ant-descriptions-item-label{color:black}',
+);
+style1.append(style1Text);
+document.head.append(style1);
 export default function(
   target:
     | 'resource'

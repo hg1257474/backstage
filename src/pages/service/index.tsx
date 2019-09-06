@@ -24,6 +24,7 @@ const { RangePicker } = DatePicker;
 import { Dispatch } from 'redux';
 import { FormComponentProps } from 'antd/es/form';
 import { PageHeaderWrapper } from '@ant-design/pro-layout';
+import { TableProps } from 'antd/lib/table/interface';
 import { connect } from 'dva';
 import * as moment from 'moment';
 import { StateType } from './model';
@@ -213,6 +214,9 @@ class TableList extends Component<TableListProps, TableListState> {
       onFilterDropdownVisibleChange: this.onUpdatedAtFilterDropdownVisibleChange,
       sortOrder: this.state.updatedAtSort,
       dataIndex: 'updatedAt',
+      render(date: moment.Moment) {
+        return moment(date).format('YYYY年MM月DD日 HH时mm分SS秒');
+      },
     },
     {
       title: '操作',
@@ -230,24 +234,14 @@ class TableList extends Component<TableListProps, TableListState> {
       payload: { current: 1, processorId, customerId },
     });
   }
-  onChange = (pagination, filter, sorter) => {
-    const { current } = pagination;
-    //const {};
-
-    const { field, order } = sorter;
-    console.log(pagination);
-    console.log(filter);
-    console.log(sorter);
+  onChange: TableProps<ServiceTableItem>['onChange'] = ({ current }, filter, { field, order }) => {
     const newState = {
-      current: field ? 1 : current,
-
+      current: current!,
       updatedAtSort: field === 'updatedAt' && order,
       isNameFiltered: filter.name && filter.name[0] ? filter.name[0] : false,
       isStatusFiltered: filter.status && filter.status[0] ? filter.status : false,
       isUpdatedAtFiltered: filter.updatedAt && filter.updatedAt ? filter.updatedAt : false,
     };
-
-    console.log(newState);
     this.setState(newState);
     this.props.dispatch({
       type: 'serviceTable/getServices',

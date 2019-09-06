@@ -70,6 +70,7 @@ const initialTableState: NonNullable<State['callback']>['newState'] = {
   privilegeFilter: [],
   servicesTotalSortOrder: false,
 };
+let servicerId: string;
 /*
 @connect(({ loading }: { loading: { effects: { [key: string]: boolean } } }) => ({
   submitting: loading.effects['formAdvancedForm/submitAdvancedForm'],
@@ -94,11 +95,11 @@ class ServicerForm extends Callback<Props, State> {
   searchRef = React.createRef();
 
   componentDidMount() {
-    /* console.log(this.props); */
+    ({ servicerId } = this.props.location.query);
     this.props.dispatch({
       type: 'servicerForm/getServicers',
       payload: {
-        params: { current: 1 },
+        params: { current: 1, servicerId },
       },
     });
     this.props.dispatch({
@@ -115,7 +116,7 @@ class ServicerForm extends Callback<Props, State> {
   }
 
   onChange: OnChange = ({ current }, filter, { field, order }) => {
-    /* console.log(current, filter, field, order); */
+    console.log(current, filter, field, order);
     const newState: NonNullable<State['callback']>['newState'] = {
       current: current!,
       isNameFiltered: filter.name && filter.name.length ? filter.name[0] : false,
@@ -133,7 +134,7 @@ class ServicerForm extends Callback<Props, State> {
     this.props.dispatch({
       type: 'servicerForm/getServicers',
       payload: {
-        params: newState,
+        params: { ...newState, servicerId },
         timestamp,
       },
     });
@@ -164,6 +165,7 @@ class ServicerForm extends Callback<Props, State> {
             isUsernameFiltered: this.state.isUsernameFiltered,
             privilegeFilter: this.state.privilegeFilter,
             servicesTotalSortOrder: this.state.servicesTotalSortOrder,
+            servicerId,
           },
           timestamp,
         },
@@ -265,7 +267,7 @@ class ServicerForm extends Callback<Props, State> {
           action = {
             type: 'servicerForm/updateServicer',
             payload: {
-              params: this.state,
+              params: { ...this.state, servicerId },
               data: values,
             },
           };
@@ -283,7 +285,7 @@ class ServicerForm extends Callback<Props, State> {
           action = {
             type: 'servicerForm/addServicer',
             payload: {
-              params: { current },
+              params: { current, servicerId },
               data: values,
             },
           };
@@ -424,6 +426,7 @@ class ServicerForm extends Callback<Props, State> {
               </Form>
             </Card>
           )}
+        
           <Card title="成员管理" bordered={false}>
             <TableForm
               onChange={this.onChange}

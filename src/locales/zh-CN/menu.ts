@@ -5,8 +5,9 @@ export default {
   'menu.login': '登录',
   'menu.register': '注册',
   'menu.service': '服务',
+  'menu.service.detail': '详情',
   'menu.order': '订单',
-  'menu.order.detail':'详情',
+  'menu.order.detail': '详情',
 
   'menu.servicer': '成员',
   'menu.customer': '客户',

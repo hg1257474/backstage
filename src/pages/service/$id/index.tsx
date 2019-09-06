@@ -61,30 +61,33 @@ class Basic extends Component<BasicProps, BasicState> {
       <PageHeaderWrapper>
         <Card bordered={false} loading={loading} className="service-detail">
           <Descriptions
-            title="服务详情"
+            title={<ServiceName serviceName={serviceDetail.name} />}
             layout="vertical"
             colon={false}
             column={3}
             style={{ marginBottom: 32 }}
           >
-            <Descriptions.Item label="服务名称">
-              <ServiceName serviceName={serviceDetail.name} />
-            </Descriptions.Item>
             <Descriptions.Item label="状态">
               <FormattedMessage id={`serviceStatus.${serviceDetail.status}`} />
+            </Descriptions.Item>
+            <Descriptions.Item label="客户" span={!!totalFee || !!processorId ? 1 : 2}>
+              <Link to={`/customer?customerId=${serviceDetail.customerId}`}>
+                {serviceDetail.customerName}
+              </Link>
             </Descriptions.Item>
             <Descriptions.Item label="提交时间">
               {new Date(serviceDetail.createdAt).toLocaleString()}
             </Descriptions.Item>
-            <Descriptions.Item label="客户" span={!!totalFee || !!processorId ? 1 : 2}>
-              <Link to={`customer/${serviceDetail.customerId}`}>{serviceDetail.customerName}</Link>
-            </Descriptions.Item>
+
             {!!totalFee && <Descriptions.Item label="报价">{totalFee}</Descriptions.Item>}
             {!!processorId && (
               <Descriptions.Item label="对接律师">
-                <Link to={`servicer/${processorId}`}>{serviceDetail.processorName}</Link>
+                <Link to={`/servicer?servicerId=${processorId}`}>
+                  {serviceDetail.processorName}
+                </Link>
               </Descriptions.Item>
             )}
+            <Descriptions.Item label="工作时长">{serviceDetail.duration}</Descriptions.Item>
 
             <Descriptions.Item label="需求描述" span={3}>
               {typeof description === 'string'
@@ -99,6 +102,7 @@ class Basic extends Component<BasicProps, BasicState> {
                         color: '#262626',
                         background: '#e8e8e8',
                         borderRadius: '0.4em',
+                        marginRight: '1em',
                       }}
                     >
                       {file[0]}
@@ -128,6 +132,7 @@ class Basic extends Component<BasicProps, BasicState> {
                       color: '#262626',
                       background: '#e8e8e8',
                       borderRadius: '0.4em',
+                      marginRight: '1em',
                     }}
                   >
                     {file[0]}

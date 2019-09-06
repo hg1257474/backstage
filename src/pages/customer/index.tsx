@@ -22,6 +22,7 @@ import Link from 'umi/link';
 import { FormattedMessage } from 'umi-plugin-react/locale';
 
 import { CustomerTableItem } from './data.d';
+import { TableProps } from 'antd/lib/table/interface';
 import React, { Component, Fragment } from 'react';
 
 import { Dispatch } from 'redux';
@@ -53,6 +54,7 @@ interface TableListState {
   isCompanyFiltered: boolean;
   infoModalData: [string, any][];
 }
+let customerId: string;
 /* eslint react/no-multi-comp:0 */
 @connect(
   ({
@@ -188,21 +190,15 @@ class TableList extends Component<TableListProps, TableListState> {
 
   componentDidMount() {
     const { dispatch } = this.props;
+    ({ customerId } = this.props.location.query);
     dispatch({
       type: 'customerTable/getCustomers',
-      payload: { current: 1 },
+      payload: { current: 1, customerId },
     });
   }
-  onChange = (pagination, filter, sorter) => {
-    const { current } = pagination;
-    //const {};
-
-    const { field, order } = sorter;
-    console.log(pagination);
-    console.log(filter);
-    console.log(sorter);
+  onChange: TableProps<CustomerTableItem>['onChange'] = ({ current }, filter, { field, order }) => {
     const newState = {
-      current: field ? 1 : current,
+      current: current,
       pointsTotalSort: field === 'pointsTotal' && order,
       orderTotalSort: field === 'orderTotal' && order,
       serviceTotalSort: field === 'serviceTotal' && order,
@@ -214,7 +210,7 @@ class TableList extends Component<TableListProps, TableListState> {
     this.setState(newState);
     this.props.dispatch({
       type: 'customerTable/getCustomers',
-      payload: { ...newState },
+      payload: { ...newState, customerId },
     });
   };
 

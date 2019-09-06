@@ -61,17 +61,14 @@ class Basic extends Component<BasicProps, BasicState> {
       <PageHeaderWrapper>
         <Card bordered={false} loading={loading} className="service-detail">
           <Descriptions
-            title="服务详情"
+            title={<ServiceName serviceName={conclusionDetail.name} />}
             layout="vertical"
             colon={false}
             column={3}
             style={{ marginBottom: 32 }}
           >
-            <Descriptions.Item label="服务名称">
-              <ServiceName serviceName={conclusionDetail.name} />
-            </Descriptions.Item>
             <Descriptions.Item label="对接律师">{conclusionDetail.processorName}</Descriptions.Item>
-            <Descriptions.Item label="提交时间">
+            <Descriptions.Item label="提交时间" span={2}>
               {new Date(conclusionDetail.createdAt).toLocaleString()}
             </Descriptions.Item>
 
@@ -88,6 +85,7 @@ class Basic extends Component<BasicProps, BasicState> {
                         color: '#262626',
                         background: '#e8e8e8',
                         borderRadius: '0.4em',
+                        marginRight: '1em',
                       }}
                     >
                       {file[0]}
@@ -107,6 +105,7 @@ class Basic extends Component<BasicProps, BasicState> {
                     color: '#262626',
                     background: '#e8e8e8',
                     borderRadius: '0.4em',
+                    marginRight: '1em',
                   }}
                 >
                   {file[0]}

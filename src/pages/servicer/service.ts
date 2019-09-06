@@ -1,6 +1,8 @@
 import getCURD, { request } from '../../services/curd';
 import { URL } from '../../config';
 const abilities = getCURD('servicer');
+export const getWorkStatistics = (id: string, period: 'month' | 'quarter' | 'year') =>
+  request(`${URL}/backstage/servicer/${id}/work_statistics?period=${period}`, { mode: 'cors' });
 export const getLawyerExhibition = () =>
   request(`${URL}/client_mini_program/lawyer_exhibition?target=id_list`, {
     mode: 'cors',

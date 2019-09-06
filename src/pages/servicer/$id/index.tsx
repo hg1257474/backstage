@@ -156,18 +156,8 @@ class Basic extends Component<BasicProps, BasicState> {
       <PageHeaderWrapper>
         <Card bordered={false}>
           <Descriptions title="用户信息" style={{ marginBottom: 32 }}>
-            <Descriptions.Item label="企业全名">付小小</Descriptions.Item>
-            <Descriptions.Item label="门店数量">18100000000</Descriptions.Item>
-            <Descriptions.Item label="加盟模式">菜鸟仓储</Descriptions.Item>
-            <Descriptions.Item label="联系人">浙江省杭州市西湖区万塘路18号</Descriptions.Item>
-            <Descriptions.Item label="电话">无</Descriptions.Item>
-            <Descriptions.Item label="微信">无</Descriptions.Item>
-            <Descriptions.Item label="钉钉">无</Descriptions.Item>
-            <Descriptions.Item label="会员">无</Descriptions.Item>
-            <Descriptions.Item label="到期时间">无</Descriptions.Item>
-            <Descriptions.Item label="历史消费金额">无</Descriptions.Item>
-            <Descriptions.Item label="积分">无</Descriptions.Item>
-            <Descriptions.Item label="积分">无</Descriptions.Item>
+            <Descriptions.Item label="企业全名">111</Descriptions.Item>
+            
           </Descriptions>
         </Card>
       </PageHeaderWrapper>

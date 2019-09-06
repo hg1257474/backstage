@@ -23,6 +23,7 @@ import React, { Component, Fragment, ClassicComponent } from 'react';
 
 import { Dispatch } from 'redux';
 import { FormComponentProps } from 'antd/es/form';
+import { TableProps } from 'antd/lib/table/interface';
 import { PageHeaderWrapper } from '@ant-design/pro-layout';
 import { connect } from 'dva';
 import * as moment from 'moment';
@@ -250,21 +251,14 @@ class OrderTable extends Component<TableListProps, TableListState> {
       title: '客户',
       dataIndex: 'customerId',
       render: (customerId: string, { customerName }: { customerName: string }) => (
-        <Link to={`customer/${customerId}`}>{customerName || customerId.slice(0, 10)}</Link>
+        <Link to={`/customer?customerId=${customerId}`}>{customerName || customerId.slice(0, 10)}</Link>
       ),
     },
   ];
 
-  onChange = (pagination, filter, sorter) => {
-    const { current } = pagination;
-    //const {};
-
-    const { field, order } = sorter;
-    console.log(pagination);
-    console.log(filter);
-    console.log(sorter);
+  onChange: TableProps<OrderTableItem>['onChange'] = ({ current }, filter, { field, order }) => {
     const newState = {
-      current: field ? 1 : current,
+      current: current!,
       totalFeeSort: field === 'totalFee' && order,
       updatedAtSort: field === 'updatedAt' && order,
       isNameFiltered: filter.name ? filter.name[0] : false,
