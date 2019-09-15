@@ -27,6 +27,8 @@ let style1Text = document.createTextNode(
 );
 style1.append(style1Text);
 document.head.append(style1);
+export const getServiceNameGroup = () =>
+  request(`${URL}/backstage/service/name_group`, { mode: 'cors' });
 export default function(
   target:
     | 'resource'

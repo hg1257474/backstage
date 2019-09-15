@@ -15,6 +15,7 @@ import {
   Row,
   Select,
   message,
+  AutoComplete,
 } from 'antd';
 import Link from 'umi/link';
 
@@ -28,6 +29,7 @@ import { TableProps } from 'antd/lib/table/interface';
 import { connect } from 'dva';
 import * as moment from 'moment';
 import { StateType } from './model';
+import { getServiceNameGroup } from './service';
 const maps = {
   contract: '合同',
   review: '审核',
@@ -60,6 +62,7 @@ interface TableListState {
 }
 let processorId: string;
 let customerId: string;
+let serviceNameGroup = [];
 /* eslint react/no-multi-comp:0 */
 @connect(
   ({
@@ -132,27 +135,35 @@ class TableList extends Component<TableListProps, TableListState> {
     const that = this;
     return (
       <div style={{ padding: 8 }}>
-        <Input
-          ref={node => {
-            that.nameSearchInput = node;
-          }}
-          placeholder={`Search`}
+        <AutoComplete
           value={selectedKeys[0]}
-          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onChange={value => setSelectedKeys(value ? [value] : [])}
           onPressEnter={confirm}
-          style={{ width: 188, marginBottom: 8, display: 'block' }}
-        />
+          style={{ width: 188, marginRight: 8 }}
+          dataSource={serviceNameGroup}
+        >
+          <Input
+            ref={node => {
+              that.nameSearchInput = node;
+            }}
+            placeholder={`输入要搜索的文件名`}
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={confirm}
+            style={{ width: 188, display: 'block' }}
+          />
+        </AutoComplete>
         <Button
           type="primary"
           onClick={confirm}
           icon="search"
-          size="small"
+     
           style={{ width: 90, marginRight: 8 }}
         >
-          Search
+          搜索
         </Button>
-        <Button onClick={clearFilters} size="small" style={{ width: 90 }}>
-          Reset
+        <Button onClick={clearFilters} style={{ width: 90 }}>
+          重置
         </Button>
       </div>
     );
@@ -225,7 +236,8 @@ class TableList extends Component<TableListProps, TableListState> {
     },
   ];
 
-  componentDidMount() {
+  async componentDidMount() {
+    serviceNameGroup = await getServiceNameGroup();
     const { dispatch } = this.props;
     ({ processorId, customerId } = this.props.location.query);
     console.log(processorId);

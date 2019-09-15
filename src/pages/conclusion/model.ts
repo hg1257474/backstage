@@ -5,8 +5,14 @@ import { getConclusions } from './service';
 import { ConclusionTableItem } from './data.d';
 
 export interface StateType {
-  conclusions: ConclusionTableItem[];
-  total: number;
+  communication: {
+    conclusions: ConclusionTableItem[];
+    total: number;
+  };
+  contract: {
+    conclusions: ConclusionTableItem[];
+    total: number;
+  };
   timestamp: number;
 }
 
@@ -30,19 +36,26 @@ const Model: ModelType = {
   namespace: 'conclusionTable',
 
   state: {
+    communication: {
+      total: 0,
+      conclusions: [],
+    },
+    contract: {
+      total: 0,
+      conclusions: [],
+    },
     timestamp: 0,
-    conclusions: [],
-    total: 0,
   },
 
   effects: {
     *getConclusions({ payload }, { call, put }) {
       const { timestamp } = payload;
       delete payload.timestamp;
-      const res = yield call(getConclusions, payload);
+      const category = Object.keys(payload)[0];
+      const res = yield call(getConclusions, { ...payload[category], category });
       yield put({
         type: 'conclusions',
-        payload: { ...res, timestamp },
+        payload: { [category]:res, timestamp },
       });
     },
   },

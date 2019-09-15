@@ -15,9 +15,12 @@ import {
   Row,
   Select,
   message,
+  AutoComplete,
+  Modal,
 } from 'antd';
 import Link from 'umi/link';
 import Callback from '../../components/Callback';
+import { getServiceNameGroup, URL } from './service';
 
 import { ConclusionTableItem } from './data.d';
 import React, { Component, Fragment } from 'react';
@@ -52,12 +55,25 @@ interface TableListProps extends FormComponentProps {
 interface TableListState {
   callback?: {
     timestamp: number;
-    newState: TableListState;
+    newState: {
+      communication?: TableListState['communication'];
+      contract?: TableListState['contract'];
+    };
   };
-  current: number;
-  isServiceNameFiltered: boolean | string;
-  isProcessorFiltered: boolean | string;
+  wantDownload: [string, string];
+  communication: {
+    current: number;
+    isServiceNameFiltered: boolean | string;
+    isProcessorFiltered: boolean | string;
+  };
+  contract: {
+    current: number;
+    isServiceNameFiltered: boolean | string;
+    isProcessorFiltered: boolean | string;
+  };
 }
+type ConclusionCategory = 'communication' | 'contract';
+let serviceNameGroup = [];
 /* eslint react/no-multi-comp:0 */
 @connect(
   ({
@@ -78,23 +94,43 @@ interface TableListState {
 // interface momentType extends typeof moment={}
 class ConclusionTable extends Callback<TableListProps, TableListState> {
   state: TableListState = {
-    current: 1,
-    isServiceNameFiltered: false,
-    isProcessorFiltered: false,
+    communication: {
+      current: 1,
+      isServiceNameFiltered: false,
+      isProcessorFiltered: false,
+    },
+    contract: {
+      current: 1,
+      isServiceNameFiltered: false,
+      isProcessorFiltered: false,
+    },
+    wantDownload: ['0', '0'],
   };
-  filterIcon = filtered => (
+  filterIcon = (filtered?: boolean) => (
     <Icon type="search" style={{ color: filtered ? '#1890ff' : undefined }} />
   );
 
-  serviceNameSearchInput: Input | null = null;
-  processorSearchInput: Input | null = null;
-  onChange: OnChange = ({ current }, filter, { field, order }) => {
+  serviceNameSearchInput: { communication: Input | null; contract: Input | null } = {
+    communication: null,
+    contract: null,
+  };
+  processorSearchInput: { communication: Input | null; contract: Input | null } = {
+    communication: null,
+    contract: null,
+  };
+  onChange: (x: ConclusionCategory) => OnChange = category => (
+    { current },
+    filter,
+    { field, order },
+  ) => {
     console.log(current, filter, field, order);
     const newState: NonNullable<TableListState['callback']>['newState'] = {
-      current: field ? 1 : current!,
-      isServiceNameFiltered:
-        filter.serviceName && filter.serviceName[0] ? filter.serviceName[0] : false,
-      isProcessorFiltered: filter.processor && filter.processor[0] ? filter.processor[0] : false,
+      [category]: {
+        current: field ? 1 : current!,
+        isServiceNameFiltered:
+          filter.serviceName && filter.serviceName[0] ? filter.serviceName[0] : false,
+        isProcessorFiltered: filter.processor && filter.processor[0] ? filter.processor[0] : false,
+      },
     };
     const timestamp = new Date().getTime();
     this.setState({
@@ -113,24 +149,74 @@ class ConclusionTable extends Callback<TableListProps, TableListState> {
     return 1;
   };
 
-  onServiceNameFilterDropdownVisibleChange = visible => {
+  onServiceNameFilterDropdownVisibleChange = (category: ConclusionCategory) => (
+    visible?: boolean,
+  ) => {
     if (visible) {
-      setTimeout(() => this.serviceNameSearchInput!.select());
+      setTimeout(() => this.serviceNameSearchInput[category]!.select());
     }
   };
-  onProcessorFilterDropdownVisibleChange = visible => {
+  onProcessorFilterDropdownVisibleChange = (category: ConclusionCategory) => (
+    visible?: boolean,
+  ) => {
     if (visible) {
-      setTimeout(() => this.processorSearchInput!.select());
+      setTimeout(() => this.processorSearchInput[category]!.select());
     }
   };
 
-  serviceNameFilterDropdown = ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => {
+  serviceNameFilterDropdown = (category: 'communication' | 'contract') => ({
+    setSelectedKeys,
+    selectedKeys,
+    confirm,
+    clearFilters,
+  }) => {
+    const that = this;
+    return (
+      <div style={{ padding: 8 }}>
+        <AutoComplete
+          value={selectedKeys[0]}
+          onChange={value => setSelectedKeys(value ? [value] : [])}
+          onPressEnter={confirm}
+          style={{ width: 188, marginRight: 8 }}
+          dataSource={serviceNameGroup}
+        >
+          <Input
+            ref={node => {
+              that.serviceNameSearchInput[category] = node;
+            }}
+            placeholder={`搜索服务名`}
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={confirm}
+            style={{ width: 188, display: 'block' }}
+          />
+        </AutoComplete>
+        <Button
+          type="primary"
+          onClick={confirm}
+          icon="search"
+          style={{ width: 90, marginRight: 8 }}
+        >
+          Search
+        </Button>
+        <Button onClick={clearFilters} style={{ width: 90 }}>
+          Reset
+        </Button>
+      </div>
+    );
+  };
+  processorFilterDropdown = (category: ConclusionCategory) => ({
+    setSelectedKeys,
+    selectedKeys,
+    confirm,
+    clearFilters,
+  }) => {
     const that = this;
     return (
       <div style={{ padding: 8 }}>
         <Input
           ref={node => {
-            that.serviceNameSearchInput = node;
+            that.processorSearchInput[category] = node;
           }}
           placeholder={`Search`}
           value={selectedKeys[0]}
@@ -153,49 +239,19 @@ class ConclusionTable extends Callback<TableListProps, TableListState> {
       </div>
     );
   };
-  processorFilterDropdown = ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => {
-    const that = this;
-    return (
-      <div style={{ padding: 8 }}>
-        <Input
-          ref={node => {
-            that.processorSearchInput = node;
-          }}
-          placeholder={`Search`}
-          value={selectedKeys[0]}
-          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-          onPressEnter={confirm}
-          style={{ width: 188, marginBottom: 8, display: 'block' }}
-        />
-        <Button
-          type="primary"
-          onClick={confirm}
-          icon="search"
-          size="small"
-          style={{ width: 90, marginRight: 8 }}
-        >
-          Search
-        </Button>
-        <Button onClick={clearFilters} size="small" style={{ width: 90 }}>
-          Reset
-        </Button>
-      </div>
-    );
-  };
-  getColumns = () => [
+  getColumns = (category: 'contract' | 'communication') => [
     {
       title: '服务名',
       dataIndex: 'serviceName',
       filterIcon: this.filterIcon,
-      filterDropdown: this.serviceNameFilterDropdown,
-      filtered: this.state.isServiceNameFiltered,
-      onFilterDropdownVisibleChange: this.onServiceNameFilterDropdownVisibleChange,
+      filterDropdown: this.serviceNameFilterDropdown(category),
+      filtered: this.state[category].isServiceNameFiltered,
+      onFilterDropdownVisibleChange: this.onServiceNameFilterDropdownVisibleChange(category),
       render: (value: []) => (
         <span>
           {value
+            .filter(item => !['communication', 'contract'].includes(item))
             .join('-')
-            .replace('communication', '咨询')
-            .replace('contract', '合同')
             .replace('review', '审核')
             .replace('draft', '起草')}
         </span>
@@ -205,9 +261,9 @@ class ConclusionTable extends Callback<TableListProps, TableListState> {
       title: '处理律师',
       dataIndex: 'processor',
       filterIcon: this.filterIcon,
-      filterDropdown: this.processorFilterDropdown,
-      filtered: this.state.isProcessorFiltered,
-      onFilterDropdownVisibleChange: this.onProcessorFilterDropdownVisibleChange,
+      filterDropdown: this.processorFilterDropdown(category),
+      filtered: this.state[category].isProcessorFiltered,
+      onFilterDropdownVisibleChange: this.onProcessorFilterDropdownVisibleChange(category),
     },
     {
       title: '操作',
@@ -216,33 +272,99 @@ class ConclusionTable extends Callback<TableListProps, TableListState> {
     },
   ];
 
-  componentDidMount() {
+  async componentDidMount() {
     const { dispatch } = this.props;
+    serviceNameGroup = await getServiceNameGroup();
     dispatch({
       type: 'conclusionTable/getConclusions',
-      payload: { current: 1 },
+      payload: { communication: { current: 1 } },
+    });
+    dispatch({
+      type: 'conclusionTable/getConclusions',
+      payload: { contract: { current: 1 } },
     });
   }
   render() {
     console.log(this.props);
+    const { wantDownload } = this.state;
+    const filename = `${wantDownload[0]}至${wantDownload[1]}.docx`;
     const { loading } = this.props;
     return (
       <PageHeaderWrapper>
-        <Card bordered={false}>
+        <Card
+          bordered={false}
+          title="咨询问题"
+          extra={
+            <Button
+              style={{ float: 'right' }}
+              type="primary"
+              onClick={() => this.setState({ wantDownload: ['1', '1'] })}
+            >
+              下载咨询类类问题汇总
+            </Button>
+          }
+        >
           <div className={styles.tableList}>
             <Table<ConclusionTableItem>
               loading={loading}
               rowKey="_id"
-              onChange={this.onChange}
-              columns={this.getColumns()}
-              dataSource={this.props.conclusionTable.conclusions}
+              onChange={this.onChange('communication')}
+              columns={this.getColumns('communication')}
+              dataSource={this.props.conclusionTable.communication.conclusions}
               pagination={{
-                total: this.props.conclusionTable.total,
-                current: this.state.current,
+                total: this.props.conclusionTable.communication.total,
+                current: this.state.communication.current,
               }}
             />
           </div>
         </Card>
+        <Card bordered={false} title="合同问题">
+          <div className={styles.tableList}>
+            <Table<ConclusionTableItem>
+              loading={loading}
+              rowKey="_id"
+              onChange={this.onChange('contract')}
+              columns={this.getColumns('contract')}
+              dataSource={this.props.conclusionTable.contract.conclusions}
+              pagination={{
+                total: this.props.conclusionTable.contract.total,
+                current: this.state.contract.current,
+              }}
+            />
+          </div>
+        </Card>
+        <Modal
+          visible={wantDownload[0] !== '0'}
+          title="下载问题库"
+          footer={null}
+          onCancel={() => {
+            this.setState({ wantDownload: ['0', '0'] });
+          }}
+          width={580}
+        >
+          <div>
+            请选择日期范围
+            <RangePicker
+              style={{ float: 'right' }}
+              onChange={(_v, value) => this.setState({ wantDownload: value })}
+            ></RangePicker>
+          </div>
+          {wantDownload[0] !== '1' && (
+            <div>
+              <Button type="primary" style={{ margin: '13px auto 0 200px' }}>
+                <a
+                  download={filename}
+                  onClick={() =>
+                    setTimeout(() => this.setState({ wantDownload: ['0', '0'] }), 1000)
+                  }
+                  href={`${URL}/backstage/conclusion/archive/${filename}`}
+                >
+                  立即下载
+                </a>
+              </Button>
+            </div>
+          )}
+        </Modal>
       </PageHeaderWrapper>
     );
   }
