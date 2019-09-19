@@ -1,11 +1,17 @@
 import { extend } from 'umi-request';
 import { URL } from '../config';
+import router from 'umi/router';
 // const url = 'http://192.168.0.29:7001';
 import { message } from 'antd';
 export const BACKSTAGE_URL = `${URL}/backstage`;
 export const request = extend({
+  credentials: 'include',
   errorHandler: e => {
+    router.replace('login');
     console.log(e);
+    const { response, data } = e;
+    console.log(response, data);
+
     message.warn('网络连接不畅');
   },
 });

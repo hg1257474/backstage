@@ -80,8 +80,7 @@ const uglifyJSOptions =
           },
         },
       }
-    : {};  
-    
+    : {};
 export default {
   // add for transfer to umi
   plugins,
@@ -100,9 +99,15 @@ export default {
   // 路由配置
   routes: [
     {
+      name: 'login',
+      path: '/login',
+      component: './user/login',
+      authority: ['dsds'],
+    },
+    {
       path: '/',
       component: '../layouts/BasicLayout',
-      authority: [''],
+      authority: ['user'],
       routes: [
         {
           name: 'home',
@@ -172,7 +177,7 @@ export default {
               component: './order',
               hideInMenu: true,
               path: '/order',
-            }
+            },
           ],
         },
         {
