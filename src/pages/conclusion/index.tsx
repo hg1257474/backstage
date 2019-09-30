@@ -247,18 +247,18 @@ class ConclusionTable extends Callback<TableListProps, TableListState> {
       filterDropdown: this.serviceNameFilterDropdown(category),
       filtered: this.state[category].isServiceNameFiltered,
       onFilterDropdownVisibleChange: this.onServiceNameFilterDropdownVisibleChange(category),
-      render: (value: string[] | string) => (
+      render: (value: string[], { description }: { description: string | any }) => (
         <span>
-          {value instanceof Array
+          {typeof description !== 'string'
             ? value
                 .filter(item => !['communication', 'contract'].includes(item))
                 .join('-')
                 .replace('review', '审核')
                 .replace('draft', '起草')
-            : value.length > 30
-            ? `${value.slice(0, 30)}...`
-            : value}
-          {typeof value === 'string' && value.length > 30 && (
+            : description.length > 30
+            ? `${description.slice(0, 30)}...`
+            : description}
+          {typeof description === 'string' && description.length > 30 && (
             <Button
               type="link"
               size="small"
@@ -266,7 +266,7 @@ class ConclusionTable extends Callback<TableListProps, TableListState> {
                 Modal.info({
                   maskClosable: true,
                   title: '问题详情',
-                  content: value,
+                  content: description,
                   icon: () => <></>,
                 })
               }
