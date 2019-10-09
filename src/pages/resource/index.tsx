@@ -78,7 +78,7 @@ const CARD_TITLES = {
 })
 */
 @connect((x: { resourceList: StateType; loading: { models: { [key: string]: boolean } } }) => {
-  console.log(x);
+  /*  console.log(x);*/
   return { resourceList: x.resourceList, loading: x.loading.models.resourceList };
 })
 class BasicList extends Component<BasicListProps, BasicListState> {
@@ -109,11 +109,11 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     });
   }
   static getDerivedStateFromProps(props: BasicListProps, state: BasicListState) {
-    console.log(state);
+    /*    console.log(state);*/
     if (state.callback && props.resourceList.timestamp === state.callback.timestamp) {
       state = { ...state, ...state.callback.newState };
       state.callback = undefined;
-      console.log(state);
+      /*      console.log(state);*/
     }
     return state;
   }
@@ -135,10 +135,13 @@ class BasicList extends Component<BasicListProps, BasicListState> {
 
   onCancel = () => {
     setTimeout(() => this.addBtn && this.addBtn.blur(), 0);
-    this.setState({
-      editTarget: undefined,
-      inputTarget: undefined,
-    });
+    this.setState(
+      {
+        editTarget: undefined,
+        inputTarget: undefined,
+      },
+      () => this.props.form.resetFields(),
+    );
   };
   indexPageTermListCurrent = 1;
   onSubmit = (e: React.FormEvent) => {
@@ -226,7 +229,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       cancelText: '取消',
       onOk: () => {
         const { dispatch } = this.props;
-        console.log("fuckkkk")
+        /*        console.log("fuckkkk")*/
         dispatch({
           type: 'resourceList/deleteItem',
           payload: {
@@ -256,8 +259,8 @@ class BasicList extends Component<BasicListProps, BasicListState> {
         <a
           className={styles['action-btn']}
           onClick={e => {
-            console.log(11);
-            console.log(target, inputTarget);
+            /*            console.log(11);*/
+            /*            console.log(target, inputTarget);*/
             e.preventDefault();
             if (editCb) editCb();
             this.setState({ editTarget: target, inputTarget });
@@ -269,7 +272,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
           className={styles['action-btn']}
           key="remove"
           onClick={e => {
-            console.log(target, inputTarget, editCb, delCb);
+            /*            console.log(target, inputTarget, editCb, delCb);*/
             e.preventDefault();
             this.onDelete(target, inputTarget, delCb && delCb());
           }}
@@ -285,7 +288,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     const {
       form: { getFieldDecorator },
     } = this.props;
-    console.log(this.props);
+    /*    console.log(this.props);*/
     const { done, inputTarget = {}, partSelected } = this.state;
     const extraContent = (
       <div className={styles.extraContent}>
@@ -373,13 +376,14 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       </div>
     );
     const that = this;
-    console.log(this.props);
-    console.log(this.state);
-    console.log(this.state);
+    /*    console.log(this.props);*/
+    /*    console.log(this.state);*/
+    /*    console.log(this.state);*/
 
-    // console.log(this.props.listBasicList);
-    // console.log(this.props.listBasicList.list);
-    // console.log('DDDDDDDDDDDDD232323232');
+    /*    // console.log(this.props.listBasicList);*/
+    /*    // console.log(this.props.listBasicList.list);*/
+    /*    // console.log('DDDDDDDDDDDDD232323232');*/
+    console.log(this.props);
     return (
       <>
         <PageHeaderWrapper>
@@ -457,7 +461,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                 visible={partSelected === 'indexPageBanner'}
                 value={this.props.resourceList.indexPageBanner}
                 onChange={value => {
-                  console.log(value);
+                  /*                  console.log(value);*/
                   this.props.dispatch({
                     type: 'resourceList/updateIndexPageBanner',
                     payload: value,

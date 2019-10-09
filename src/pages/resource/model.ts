@@ -72,7 +72,7 @@ const Model: ModelType = {
     },
     *updateIndexPageBanner({ payload }, { call, put }) {
       const res = yield call(updateIndexPageBanner, payload);
-      console.log(res);
+/*      console.log(res);*/
       yield put({
         type: 'indexPageBanner',
         payload: { indexPageBanner: res },
@@ -88,7 +88,7 @@ const Model: ModelType = {
       });
     },
     *getIndexPageTermList({ payload }, { call, put }) {
-      console.log(payload);
+/*      console.log(payload);*/
       const response = yield call(getList, payload);
       yield put({
         type: 'indexPageTermList',
@@ -96,7 +96,7 @@ const Model: ModelType = {
       });
     },
     *deleteItem({ payload }, { call, put }) {
-      console.log(payload);
+/*      console.log(payload);*/
       let callback = payload.callback || {};
       delete callback.current;
       delete payload.callback;
@@ -115,7 +115,7 @@ const Model: ModelType = {
     },
     *updateItem({ payload }, { call, put }) {
       const timestamp = payload.timestamp;
-      console.log(payload);
+/*      console.log(payload);*/
       delete payload.timestamp;
       const response = yield call(updateItem, payload);
       if (payload.params.target !== 'indexPageTerm')
@@ -135,7 +135,7 @@ const Model: ModelType = {
       }
     },
     *newItem({ payload }, { call, put }) {
-      console.log(payload);
+/*      console.log(payload);*/
       const timestamp = payload.timestamp;
       delete payload.timestamp;
       const response = yield call(newItem, payload);
@@ -162,7 +162,7 @@ const Model: ModelType = {
     },
 
     list(state, action) {
-      console.log(action.payload);
+/*      console.log(action.payload);*/
       return { ...state, ...action.payload };
       /*
       const list = action.payload.list.map((item, index) => {

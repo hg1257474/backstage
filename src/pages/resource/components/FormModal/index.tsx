@@ -6,6 +6,7 @@ import {
   Form,
   Icon,
   Input,
+  message,
   List,
   Menu,
   Modal,
@@ -14,11 +15,13 @@ import {
   Row,
   Select,
   InputNumber,
+  Upload,
 } from 'antd';
+import { URL } from '../../../../config';
 import styles from '../../style.less';
 import ImageUpload from '../ImageUpload';
 const { Option } = Select;
-import React, { FormEvent } from 'react';
+import React, { FormEvent, ChangeEvent } from 'react';
 import Result from '../../Result';
 import { NewTargetType } from '../../index';
 import {
@@ -107,6 +110,35 @@ interface State {
     index?: number;
   };
 }
+const Other = ({
+  value,
+  onChange,
+  isFileUpload,
+}: {
+  value: any;
+  onChange: (x: [string, string] | string) => void;
+  isFileUpload: boolean;
+}) => {
+  return isFileUpload ? (
+    <Upload
+      showUploadList={false}
+      onChange={({ file }) => {
+        if (file.status === 'done') {
+          onChange([file.name, file.response]);
+        } else if (file.status === 'error') {
+          message.error(`${file.name} 上传失败`);
+        }
+      }}
+      action={`${URL}/file`}
+    >
+      {value[0] === '-' ? '' : value[0]}
+      <Button style={{ marginLeft: '0.5em' }}>{value[0] === '-' ? '上传' : '修改'}</Button>
+    </Upload>
+  ) : (
+    <Input value={value} defaultValue="-" onChange={e => onChange(e.currentTarget.value)} />
+  );
+};
+
 export default class extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -144,7 +176,7 @@ export default class extends React.Component<Props, State> {
         : { okText: '保存', onOk: onSubmit, onCancel: onCancel };
     const that = this;
     console.log(this.props);
-    console.log(this.state);
+    /*    console.log(this.state);*/
     return (
       this.state.visible && (
         <Modal
@@ -208,7 +240,7 @@ export default class extends React.Component<Props, State> {
                       rules: [{ required: true, message: '请输入任务名称' }],
                       initialValue: inputTarget.category || this.props.indexPageCategorySelected,
                       getValueFromEvent(res) {
-                        console.log(res);
+                        /*                    console.log(res);*/
                         setTimeout(
                           async () =>
                             that.setState({
@@ -243,8 +275,16 @@ export default class extends React.Component<Props, State> {
                   <FormItem label="其他参数" {...this.formLayout}>
                     {getFieldDecorator('termOther', {
                       rules: [{ required: true, message: '请输入其他参数' }],
-                      initialValue: inputTarget.termOther,
-                    })(<Input placeholder="请输入" />)}
+                      initialValue: inputTarget.termOther || '-',
+                      getValueFromEvent: value => value,
+                    })(
+                      <Other
+                        isFileUpload={
+                          this.state.indexPageCategorySelected ===
+                          this.state.indexPageCategories!.length - 1
+                        }
+                      />,
+                    )}
                   </FormItem>
                   <FormItem label="服务图标" {...this.formLayout}>
                     {getFieldDecorator('termIcon', {

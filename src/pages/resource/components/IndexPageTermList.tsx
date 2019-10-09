@@ -75,7 +75,7 @@ export default class extends React.Component<Props, State> {
               }
             />
             <div>{item[2]}</div>
-            <div>{item[3]}</div>
+            {/* <div>{item[3]}</div> */}
             <ActionBar
               target="indexPageTerm"
               inputTarget={{

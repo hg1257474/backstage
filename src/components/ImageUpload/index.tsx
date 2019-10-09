@@ -27,8 +27,8 @@ export default class extends React.Component<Props, State> {
       this.setState({ image: this.props.value || '', oldValue: this.props.value });
       image = this.props.value || '';
     }
-    console.log(this.props.value, this.state.image, this.state.oldValue);
-    console.log(image);
+/*    console.log(this.props.value, this.state.image, this.state.oldValue);*/
+/*    console.log(image);*/
     if (image instanceof Array) {
       if (!image.length || image[1].includes('base64')) return image[1];
       else return `${URL}/resource/${this.props.target}/${image[1]}/${image[0]}`;
@@ -42,15 +42,15 @@ export default class extends React.Component<Props, State> {
     const fileSize = e.target.files![0].size;
     reader.onload = () => {
       /* console.log('321312093u45u34'); */
-      /* console.log(fileName); */
+     /* console.log(fileName); */
       this.setState({ image: reader.result as string });
       this.props.onChange!([fileName, reader.result as string, fileSize]);
     };
     reader.readAsDataURL(e.target.files![0]);
   };
   render() {
-    console.log(this.props);
-    console.log(this.getImage());
+/*    console.log(this.props);*/
+/*    console.log(this.getImage());*/
     return (
       <div style={this.props.visible === false ? { display: 'none' } : {}}>
         <img src={this.getImage()} className={styles.img} style={this.props.style} />
