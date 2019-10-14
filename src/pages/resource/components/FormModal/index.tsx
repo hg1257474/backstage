@@ -128,12 +128,16 @@ const Other = ({
         type: 'text/plain',
       }))}
       onChange={({ file, fileList }) => {
-        console.log(file)
+        console.log(file);
         console.log(fileList);
+        console.log(value);
+
         if (file.status === 'done') {
           onChange([...(value instanceof Array ? value : []), [file.name, file.response]]);
         } else if (file.status === 'error') {
           message.error(`${file.name} 上传失败`);
+        } else if (file.status === 'removed') {
+          onChange(value.filter((item: [string]) => item[0] !== file.name));
         }
       }}
       action={`${URL}/file`}
