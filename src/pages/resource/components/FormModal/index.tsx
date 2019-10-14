@@ -128,6 +128,7 @@ const Other = ({
         type: 'text/plain',
       }))}
       onChange={({ file, fileList }) => {
+        console.log(file)
         console.log(fileList);
         if (file.status === 'done') {
           onChange([...(value instanceof Array ? value : []), [file.name, file.response]]);
