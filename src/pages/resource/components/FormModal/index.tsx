@@ -121,8 +121,14 @@ const Other = ({
 }) => {
   return isFileUpload ? (
     <Upload
-      showUploadList={false}
-      onChange={({ file }) => {
+      defaultFileList={value.map((item: [string], index: number) => ({
+        name: item[0],
+        uid: index,
+        size: index,
+        type: 'text/plain',
+      }))}
+      onChange={({ file, fileList }) => {
+        console.log(fileList);
         if (file.status === 'done') {
           onChange([file.name, file.response]);
         } else if (file.status === 'error') {
@@ -131,8 +137,11 @@ const Other = ({
       }}
       action={`${URL}/file`}
     >
-      {value[0] === '-' ? '' : value[0]}
-      <Button style={{ marginLeft: '0.5em' }}>{value[0] === '-' ? '上传' : '修改'}</Button>
+      <Button>
+        <Icon type="upload" /> 上传
+      </Button>
+      {/* {value[0] === '-' ? '' : value[0]} */}
+      {/* <Button style={{ marginLeft: '0.5em' }}>{value[0] === '-' ? '上传' : '修改'}</Button> */}
     </Upload>
   ) : (
     <Input value={value} defaultValue="-" onChange={e => onChange(e.currentTarget.value)} />
