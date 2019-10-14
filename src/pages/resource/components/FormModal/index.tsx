@@ -116,7 +116,7 @@ const Other = ({
   isFileUpload,
 }: {
   value: any;
-  onChange: (x: [string, string] | string) => void;
+  onChange: (x: [string, string][] | string) => void;
   isFileUpload: boolean;
 }) => {
   return isFileUpload ? (
@@ -130,7 +130,7 @@ const Other = ({
       onChange={({ file, fileList }) => {
         console.log(fileList);
         if (file.status === 'done') {
-          onChange([file.name, file.response]);
+          onChange([...(value instanceof Array ? value : []), [file.name, file.response]]);
         } else if (file.status === 'error') {
           message.error(`${file.name} 上传失败`);
         }
