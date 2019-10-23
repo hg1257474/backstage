@@ -50,6 +50,7 @@ const Model: ModelType = {
 
   effects: {
     *getLawyerExhibition({}, { call, put }) {
+      yield new Promise(resolve => setTimeout(() => resolve(1), 1000));
       const res = yield call(getLawyerExhibition);
       console.log(res);
       yield put({
@@ -67,7 +68,7 @@ const Model: ModelType = {
         type: 'servicers',
         payload: { ...res, timestamp },
       });
-    }, 
+    },
     *addServicer({ payload }, { call, put }) {
       console.log(payload);
       const res = yield call(addServicer, payload.data);

@@ -71,7 +71,6 @@ interface Props {
   target: {
     indexPageCategoryTotal?: number;
     indexPageTermTotal?: number;
-    indexPageCategories?: string[];
     index?: number;
     type: 'indexPageTerm' | 'indexPageCategory' | 'product';
     [x: string]: any;
@@ -87,6 +86,7 @@ interface Props {
   ) => (node: React.ReactNode) => React.ReactNode;
 }
 interface State {
+  indexPageCategories: string[];
   indexPageColumnIndexMax: number;
   isProductPromotion?: boolean;
 }
@@ -135,28 +135,34 @@ const Other = ({
 export default class extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    const { target } = props;
-    let newState: Partial<State> = {};
-    switch (target.type) {
-      case 'indexPageCategory':
-        console.log(target);
-        newState.indexPageColumnIndexMax = target.indexPageCategoryTotal;
-        break;
-      case 'indexPageTerm':
-        newState.indexPageColumnIndexMax = target.isNew
-          ? target.indexPageTermTotal! + 1
-          : target.indexPageTermTotal;
-        break;
-      case 'product':
-        newState.isProductPromotion = !!target.originalPrice;
-        break;
-      default:
-        throw new Error('dd');
-    }
     this.state = {
       indexPageColumnIndexMax: 0,
-      ...newState,
+      indexPageCategories: [],
     };
+  }
+  async componentDidUpdate(prevProps: Props) {
+    const { target } = this.props;
+    if (!!this.props.target && !!prevProps.target != !!this.props.target && !this.props.done) {
+      let newState: Partial<State> = {};
+      switch (target.type) {
+        case 'indexPageCategory':
+          console.log(target);
+          newState.indexPageColumnIndexMax = target.indexPageCategoryTotal;
+          break;
+        case 'indexPageTerm':
+          newState.indexPageCategories = await mRequest({ target: 'indexPageCategories' });
+          newState.indexPageColumnIndexMax = target.isNew
+            ? target.indexPageTermTotal! + 1
+            : target.indexPageTermTotal;
+          break;
+        case 'product':
+          newState.isProductPromotion = !!target.originalPrice;
+          break;
+        default:
+          throw new Error('dd');
+      }
+      setTimeout(() => this.setState({ ...this.state, ...newState }), 0);
+    }
   }
   formLayout = {
     labelCol: { span: 7 },
@@ -233,7 +239,7 @@ export default class extends React.Component<Props, State> {
                         },
                       })(
                         <Select>
-                          {target.indexPageCategories!.map((item, index) => (
+                          {this.state.indexPageCategories!.map((item, index) => (
                             <Option value={index} key={index}>
                               {item}
                             </Option>
@@ -260,7 +266,9 @@ export default class extends React.Component<Props, State> {
                         getValueFromEvent: value => value,
                       })(
                         <Other
-                          isFileUpload={target.category === target.indexPageCategories!.length - 1}
+                          isFileUpload={
+                            target.category === this.state.indexPageCategories!.length - 1
+                          }
                         />,
                       )}
                     </FormItem>

@@ -1,70 +1,19 @@
 import { request } from '../../services/curd';
-import {
-  IndexCategoryListItemDataType,
-  IndexTermListItemDataType,
-  PriceListItemDataType,
-} from './data.d';
-interface Params {
-  partSelected: {};
-  current?: number;
-}
 import { URL as url } from '../../config';
-const leach = params => {
-  Object.keys(params).forEach(item => {
-    if (params[item] === false || params[item] === undefined) delete params[item];
-  });
+const targetMap = {
+  indexPageTerm: 'index_page_term',
+  indexPageTermList: 'index_page_term_list',
+  indexPageCategory: 'index_page_category',
+  indexPageCategories: 'index_page_categories',
+  indexPageCategoryList: 'index_page_category_list',
+  indexPageBanner: 'index_page_banner',
+  indexPageTermTotal: 'index_page_term_total',
+  productList: 'product_list',
 };
-type ParamsType = IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType;
-export async function getList(params: Params) {
-  return request(url + '/backstage/resource', {
+export default (content: any) =>
+  request(`${url}/backstage/resource/${targetMap[content.target] || content.target}`, {
     mode: 'cors',
-    params,
+    method: content.method || 'get',
+    params: content.params,
+    data: content.data,
   });
-}
-
-export const getIndexPageBanner = async () =>
-  request(`${url}/client_mini_program/index_page_banner`, { mode: 'cors' });
-export const updateIndexPageBanner = async (data: any[]) =>
-  request(`${url}/client_mini_program/index_page_banner`, { mode: 'cors', method: 'put', data });
-export async function deleteItem(params: Params) {
-  leach(params);
-  console.log(params);
-  return request(url + '/backstage/resource', {
-    mode: 'cors',
-    method: 'DELETE',
-    params,
-  });
-}
-
-export async function updateItem(arg: any) {
-  console.log(arg);
-  return request(url + '/backstage/resource', {
-    mode: 'cors',
-    method: 'PUT',
-    ...arg,
-  });
-}
-
-export async function newItem(arg: any) {
-  return request(url + '/backstage/resource', {
-    mode: 'cors',
-    method: 'POST',
-    ...arg,
-  });
-}
-export async function getIndexPageTermTotal(category: number) {
-  return request(url + '/backstage/resource/index_page_term_total', {
-    mode: 'cors',
-    params: { category },
-  });
-}
-export async function getIndexPageCategoryTotal() {
-  return request(url + '/backstage/resource/index_page_category_total', {
-    mode: 'cors',
-  });
-}
-export async function getIndexPageCategories() {
-  return request(url + '/backstage/resource/index_page_categories', {
-    mode: 'cors',
-  });
-}

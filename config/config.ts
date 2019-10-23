@@ -231,7 +231,7 @@ export default {
         resourcePath: string;
       },
       localIdentName: string,
-      localName: string,
+      localName: string
     ) => {
       if (
         context.resourcePath.includes('node_modules') ||

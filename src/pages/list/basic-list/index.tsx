@@ -15,6 +15,7 @@ import {
   Radio,
   Row,
   Select,
+  Result,
 } from 'antd';
 import React, { Component } from 'react';
 
@@ -24,7 +25,6 @@ import { PageHeaderWrapper } from '@ant-design/pro-layout';
 import { connect } from 'dva';
 import { findDOMNode } from 'react-dom';
 import moment from 'moment';
-import Result from './Result';
 import { StateType } from './model';
 import { BasicListItemDataType } from './data.d';
 import styles from './style.less';
@@ -59,7 +59,10 @@ interface BasicListState {
     loading: loading.models.listBasicList,
   }),
 )
-class BasicList extends Component<BasicListProps, BasicListState> {
+class BasicList extends Component<
+  BasicListProps,
+  BasicListState
+> {
   state: BasicListState = { visible: false, done: false, current: undefined };
 
   formLayout = {
@@ -130,7 +133,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
   deleteItem = (id: string) => {
     const { dispatch } = this.props;
     dispatch({
-      type: 'listBasicList/test',
+      type: 'listBasicList/submit',
       payload: { id },
     });
   };
@@ -163,7 +166,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       ? { footer: null, onCancel: this.handleDone }
       : { okText: '保存', onOk: this.handleSubmit, onCancel: this.handleCancel };
 
-    const Info: React.SFC<{
+    const Info: React.FC<{
       title: React.ReactNode;
       value: React.ReactNode;
       bordered?: boolean;
@@ -213,7 +216,7 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       </div>
     );
 
-    const MoreBtn: React.SFC<{
+    const MoreBtn: React.FC<{
       item: BasicListItemDataType;
     }> = ({ item }) => (
       <Dropdown
@@ -234,10 +237,10 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       if (done) {
         return (
           <Result
-            type="success"
+            status="success"
             title="操作成功"
-            description="一系列的信息描述，很短同样也可以带标点。"
-            actions={
+            subTitle="一系列的信息描述，很短同样也可以带标点。"
+            extra={
               <Button type="primary" onClick={this.handleDone}>
                 知道了
               </Button>

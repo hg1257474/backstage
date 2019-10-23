@@ -2,39 +2,23 @@ import { List, Avatar, Button } from 'antd';
 import React from 'react';
 import _ from 'lodash';
 import styles from '../style.less';
+import { IndexPageTermListItem } from '../data';
+import { StateType } from '../model';
 import { URL as url } from '../../../config';
+import mRequest from '../service';
 export type Item = [string, string, string, string?];
 export interface Props {
   loading?: boolean;
-  resources: Item[];
-  total: number;
-  ActionBar: React.Component;
+  list: StateType['indexPageTermList'];
+  ActionBar: (...x: any[]) => JSX.Element;
   onAddItem: () => void;
-  onCurrentChange: (e: number) => void;
 }
-interface State {
-  current: number;
-  willChangeCurrent?: {
-    current: number;
-    oldProps: Props;
-  };
-}
+interface State {}
 export default class extends React.Component<Props, State> {
-  state = { current: 1 };
-  static getDerivedStateFromProps(props: Props, state: State) {
-    if (state.willChangeCurrent && !_.isEqual(props, state.willChangeCurrent.oldProps)) {
-      state.current = state.willChangeCurrent.current;
-      delete state.willChangeCurrent;
-    }
-    return state;
-  }
-
   render() {
-    const that = this;
-    console.log(this.props);
-    const { ActionBar } = this.props;
+    const { ActionBar, list } = this.props;
     return (
-      <List<Item>
+      <List<IndexPageTermListItem>
         footer={
           <Button
             type="dashed"
@@ -50,17 +34,9 @@ export default class extends React.Component<Props, State> {
           </Button>
         }
         className={styles['index-page-term-list']}
-        pagination={
-          // total: this.props.total,
-          // current: this.state.current,
-          // onChange(e) {
-          //   that.props.onCurrentChange(e);
-          //   that.setState({ current: e });
-          // },
-          false
-        }
+        pagination={false}
         loading={this.props.loading}
-        dataSource={this.props.resources}
+        dataSource={list.content}
         renderItem={(item, index) => (
           <List.Item className={styles.test123456789}>
             <List.Item.Meta
@@ -74,17 +50,28 @@ export default class extends React.Component<Props, State> {
                 />
               }
             />
-            <div>{item[2]}</div>
-            {/* <div>{item[3]}</div> */}
             <ActionBar
-              target="indexPageTerm"
-              inputTarget={{
-                termIcon: item[0],
-                term: item[1],
-                termDescription: item[2],
-                termOther: item[3],
-                index: (this.state.current - 1) * 10 + index,
-              }}
+              editTarget={() =>
+                new Promise(async resolve => {
+                  resolve({
+                    term: await mRequest({
+                      target: 'indexPageTerm',
+                      params: { category: list.category, term: index },
+                    }),
+                    type: 'indexPageTerm',
+                    category: list.category,
+                    index,
+                    indexPageTermTotal: list.content.length,
+                    indexPageCategories: await mRequest({ target: 'indexPageCategories' }),
+                  });
+                })
+              }
+              deleteTarget={[
+                'indexPageTerm',
+                { category: list.category, term: index },
+                { target: 'indexPageTermList', params: { category: list.category } },
+                {},
+              ]}
             />
           </List.Item>
         )}

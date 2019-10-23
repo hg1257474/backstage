@@ -1,26 +1,8 @@
-import {
-  Avatar,
-  Button,
-  Card,
-  DatePicker,
-  Dropdown,
-  Form,
-  Icon,
-  Input,
-  List,
-  Menu,
-  Modal,
-  Table,
-  Progress,
-  Radio,
-  Row,
-  Select,
-} from 'antd';
+import { Button, Card, List, Modal, Radio, Form } from 'antd';
 import ImageUpload from '../../components/ImageUpload';
 import _ from 'lodash';
-const { Option } = Select;
 import React, { Component } from 'react';
-
+import mRequest from './service';
 import { Dispatch } from 'redux';
 import { FormComponentProps } from 'antd/es/form';
 import { PageHeaderWrapper } from '@ant-design/pro-layout';
@@ -28,21 +10,14 @@ import { connect } from 'dva';
 import { findDOMNode } from 'react-dom';
 import { StateType } from './model';
 import {
-  IndexCategoryListItemDataType,
-  IndexTermListItemDataType,
-  PriceListItemDataType,
+  IndexPageBanner,
+  IndexPageCategoryListItem,
+  IndexPageTermListItem,
+  ProductListItem,
 } from './data.d';
 import styles from './style.less';
 import IndexPageTermList from './components/IndexPageTermList';
 import FormModal from './components/FormModal';
-import { classBody } from '@babel/types';
-import { getIndexPageCategories } from './service';
-import { match } from 'minimatch';
-interface PartSelectedType<T extends 'indexPage' | 'payPage'> {
-  part: T;
-  categorySelected?: T extends 'indexPage' ? string : void;
-}
-//type bb<T>=T extends "qwe"
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
 interface BasicListProps extends FormComponentProps {
@@ -51,22 +26,12 @@ interface BasicListProps extends FormComponentProps {
   loading: boolean;
 }
 export type NewTargetType = 'IndexPageCategory' | 'IndexPageTerm' | undefined;
-
 interface BasicListState {
-  editTarget?: 'indexPageCategory' | 'indexPageTerm';
   done: boolean;
-  current: number;
-  partSelected: 'indexPageCategory' | 'indexPageBanner';
-  callback?: {
-    timestamp: number;
-    newState: BasicListState;
-  };
-  newTarget?: NewTargetType;
-  shouldNewItem: boolean;
-  indexPageCategorySelected?: number;
-  inputTarget?: Partial<
-    IndexCategoryListItemDataType | IndexTermListItemDataType | PriceListItemDataType
-  >;
+  indexPageCategoryListCurrent: number;
+  partSelected: 'indexPageColumn' | 'indexPageBanner' | 'product';
+  newState?: Partial<BasicListState>;
+  editTarget?: any;
 }
 const CARD_TITLES = {
   indexPageCategory: '首页分级类目',
@@ -84,9 +49,8 @@ const CARD_TITLES = {
 class BasicList extends Component<BasicListProps, BasicListState> {
   state: BasicListState = {
     done: false,
-    shouldNewItem: false,
-    current: 1,
-    partSelected: 'indexPageCategory',
+    indexPageCategoryListCurrent: 1,
+    partSelected: 'indexPageColumn',
   };
   formLayout = {
     labelCol: { span: 7 },
@@ -98,30 +62,55 @@ class BasicList extends Component<BasicListProps, BasicListState> {
   componentDidMount() {
     const { dispatch } = this.props;
     dispatch({
-      type: 'resourceList/getResources',
+      type: 'resourceList/mGet',
       payload: {
-        current: this.state.current,
-        target: 'indexPageCategory',
+        target: 'indexPageCategoryList',
+        params: {
+          current: 1,
+        },
       },
     });
     dispatch({
-      type: 'resourceList/getIndexPageBanner',
+      type: 'resourceList/mGet',
+      payload: {
+        target: 'indexPageBanner',
+      },
+    });
+    dispatch({
+      type: 'resourceList/mGet',
+      payload: {
+        target: 'productList',
+      },
     });
   }
-  static getDerivedStateFromProps(props: BasicListProps, state: BasicListState) {
-    /*    console.log(state);*/
-    if (state.callback && props.resourceList.timestamp === state.callback.timestamp) {
-      state = { ...state, ...state.callback.newState };
-      state.callback = undefined;
-      /*      console.log(state);*/
-    }
-    return state;
+  componentDidUpdate(prevProps: BasicListProps) {
+    if (this.props.resourceList.timestamp !== prevProps.resourceList.timestamp)
+      this.setState({ ...this.state, ...this.state.newState, newState: undefined });
   }
 
-  newItem = editTarget => () => {
-    let newState = {};
+  newItem = (type: 'indexPageCategory' | 'indexPageTerm') => async () => {
+    let editTarget: BasicListState['editTarget'] = {};
+    const { resourceList } = this.props;
+    switch (type) {
+      case 'indexPageCategory':
+        editTarget = {
+          indexPageCategoryTotal: resourceList.indexPageCategoryList.total,
+          isNew: true,
+        };
+        break;
+      case 'indexPageTerm':
+        editTarget = {
+          indexPageCategories: await mRequest({ target: 'indexPageCategories' }),
+          term: [],
+          indexPageTermTotal: resourceList.indexPageTermList.content.length,
+          category: resourceList.indexPageTermList.category,
+          isNew: true,
+        };
+        break;
+    }
+    editTarget.type = type;
+    console.log(editTarget);
     this.setState({ editTarget });
-    this.setState(newState);
   };
 
   onDone = () => {
@@ -129,7 +118,6 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     this.setState({
       done: false,
       editTarget: undefined,
-      inputTarget: undefined,
     });
   };
 
@@ -138,90 +126,82 @@ class BasicList extends Component<BasicListProps, BasicListState> {
     this.setState(
       {
         editTarget: undefined,
-        inputTarget: undefined,
       },
       () => this.props.form.resetFields(),
     );
   };
-  indexPageTermListCurrent = 1;
   onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const { dispatch, form } = this.props;
-    const { inputTarget } = this.state;
+    const { editTarget } = this.state;
     setTimeout(() => this.addBtn && this.addBtn.blur(), 0);
-    form.validateFields(
-      (
-        err: string | undefined,
-        fieldsValue:
-          | IndexCategoryListItemDataType
-          | IndexTermListItemDataType
-          | PriceListItemDataType,
-      ) => {
-        if (err) return;
-        const timestamp = new Date().getTime();
-        let current = 0;
-        if (this.state.editTarget === 'indexPageCategory') {
-          fieldsValue.index! -= 1;
-          current = this.state.inputTarget
-            ? this.state.current
-            : Math.ceil((this.props.resourceList.total + 1) / 10);
-
-          this.setState({
-            callback: {
-              newState: { current, done: true },
-              timestamp,
+    form.validateFields((err: string | undefined, fieldsValue: any) => {
+      if (err) return;
+      let newState: BasicListState['newState'] = { done: true };
+      let data: any = {};
+      let callback: any = {};
+      console.log(fieldsValue);
+      switch (editTarget.type) {
+        case 'product':
+          callback = {
+            target: 'productList',
+          };
+          data = fieldsValue;
+          break;
+        case 'indexPageCategory':
+          callback = {
+            params: {
+              current: newState.indexPageCategoryListCurrent = Math.ceil(fieldsValue.index / 10),
             },
-          });
-        } else if (this.state.editTarget === 'indexPageTerm') {
-          fieldsValue.index! -= 1;
-          current = 1; //this.indexPageTermCurrent;
-          this.setState({
-            callback: {
-              newState: { current, done: true },
-              timestamp,
+            target: 'indexPageCategoryList',
+          };
+          fieldsValue.index -= 1;
+          data = editTarget.isNew ? fieldsValue : { ...fieldsValue, oldIndex: editTarget.index };
+          break;
+        case 'indexPageTerm':
+          callback = [
+            {
+              params: {
+                current: newState.indexPageCategoryListCurrent = Math.ceil(
+                  fieldsValue.category / 10,
+                ),
+              },
+              target: 'indexPageCategoryList',
             },
-          });
-        }
-        const payload = {
-          timestamp,
-          params: {
-            current,
-            target: this.state.editTarget,
-            indexPageCategorySelected: this.state.indexPageCategorySelected,
-          },
-          data: {
-            ...fieldsValue,
-            oldCategory: this.state.indexPageCategorySelected,
-            oldIndex: inputTarget && inputTarget.index,
-          },
-        };
-        if (this.state.inputTarget)
-          dispatch({
-            type: 'resourceList/updateItem',
-            payload,
-          });
-        else
-          dispatch({
-            type: 'resourceList/newItem',
-            payload,
-          });
-      },
-    );
-  };
-  // %no%
-  onChangeIndexPageTermListCurrent = current => {
-    this.indexPageTermListCurrent = current;
-    this.props.dispatch({
-      type: 'resourceList/getIndexPageTermList',
-      payload: {
-        target: 'indexPageTerm',
-        categorySelected: this.state.indexPageCategorySelected! + (this.state.current - 1) * 10,
-        current: 1,
-      },
+            {
+              params: {
+                category: editTarget.category,
+              },
+              target: 'indexPageTermList',
+            },
+          ];
+          fieldsValue.index -= 1;
+          data = editTarget.isNew
+            ? fieldsValue
+            : { ...fieldsValue, oldIndex: editTarget.index, oldCategory: editTarget.category };
+          break;
+        default:
+          throw new Error('d');
+      }
+      this.setState({ newState });
+      dispatch({
+        type: 'resourceList/mUpdate',
+        payload: {
+          method: editTarget.isNew ? 'post' : 'put',
+          data,
+          target: editTarget.type,
+          callback,
+        },
+      });
     });
   };
 
-  onDelete = (target: any, inputTarget: any, callback?: any) => {
+  onDelete = (
+    target: 'indexPageCategory' | 'indexPageTerm',
+    params: any,
+    callback: any,
+    newState: BasicListState['newState'],
+  ) => {
     Modal.confirm({
       title: '删除条目', //_maps1[this.state.selectedPage],
       content: '您确定删除条目?', //_maps2[this.state.selectedPage],
@@ -229,41 +209,37 @@ class BasicList extends Component<BasicListProps, BasicListState> {
       cancelText: '取消',
       onOk: () => {
         const { dispatch } = this.props;
+        console.log(target, params, callback, newState);
         /*        console.log("fuckkkk")*/
+        this.setState({ newState });
         dispatch({
-          type: 'resourceList/deleteItem',
+          type: 'resourceList/mUpdate',
           payload: {
-            current: callback && callback.current,
-            callback,
+            method: 'delete',
             target,
-            indexPageCategorySelected: this.state.indexPageCategorySelected,
-            inputTarget: target.includes('indexPage') ? inputTarget.index : inputTarget,
+            callback,
+            params,
           },
         });
       },
     });
   };
   render() {
+    console.log(this.props);
     const ActionBar = ({
-      target,
-      inputTarget,
-      editCb,
-      delCb,
+      editTarget,
+      deleteTarget,
     }: {
-      target: any;
-      inputTarget: any;
-      editCb?: (...x: any) => {};
-      delCb?: (...x: any) => {};
+      editTarget: ((x: any[]) => BasicListState['editTarget']) | BasicListState['editTarget'];
+      deleteTarget: ['indexPageCategory' | 'indexPageTerm', any, any, BasicListState['newState']];
     }) => (
       <>
         <a
           className={styles['action-btn']}
-          onClick={e => {
-            /*            console.log(11);*/
-            /*            console.log(target, inputTarget);*/
+          onClick={async e => {
             e.preventDefault();
-            if (editCb) editCb();
-            this.setState({ editTarget: target, inputTarget });
+            if (editTarget instanceof Function) editTarget = await editTarget();
+            this.setState({ editTarget });
           }}
         >
           编辑
@@ -274,116 +250,120 @@ class BasicList extends Component<BasicListProps, BasicListState> {
           onClick={e => {
             /*            console.log(target, inputTarget, editCb, delCb);*/
             e.preventDefault();
-            this.onDelete(target, inputTarget, delCb && delCb());
+            this.onDelete(...deleteTarget);
           }}
         >
           删除
         </a>
       </>
     );
-    const {
-      resourceList: { list },
-      loading,
-    } = this.props;
+    const { loading, resourceList } = this.props;
     const {
       form: { getFieldDecorator },
     } = this.props;
     /*    console.log(this.props);*/
-    const { done, inputTarget = {}, partSelected } = this.state;
+    const { done, partSelected } = this.state;
     const extraContent = (
       <div className={styles.extraContent}>
         <RadioGroup
           defaultValue={partSelected}
           onChange={e => this.setState({ partSelected: e.target.value })}
         >
-          <RadioButton value="indexPageCategory">首页类目</RadioButton>
+          <RadioButton value="indexPageColumn">首页类目</RadioButton>
           <RadioButton value="indexPageBanner">首页头图</RadioButton>
+          <RadioButton value="product">产品</RadioButton>
         </RadioGroup>
       </div>
     );
-    const IndexCategoryListContent = ({ index, category }: IndexCategoryListItemDataType) => {
-      const rIndex = (this.state.current - 1) * 10 + index!;
+    const IndexCategoryListContent = ({ category, index }: { category: string; index: number }) => {
+      const deleteCallbackCurrent =
+        resourceList.indexPageCategoryList.total - 1 >
+        (this.state.indexPageCategoryListCurrent - 1) * 10
+          ? this.state.indexPageCategoryListCurrent
+          : this.state.indexPageCategoryListCurrent - 1 || 1;
       return (
         <div className={styles.listContent}>
           <div className={styles.listContentItem}>
             {category}
             <ActionBar
-              inputTarget={{ index: rIndex, category }}
-              target="indexPageCategory"
-              delCb={() => {
-                const timestamp = new Date().getTime();
-                let current =
-                  (this.state.current - 1) * 10 === this.props.resourceList.total - 1
-                    ? this.state.current - 1
-                    : this.state.current;
-                if (!current) current = 1;
-                const callback = { newState: { current }, timestamp };
-                this.setState({ callback });
-                return { ...callback, current };
+              editTarget={{
+                type: 'indexPageCategory',
+                category,
+                index,
+                indexPageCategoryTotal: resourceList.indexPageCategoryList.total,
               }}
+              deleteTarget={[
+                'indexPageCategory',
+                { category: index },
+                {
+                  target: 'indexPageCategoryList',
+                  params: { current: deleteCallbackCurrent },
+                },
+                { indexPageCategoryListCurrent: deleteCallbackCurrent },
+              ]}
             />
             <a
               className={styles['action-btn']}
               onClick={() => {
                 this.props.dispatch({
-                  type: 'resourceList/getIndexPageTermList',
+                  type: 'resourceList/mGet',
                   payload: {
-                    target: 'indexPageTerm',
-                    indexPageCategorySelected: rIndex,
-                    current: 1,
+                    target: 'indexPageTermList',
+                    params: {
+                      category: resourceList.indexPageTermList.category === index ? -1 : index,
+                    },
                   },
                 });
-                this.setState(prevState => ({
-                  indexPageCategorySelected:
-                    prevState.indexPageCategorySelected === rIndex ? undefined : rIndex,
-                }));
               }}
             >
-              {this.state.indexPageCategorySelected === rIndex ? '隐藏' : '查看'}
+              {resourceList.indexPageTermList.category === index ? '隐藏' : '查看'}
             </a>
-            {this.state.indexPageCategorySelected === rIndex && (
+            {resourceList.indexPageTermList.category === index && (
               <IndexPageTermList
                 loading={this.props.loading}
                 ActionBar={ActionBar}
-                onCurrentChange={this.onChangeIndexPageTermListCurrent}
                 onAddItem={this.newItem('indexPageTerm')}
-                {...this.props.resourceList.indexPageTermList}
+                list={resourceList.indexPageTermList}
               />
             )}
           </div>
         </div>
       );
     };
-    const PriceListContent = ({
-      data: { category, description, fee },
-    }: {
-      data: PriceListItemDataType;
-    }) => (
-      <div className={styles.listContent}>
-        <div className={styles.listContentItem}>
-          <span>类别</span>
-          <p>{category}</p>
-        </div>
+    const ProductListItem = ({ item, index }: { item: ProductListItem; index: number }) => (
+      <>
+        <div className={styles.listContentItem}>{item.name}</div>
 
         <div className={styles.listContentItem}>
-          <span>说明</span>
-          <p>{description}</p>
+          {item.presentPrice}
+
+          <span
+            style={{ width: '6em', display: 'inline-block', paddingLeft: '1.5em', color: 'red' }}
+          >
+            {item.originalPrice ? '促销中' : ''}
+          </span>
         </div>
-        <div className={styles.listContentItem}>
-          <span>金额</span>
-          <p>{fee}</p>
-        </div>
-      </div>
+        <a
+          onClick={async () => {
+            const product = await mRequest({
+              target: 'product',
+              params: { product: index },
+            });
+            this.setState({
+              editTarget: {
+                ...product,
+                type: 'product',
+                index,
+              },
+            });
+          }}
+        >
+          编辑
+        </a>
+      </>
     );
     const that = this;
-    /*    console.log(this.props);*/
-    /*    console.log(this.state);*/
-    /*    console.log(this.state);*/
-
-    /*    // console.log(this.props.listBasicList);*/
-    /*    // console.log(this.props.listBasicList.list);*/
-    /*    // console.log('DDDDDDDDDDDDD232323232');*/
-    console.log(this.props);
+    console.log(this.state.editTarget);
     return (
       <>
         <PageHeaderWrapper>
@@ -401,10 +381,10 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                 style={{
                   width: '100%',
                   marginBottom: 8,
-                  display: partSelected === 'indexPageCategory' ? '' : 'none',
+                  display: partSelected === 'indexPageColumn' ? '' : 'none',
                 }}
                 icon="plus"
-                onClick={this.newItem(this.state.partSelected)}
+                onClick={this.newItem('indexPageCategory')}
                 ref={component => {
                   // eslint-disable-next-line  react/no-find-dom-node
                   this.addBtn = findDOMNode(component) as HTMLButtonElement;
@@ -412,46 +392,45 @@ class BasicList extends Component<BasicListProps, BasicListState> {
               >
                 添加
               </Button>
-              <List<
-                | IndexCategoryListItemDataType
-                | IndexCategoryListItemDataType
-                | PriceListItemDataType
-              >
+              <List<IndexPageCategoryListItem | ProductListItem>
                 size="large"
-                style={partSelected === 'indexPageCategory' ? {} : { display: 'none' }}
+                style={
+                  ['indexPageColumn', 'product'].includes(partSelected) ? {} : { display: 'none' }
+                }
                 rowKey="index"
                 loading={loading}
                 pagination={
-                  {
-                    total: this.props.resourceList.total,
-                    current: this.state.current,
-                    onChange(e) {
-                      const timestamp = new Date().getTime();
-                      that.setState({
-                        callback: {
-                          timestamp,
-                          newState: { current: e, indexPageCategorySelected: undefined },
+                  partSelected === 'indexPageColumn'
+                    ? {
+                        total: resourceList.indexPageCategoryList.total,
+                        current: this.state.indexPageCategoryListCurrent,
+                        onChange(current) {
+                          that.setState({ newState: { indexPageCategoryListCurrent: current } });
+                          that.props.dispatch({
+                            type: 'resourceList/mGet',
+                            payload: {
+                              target: 'indexPageCategoryList',
+                              params: { current },
+                            },
+                          });
                         },
-                      });
-                      that.props.dispatch({
-                        type: 'resourceList/getResources',
-                        payload: {
-                          timestamp,
-                          current: e,
-                          target: that.state.partSelected,
-                        },
-                      });
-                    },
-                  } /*paginationProps*/
+                      }
+                    : false /*paginationProps*/
                 }
                 dataSource={
-                  this.props.resourceList
-                    .resources /*this.state.selectedPage === 'index' ? index : payment*/
+                  partSelected === 'product'
+                    ? resourceList.productList
+                    : resourceList.indexPageCategoryList.content
                 }
                 renderItem={(item, index) => (
                   <List.Item className={styles.test123456789}>
-                    {partSelected === 'indexPageCategory' && (
-                      <IndexCategoryListContent index={index} category={item} />
+                    {partSelected === 'product' ? (
+                      <ProductListItem item={item as ProductListItem} index={index} />
+                    ) : (
+                      <IndexCategoryListContent
+                        index={index + (this.state.indexPageCategoryListCurrent - 1) * 10}
+                        category={item as IndexPageCategoryListItem}
+                      />
                     )}
                   </List.Item>
                 )}
@@ -460,11 +439,18 @@ class BasicList extends Component<BasicListProps, BasicListState> {
                 target="indexPage"
                 visible={partSelected === 'indexPageBanner'}
                 value={this.props.resourceList.indexPageBanner}
-                onChange={value => {
+                onChange={data => {
                   /*                  console.log(value);*/
                   this.props.dispatch({
-                    type: 'resourceList/updateIndexPageBanner',
-                    payload: value,
+                    type: 'resourceList/mUpdate',
+                    payload: {
+                      method: 'put',
+                      data,
+                      target: 'indexPageBanner',
+                      callback: {
+                        target: 'indexPageBanner',
+                      },
+                    },
                   });
                 }}
               />
@@ -474,14 +460,11 @@ class BasicList extends Component<BasicListProps, BasicListState> {
         {this.state.editTarget && (
           <FormModal
             target={this.state.editTarget}
-            inputTarget={inputTarget}
-            indexPageCategorySelected={this.state.indexPageCategorySelected}
             onCancel={this.onCancel}
             onDone={this.onDone}
             done={done}
             onSubmit={this.onSubmit}
             getFieldDecorator={getFieldDecorator}
-            max={this.props.resourceList.total}
           />
         )}
       </>
