@@ -194,7 +194,7 @@ export default class extends React.Component<Props, State> {
               <Result
                 type="success"
                 title="操作成功"
-                description="一系列的信息描述，很短同样也可以带标点。"
+                description="您的操作已经成功"
                 actions={
                   <Button type="primary" onClick={onDone}>
                     知道了

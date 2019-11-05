@@ -18,6 +18,7 @@ import mRequest from '../../service';
 import React, { FormEvent } from 'react';
 import Result from '../../Result';
 const FormItem = Form.Item;
+const { TextArea } = Input;
 
 type ValidationRule = {
   /** validation error message */
@@ -188,7 +189,7 @@ export default class extends React.Component<Props, State> {
               <Result
                 type="success"
                 title="操作成功"
-                description="一系列的信息描述，很短同样也可以带标点。"
+                description="您的操作已经成功"
                 actions={
                   <Button type="primary" onClick={onDone}>
                     知道了
@@ -319,6 +320,14 @@ export default class extends React.Component<Props, State> {
                           rules: [{ required: true, message: '请填写原价' }],
                           initialValue: target.originalPrice || target.presentPrice,
                         })(<InputNumber placeholder="请输入" min={0.01} />)}
+                      </FormItem>
+                    )}
+                    {this.state.isProductPromotion && (
+                      <FormItem label="优惠说明" {...this.formLayout}>
+                        {getFieldDecorator('promotionDescription', {
+                          // rules: [{ required: true, message: '请填写原价' }],
+                          initialValue: target.promotionDescription || '',
+                        })(<TextArea placeholder="请输入" />)}
                       </FormItem>
                     )}
                     <FormItem label="说明" {...this.formLayout}>
