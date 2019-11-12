@@ -1,6 +1,4 @@
-import request from 'umi-request';
-import { URL } from '../../../config';
-
+import { request, URL } from '../../../services/curd';
 export async function getDetail(id: string) {
   return request(`${URL}/backstage/service/${id}`, {
     mode: 'cors',

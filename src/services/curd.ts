@@ -1,4 +1,5 @@
 import { extend } from 'umi-request';
+export { URL } from '../config';
 import { URL } from '../config';
 import router from 'umi/router';
 // const url = 'http://192.168.0.29:7001';
